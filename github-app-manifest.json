@@ -1,0 +1,27 @@
+{
+  "name": "MergeGuard Command Center Local",
+  "url": "http://localhost:4000",
+  "hook_attributes": {
+    "url": "http://localhost:4000/webhooks/github",
+    "active": true
+  },
+  "redirect_url": "http://localhost:4000",
+  "public": false,
+  "default_permissions": {
+    "checks": "write",
+    "contents": "read",
+    "issues": "write",
+    "metadata": "read",
+    "pull_requests": "write",
+    "statuses": "write"
+  },
+  "default_events": [
+    "pull_request",
+    "pull_request_review",
+    "check_suite",
+    "check_run",
+    "issue_comment",
+    "installation",
+    "installation_repositories"
+  ]
+}

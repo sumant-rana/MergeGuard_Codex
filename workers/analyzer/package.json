@@ -1,0 +1,9 @@
+{
+  "name": "@mergeguard/analyzer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/analyze.js"
+  }
+}

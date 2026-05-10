@@ -1,0 +1,22 @@
+{
+  "name": "@mergeguard/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./classifier": "./src/classifier.js",
+    "./risk": "./src/risk.js",
+    "./comment": "./src/comment.js",
+    "./labels": "./src/labels.js",
+    "./signature": "./src/signature.js",
+    "./ids": "./src/ids.js",
+    "./codeowners": "./src/codeowners.js",
+    "./symbols": "./src/symbols.js",
+    "./intent": "./src/intent.js",
+    "./concepts": "./src/concepts.js",
+    "./policy": "./src/policy.js",
+    "./promptCanary": "./src/promptCanary.js",
+    "./contracts": "./src/contracts.js",
+    "./semantic": "./src/semantic.js"
+  }
+}

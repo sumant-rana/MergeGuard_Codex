@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MergeGuard Command Center</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">MergeGuard</p>
+        <h1>Command Center</h1>
+      </div>
+      <div class="topbar-actions">
+        <button id="refresh-button" class="icon-button" type="button" title="Refresh queue" aria-label="Refresh queue">R</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="queue-pane" aria-label="Pull request queue">
+        <div class="metrics" id="metrics"></div>
+
+        <form class="filters" id="filters">
+          <label>
+            Repo
+            <select name="repo" id="repo-filter">
+              <option value="">All repos</option>
+            </select>
+          </label>
+          <label>
+            Owner
+            <select name="owner" id="owner-filter">
+              <option value="">All owners</option>
+            </select>
+          </label>
+          <label>
+            State
+            <select name="risk_state" id="state-filter">
+              <option value="">All states</option>
+              <option value="pass">PASS</option>
+              <option value="review">REVIEW</option>
+              <option value="blocked">BLOCKED</option>
+              <option value="analysis_failed">ANALYSIS FAILED</option>
+            </select>
+          </label>
+        </form>
+
+        <div class="queue-table-wrap">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th>Risk</th>
+                <th>PR</th>
+                <th>Owner</th>
+                <th>Gate</th>
+                <th>Next Action</th>
+              </tr>
+            </thead>
+            <tbody id="queue-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="detail-pane" id="detail-pane" aria-label="Pull request detail">
+        <div class="empty-detail">Select a pull request from the queue.</div>
+      </section>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
