@@ -692,6 +692,88 @@
         gap: 10px;
       }
 
+      .dashboard-tabs-panel {
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .dashboard-tabs {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 12px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(9, 13, 21, 0.76);
+      }
+
+      .dashboard-tab {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 8px;
+        min-height: 36px;
+        padding: 0 12px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        background: rgba(148, 163, 184, 0.08);
+        color: var(--text-soft);
+        font-size: 12px;
+        font-weight: 850;
+        cursor: pointer;
+      }
+
+      .dashboard-tab:hover {
+        border-color: rgba(56, 189, 248, 0.36);
+        color: var(--text);
+      }
+
+      .dashboard-tab.active {
+        border-color: rgba(56, 189, 248, 0.58);
+        background: rgba(56, 189, 248, 0.13);
+        color: var(--text);
+      }
+
+      .dashboard-tab small {
+        min-width: 22px;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: rgba(56, 189, 248, 0.16);
+        color: #bae6fd;
+        text-align: center;
+      }
+
+      .dashboard-tab-body {
+        max-height: min(68vh, 760px);
+        overflow: auto;
+        padding: 16px;
+      }
+
+      .tab-panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .tab-panel-head h3 {
+        margin-bottom: 4px;
+      }
+
+      .tab-panel-head p {
+        max-width: 760px;
+        margin: 0;
+      }
+
+      .tab-section {
+        display: grid;
+        gap: 12px;
+      }
+
+      .tab-section + .tab-section {
+        margin-top: 16px;
+      }
+
       .agent-workflow-panel {
         display: grid;
         gap: 14px;
@@ -1147,6 +1229,10 @@
           justify-content: flex-start;
         }
 
+        .tab-panel-head {
+          flex-direction: column;
+        }
+
         .risk-dial {
           width: 118px;
         }
@@ -1245,6 +1331,7 @@
         rows: [],
         selectedRunId: null,
         selectedPrId: null,
+        selectedDetailTab: "overview",
         activeAnalysisPrId: null,
         currentRun: null,
         agents: [],
@@ -1459,6 +1546,7 @@
         const payload = await fetchJson(`/api/runs/${encodeURIComponent(runId)}`);
         state.selectedRunId = runId;
         state.selectedPrId = payload.run?.pull_request_id || null;
+        state.selectedDetailTab = "overview";
         workflowPanelEl.classList.add("hidden");
         detailEl.classList.remove("hidden");
         renderDetail(payload.run);
@@ -1640,6 +1728,9 @@
         const score = numericScore(summary.risk_score);
         const status = summary.status || run.state || "queued";
         const agentNames = Object.keys(run.agent_results || {});
+        const tabs = detailTabs(run, summary, pr, agentNames);
+        const selectedTab = tabs.find((tab) => tab.id === state.selectedDetailTab) || tabs[0];
+        state.selectedDetailTab = selectedTab.id;
 
         detailEl.innerHTML = `
           <section class="panel detail-hero">
@@ -1661,52 +1752,151 @@
             ${riskDial(score)}
           </section>
 
-          <section id="agents-panel" class="panel">
-            <p class="section-kicker">Execution mesh</p>
-            <h3>Independent agents</h3>
-            <div class="agent-grid">${agentNames.map((name) => agentCard(name, run.agent_results[name])).join("")}</div>
-          </section>
-
-          <section class="panel">
-            <p class="section-kicker">Review routing</p>
-            <h3>Hotspots and owners</h3>
-            ${barList(summary.hotspot_themes || [], "theme", "count")}
-            ${cards(summary.hotspots, hotspotCard, "No hotspots flagged.")}
-          </section>
-
-          <section id="evidence-panel" class="panel">
-            <p class="section-kicker">Intent coverage</p>
-            <h3>Intent and evidence</h3>
-            ${cards(summary.evidence_links, evidenceCard, "No evidence gaps detected.")}
-          </section>
-
-          <section class="panel">
-            <p class="section-kicker">Behavior</p>
-            <h3>Behavioral diff and blast radius</h3>
-            ${cards(summary.behavioral_deltas, behaviorCard, "No behavior deltas detected.")}
-            ${cards(summary.blast_radius, blastCard, "No blast-radius items detected.")}
-          </section>
-
-          <section class="panel">
-            <p class="section-kicker">Policy and prompt gates</p>
-            <h3>Concept policies and prompt canaries</h3>
-            ${cards(summary.policy_findings, policyCard, "Concept policy rules pass.")}
-            ${cards(summary.prompt_canary_runs, promptCard, "No prompt canaries required.")}
-          </section>
-
-          <section id="contracts-panel" class="panel">
-            <p class="section-kicker">Runtime assumptions</p>
-            <h3>Contracts and suggested tests</h3>
-            ${cards(summary.contract_findings, contractCard, "No runtime contract drift.")}
-            ${cards(summary.suggested_tests, suggestedTestCard, "No generated test suggestions.")}
-          </section>
-
-          <section class="panel">
-            <p class="section-kicker">Review comment</p>
-            <h3>Generated PR comment</h3>
-            <pre class="comment-box">${esc(summary.comment || "No comment generated.")}</pre>
+          <section class="panel dashboard-tabs-panel" aria-label="PR analysis detail tabs">
+            <div class="dashboard-tabs" role="tablist" aria-label="PR analysis sections">
+              ${tabs.map((tab) => tabButton(tab, tab.id === selectedTab.id)).join("")}
+            </div>
+            ${tabPanel(selectedTab)}
           </section>
         `;
+
+        for (const button of detailEl.querySelectorAll("[data-detail-tab]")) {
+          button.addEventListener("click", () => {
+            state.selectedDetailTab = button.dataset.detailTab;
+            renderDetail(state.currentRun);
+          });
+        }
+      }
+
+      function detailTabs(run, summary, pr, agentNames) {
+        return [
+          {
+            id: "overview",
+            label: "Overview",
+            kicker: "Readiness",
+            title: "Review posture",
+            description: "The merge decision, required checks, and reviewer-facing next steps.",
+            count: countItems(summary.checks),
+            content: `
+              <div class="tab-section">
+                ${cards(summary.checks, checkCard, "No checks generated for this run.")}
+              </div>
+              <div class="tab-section">
+                <pre class="comment-box">${esc(summary.comment || "No generated review comment yet.")}</pre>
+              </div>
+            `
+          },
+          {
+            id: "agents",
+            label: "Agents",
+            kicker: "Execution mesh",
+            title: "Independent agent outputs",
+            description: "Status and confidence from each deployed MergeGuard agent.",
+            count: agentNames.length,
+            content: `<div class="agent-grid">${agentNames
+              .map((name) => agentCard(name, run.agent_results[name]))
+              .join("")}</div>`
+          },
+          {
+            id: "review",
+            label: "Review",
+            kicker: "Routing",
+            title: "Hotspots and owners",
+            description: "Where the reviewer should spend attention first.",
+            count: countItems(summary.hotspots),
+            content: `
+              <div class="tab-section">${barList(summary.hotspot_themes || [], "theme", "count")}</div>
+              <div class="tab-section">${cards(summary.owner_summary, ownerCard, "No owner routing found.")}</div>
+              <div class="tab-section">${cards(summary.hotspots, hotspotCard, "No hotspots flagged.")}</div>
+            `
+          },
+          {
+            id: "evidence",
+            label: "Evidence",
+            kicker: "Intent coverage",
+            title: "Intent and evidence",
+            description: "How PR intent maps to tests, changed files, and missing proof.",
+            count: countItems(summary.evidence_links),
+            content: cards(summary.evidence_links, evidenceCard, "No evidence gaps detected.")
+          },
+          {
+            id: "behavior",
+            label: "Behavior",
+            kicker: "Runtime behavior",
+            title: "Behavioral diff and blast radius",
+            description: "Detected behavior changes and downstream impact.",
+            count: countItems(summary.behavioral_deltas) + countItems(summary.blast_radius),
+            content: `
+              <div class="tab-section">${cards(summary.behavioral_deltas, behaviorCard, "No behavior deltas detected.")}</div>
+              <div class="tab-section">${cards(summary.blast_radius, blastCard, "No blast-radius items detected.")}</div>
+            `
+          },
+          {
+            id: "gates",
+            label: "Gates",
+            kicker: "Policy and prompt",
+            title: "Concept policies and prompt canaries",
+            description: "Policy blocks, owner overrides, prompt drift, and model-output checks.",
+            count: countItems(summary.policy_findings) + countItems(summary.prompt_canary_runs),
+            content: `
+              <div class="tab-section">${cards(summary.policy_findings, policyCard, "Concept policy rules pass.")}</div>
+              <div class="tab-section">${cards(summary.prompt_canary_runs, promptCard, "No prompt canaries required.")}</div>
+            `
+          },
+          {
+            id: "contracts",
+            label: "Contracts",
+            kicker: "Runtime assumptions",
+            title: "Contracts and suggested tests",
+            description: "Contract drift and generated test ideas for follow-up validation.",
+            count: countItems(summary.contract_findings) + countItems(summary.suggested_tests),
+            content: `
+              <div class="tab-section">${cards(summary.contract_findings, contractCard, "No runtime contract drift.")}</div>
+              <div class="tab-section">${cards(summary.suggested_tests, suggestedTestCard, "No generated test suggestions.")}</div>
+            `
+          },
+          {
+            id: "comment",
+            label: "Comment",
+            kicker: "Review comment",
+            title: "Generated PR comment",
+            description: "Ready-to-post reviewer summary synthesized from the agent run.",
+            count: summary.comment ? 1 : 0,
+            content: `<pre class="comment-box">${esc(summary.comment || "No comment generated.")}</pre>`
+          }
+        ];
+      }
+
+      function tabButton(tab, selected) {
+        return `<button
+          id="detail-tab-${escAttr(tab.id)}"
+          class="dashboard-tab${selected ? " active" : ""}"
+          type="button"
+          role="tab"
+          aria-selected="${selected ? "true" : "false"}"
+          aria-controls="detail-panel-${escAttr(tab.id)}"
+          data-detail-tab="${escAttr(tab.id)}">
+          <span>${esc(tab.label)}</span>
+          <small>${esc(tab.count || 0)}</small>
+        </button>`;
+      }
+
+      function tabPanel(tab) {
+        return `<div
+          id="detail-panel-${escAttr(tab.id)}"
+          class="dashboard-tab-body"
+          role="tabpanel"
+          aria-labelledby="detail-tab-${escAttr(tab.id)}">
+          <div class="tab-panel-head">
+            <div>
+              <p class="section-kicker">${esc(tab.kicker)}</p>
+              <h3>${esc(tab.title)}</h3>
+              <p class="muted">${esc(tab.description)}</p>
+            </div>
+            ${pill(`${tab.count || 0} items`, "info")}
+          </div>
+          ${tab.content}
+        </div>`;
       }
 
       function metric(label, value, hint) {
@@ -1730,10 +1920,25 @@
         </div>`;
       }
 
+      function countItems(items) {
+        return Array.isArray(items) ? items.length : 0;
+      }
+
       function cards(items, renderer, emptyText) {
         const list = items || [];
         if (!list.length) return `<p class="muted">${esc(emptyText)}</p>`;
         return `<div class="review-grid">${list.slice(0, 8).map((item) => `<article class="review-card">${renderer(item)}</article>`).join("")}</div>`;
+      }
+
+      function checkCard(item) {
+        return `<div class="review-card-top"><h4>${esc(item.name || "MergeGuard check")}</h4>${pill(item.conclusion || item.status || "unknown")}</div>
+          <p>${esc(item.summary || item.details || "No additional check details.")}</p>`;
+      }
+
+      function ownerCard(item) {
+        const fileCount = item.file_count ?? item.count ?? (item.files || []).length;
+        return `<div class="review-card-top"><h4>${esc(item.owner || "unassigned")}</h4>${pill(`${fileCount} files`, "info")}</div>
+          <p>${esc((item.files || []).join(", ") || "Review ownership inferred from changed paths.")}</p>`;
       }
 
       function hotspotCard(item) {
