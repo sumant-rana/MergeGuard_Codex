@@ -19,6 +19,18 @@ Open:
 http://127.0.0.1:4100
 ```
 
+If `gh` is installed outside your shell `PATH`, set:
+
+```sh
+export GH_BIN=/absolute/path/to/gh
+```
+
+On Apple Silicon Homebrew this is usually:
+
+```sh
+export GH_BIN=/opt/homebrew/bin/gh
+```
+
 ## Analyze An Existing PR
 
 From the MergeGuard repo:

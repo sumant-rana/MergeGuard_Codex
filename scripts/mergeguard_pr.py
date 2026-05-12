@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import urllib.error
@@ -15,6 +16,12 @@ from typing import Any
 
 DEFAULT_API_URL = os.environ.get("MERGEGUARD_API_URL", "http://127.0.0.1:4100")
 MAX_CONTENT_BYTES = 128_000
+GH_CANDIDATE_PATHS = [
+    os.environ.get("GH_BIN", ""),
+    "/opt/homebrew/bin/gh",
+    "/usr/local/bin/gh",
+    "/usr/bin/gh",
+]
 PR_VIEW_FIELDS = [
     "number",
     "title",
@@ -411,16 +418,17 @@ def gh_json(cmd: list[str], cwd: Path) -> dict[str, Any]:
 
 
 def run_text(cmd: list[str], cwd: Path) -> str:
+    resolved_cmd = [resolve_command(cmd[0]), *cmd[1:]]
     try:
         process = subprocess.run(
-            cmd,
+            resolved_cmd,
             cwd=cwd,
             check=False,
             text=True,
             capture_output=True,
         )
     except FileNotFoundError as exc:
-        raise CommandError(f"required command not found: {cmd[0]}") from exc
+        raise CommandError(command_not_found_message(cmd[0])) from exc
 
     if process.returncode != 0:
         stderr = process.stderr.strip()
@@ -428,6 +436,31 @@ def run_text(cmd: list[str], cwd: Path) -> str:
         detail = stderr or stdout or f"exit code {process.returncode}"
         raise CommandError(f"{' '.join(cmd)} failed: {detail}")
     return process.stdout
+
+
+def resolve_command(command: str) -> str:
+    if "/" in command:
+        return command
+
+    found = shutil.which(command)
+    if found:
+        return found
+
+    if command == "gh":
+        for candidate in GH_CANDIDATE_PATHS:
+            if candidate and Path(candidate).exists():
+                return candidate
+
+    return command
+
+
+def command_not_found_message(command: str) -> str:
+    if command != "gh":
+        return f"required command not found: {command}"
+    return (
+        "required command not found: gh. Install GitHub CLI with `brew install gh`, "
+        "or set GH_BIN=/absolute/path/to/gh if it is installed outside PATH."
+    )
 
 
 def nested(data: dict[str, Any], *keys: str) -> Any:
