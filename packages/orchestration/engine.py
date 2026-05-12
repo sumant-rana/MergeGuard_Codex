@@ -127,6 +127,7 @@ class MergeGuardOrchestrator:
             pr_record["id"],
             pr_record["head_sha"],
             pull_request=pr_record,
+            input_payload=payload,
         )
         prior_results: dict[str, Any] = {}
         settings = payload.get("settings", {})

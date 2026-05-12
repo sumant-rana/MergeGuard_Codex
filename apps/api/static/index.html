@@ -332,9 +332,22 @@
         gap: 12px;
       }
 
+      .compact-metrics {
+        width: min(620px, 100%);
+      }
+
       .metric {
         min-height: 108px;
         padding: 15px;
+      }
+
+      .compact-metrics .metric {
+        min-height: 76px;
+        padding: 12px;
+      }
+
+      .compact-metrics .metric strong {
+        font-size: 24px;
       }
 
       .metric span {
@@ -424,6 +437,115 @@
         min-height: 320px;
         overflow: auto;
         padding: 0 14px 14px;
+      }
+
+      .pr-list-panel {
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+      }
+
+      .page-heading,
+      .pr-list-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+
+      .page-heading h2 {
+        margin: 0;
+        font-size: clamp(28px, 4vw, 44px);
+        line-height: 1;
+      }
+
+      .page-heading .muted {
+        max-width: 680px;
+        margin: 10px 0 0;
+        font-size: 14px;
+      }
+
+      .pr-list {
+        max-height: none;
+        min-height: 160px;
+        overflow: visible;
+        padding: 0;
+      }
+
+      .pr-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(120px, 190px) auto;
+        gap: 16px;
+        align-items: center;
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(12, 18, 28, 0.86);
+        box-shadow: var(--shadow-soft);
+      }
+
+      .pr-row-main {
+        min-width: 0;
+      }
+
+      .pr-row-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .pr-title-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .pr-title-line h3 {
+        margin: 0;
+        overflow-wrap: anywhere;
+        font-size: 16px;
+      }
+
+      .pr-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .small-button {
+        min-height: 34px;
+        padding: 0 11px;
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        background: rgba(21, 27, 41, 0.94);
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 850;
+        cursor: pointer;
+      }
+
+      .small-button:hover {
+        border-color: rgba(56, 189, 248, 0.58);
+      }
+
+      .small-button.primary {
+        border-color: rgba(56, 189, 248, 0.48);
+        background: linear-gradient(135deg, rgba(14, 116, 144, 0.94), rgba(37, 99, 235, 0.88));
+      }
+
+      .small-button.success {
+        border-color: rgba(34, 197, 94, 0.46);
+        background: rgba(22, 101, 52, 0.66);
+      }
+
+      .small-button:disabled {
+        cursor: wait;
+        opacity: 0.62;
       }
 
       .queue-card {
@@ -1014,10 +1136,15 @@
         .summary-strip,
         .metrics,
         .filters,
+        .pr-row,
         .agent-flow-shell,
         .agent-grid,
         .review-grid {
           grid-template-columns: 1fr;
+        }
+
+        .pr-row-actions {
+          justify-content: flex-start;
         }
 
         .risk-dial {
@@ -1040,10 +1167,9 @@
         </div>
       </div>
       <nav class="nav-links" aria-label="Dashboard sections">
-        <a href="#queue-panel">Queue</a>
-        <a href="#agents-panel">Agents</a>
-        <a href="#evidence-panel">Evidence</a>
-        <a href="#contracts-panel">Contracts</a>
+        <a href="#queue-panel">Pull requests</a>
+        <a href="#agent-workflow-panel">Agent run</a>
+        <a href="#detail-pane">Dashboard</a>
       </nav>
       <div class="topbar-actions">
         <button id="refresh-button" class="button" type="button">Refresh</button>
@@ -1052,39 +1178,52 @@
     </header>
 
     <main class="shell">
-      <section class="hero" aria-label="Command overview">
-        <div class="hero-panel">
-          <p class="eyebrow">Live PR intelligence</p>
-          <h2 class="hero-title">Agent-reviewed pull requests, one truth report at a time.</h2>
-          <p id="hero-copy" class="hero-copy">
-            Loading the latest MergeGuard queue and independent agent findings.
-          </p>
-          <div id="hero-meta" class="hero-meta"></div>
-        </div>
-        <aside id="risk-panel" class="risk-panel" aria-label="Selected risk">
-          <div class="risk-dial" style="--score: 0">
-            <div class="risk-dial-inner">
-              <div>
-                <div class="risk-number">0</div>
-                <div class="risk-caption">risk</div>
-              </div>
-            </div>
-          </div>
+      <section id="queue-panel" class="panel pr-list-panel" aria-label="Pull request list">
+        <div class="page-heading">
           <div>
-            <p class="section-kicker">Selected run</p>
-            <h2>No run selected</h2>
-            <p>Select a PR from the queue or run the demo analysis.</p>
+            <p class="eyebrow">Live PR intake</p>
+            <h2>Pull requests</h2>
+            <p class="muted">New PR analyses appear here automatically. Choose a PR, run agents, then open the dashboard.</p>
           </div>
-        </aside>
+          <section id="metrics" class="metrics compact-metrics" aria-label="Metrics"></section>
+        </div>
+        <form id="filters" class="filters">
+          <label>
+            Repo
+            <select name="repo" id="repo-filter">
+              <option value="">All repos</option>
+            </select>
+          </label>
+          <label>
+            Owner
+            <select name="owner" id="owner-filter">
+              <option value="">All owners</option>
+            </select>
+          </label>
+          <label>
+            State
+            <select name="risk_state" id="state-filter">
+              <option value="">All states</option>
+              <option value="pass">Pass</option>
+              <option value="review">Review</option>
+              <option value="blocked">Blocked</option>
+              <option value="analysis_failed">Analysis failed</option>
+            </select>
+          </label>
+        </form>
+        <div class="pr-list-header">
+          <h3 class="panel-title">PR queue</h3>
+          <span id="queue-count" class="pill pill-info">0 PRS</span>
+        </div>
+        <div id="queue-list" class="queue-list pr-list"></div>
       </section>
 
-      <section id="metrics" class="metrics" aria-label="Metrics"></section>
-
-      <section id="agent-workflow-panel" class="panel agent-workflow-panel" aria-label="Agent workflow">
+      <section id="agent-workflow-panel" class="panel agent-workflow-panel hidden" aria-label="Agent workflow">
         <div class="workflow-toolbar">
           <div>
             <p class="section-kicker">Agent workflow</p>
-            <h3 class="panel-title">Available agents</h3>
+            <h3 id="workflow-title" class="panel-title">Available agents</h3>
+            <p id="workflow-subtitle" class="muted">Toggle agents, then analyze a PR to watch the flow.</p>
           </div>
           <label class="delay-control">
             Execution gap
@@ -1098,43 +1237,7 @@
         </div>
       </section>
 
-      <section class="workspace">
-        <aside id="queue-panel" class="panel queue-pane" aria-label="Pull request queue">
-          <div class="panel-header">
-            <h3 class="panel-title">Risk queue</h3>
-            <span id="queue-count" class="pill pill-info">0 PRS</span>
-          </div>
-          <form id="filters" class="filters">
-            <label>
-              Repo
-              <select name="repo" id="repo-filter">
-                <option value="">All repos</option>
-              </select>
-            </label>
-            <label>
-              Owner
-              <select name="owner" id="owner-filter">
-                <option value="">All owners</option>
-              </select>
-            </label>
-            <label>
-              State
-              <select name="risk_state" id="state-filter">
-                <option value="">All states</option>
-                <option value="pass">Pass</option>
-                <option value="review">Review</option>
-                <option value="blocked">Blocked</option>
-                <option value="analysis_failed">Analysis failed</option>
-              </select>
-            </label>
-          </form>
-          <div id="queue-list" class="queue-list"></div>
-        </aside>
-
-        <section id="detail-pane" class="detail-pane" aria-label="Pull request detail">
-          <div class="empty-state">Select a pull request from the queue.</div>
-        </section>
-      </section>
+      <section id="detail-pane" class="detail-pane hidden" aria-label="Pull request dashboard"></section>
     </main>
 
     <script type="module">
@@ -1142,6 +1245,7 @@
         rows: [],
         selectedRunId: null,
         selectedPrId: null,
+        activeAnalysisPrId: null,
         currentRun: null,
         agents: [],
         enabledAgents: new Set(),
@@ -1160,10 +1264,10 @@
       const stateFilterEl = document.querySelector("#state-filter");
       const runButton = document.querySelector("#run-demo");
       const refreshButton = document.querySelector("#refresh-button");
-      const heroCopyEl = document.querySelector("#hero-copy");
-      const heroMetaEl = document.querySelector("#hero-meta");
-      const riskPanelEl = document.querySelector("#risk-panel");
       const queueCountEl = document.querySelector("#queue-count");
+      const workflowPanelEl = document.querySelector("#agent-workflow-panel");
+      const workflowTitleEl = document.querySelector("#workflow-title");
+      const workflowSubtitleEl = document.querySelector("#workflow-subtitle");
       const agentFlowEl = document.querySelector("#agent-flow");
       const agentOutputEl = document.querySelector("#agent-output");
       const agentDelayEl = document.querySelector("#agent-delay");
@@ -1182,6 +1286,7 @@
 
       await loadAgents();
       await loadQueue();
+      window.setInterval(() => loadQueue({ preserveView: true }), 3000);
 
       async function loadAgents() {
         const data = await fetchJson("/api/agents");
@@ -1195,8 +1300,10 @@
         const previous = runButton.textContent;
         runButton.disabled = true;
         runButton.textContent = "Running...";
+        workflowPanelEl.classList.remove("hidden");
+        detailEl.classList.add("hidden");
+        updateWorkflowHeader("Analyzing demo PR", "Invoking enabled agents with visible execution gaps.");
         startFlowAnimation();
-        detailEl.innerHTML = runningState();
         try {
           const response = await fetch("/api/demo/analyze", {
             method: "POST",
@@ -1210,9 +1317,11 @@
           if (data.run) {
             state.selectedRunId = data.run.id;
             state.selectedPrId = data.run.pull_request_id;
-            renderDetail(data.run);
+            state.currentRun = data.run;
+            updateWorkflowHeader("Agent run complete", "Use Show details in the PR list to open the dashboard.");
+            renderAgentWorkflow(data.run);
           }
-          await loadQueue(data.run?.id);
+          await loadQueue({ preferredRunId: data.run?.id });
           if (!response.ok) {
             throw new Error(data.run?.summary?.next_action || data.error || "Demo analysis failed");
           }
@@ -1225,25 +1334,19 @@
         }
       }
 
-      async function loadQueue(preferredRunId) {
+      async function loadQueue(options = {}) {
         const data = await fetchJson("/api/queue");
         state.rows = data.queue || [];
         renderMetrics(data.metrics || {});
         renderFilters();
 
-        const selectedRow = chooseSelectedRow(preferredRunId);
-        if (selectedRow?.latest_run) {
+        const selectedRow = chooseSelectedRow(options.preferredRunId);
+        if (options.preferredRunId && selectedRow?.latest_run) {
           state.selectedRunId = selectedRow.latest_run.id;
           state.selectedPrId = selectedRow.pull_request.id;
         }
 
         renderQueue();
-        if (state.selectedRunId) {
-          const payload = await fetchJson(`/api/runs/${encodeURIComponent(state.selectedRunId)}`);
-          renderDetail(payload.run);
-        } else {
-          renderEmpty();
-        }
       }
 
       function chooseSelectedRow(preferredRunId) {
@@ -1299,20 +1402,67 @@
         queueCountEl.textContent = `${rows.length} PR${rows.length === 1 ? "" : "S"}`;
         if (!rows.length) {
           queueListEl.innerHTML = `<div class="empty-state">No analyzed pull requests match this scope.</div>`;
-          renderEmpty();
           return;
         }
         queueListEl.innerHTML = rows.map(queueCard).join("");
-        for (const card of queueListEl.querySelectorAll(".queue-card")) {
-          card.addEventListener("click", async () => {
-            state.selectedRunId = card.dataset.runId || null;
-            state.selectedPrId = card.dataset.prId || null;
-            renderQueue();
-            if (!state.selectedRunId) return renderEmpty();
-            const payload = await fetchJson(`/api/runs/${encodeURIComponent(state.selectedRunId)}`);
-            renderDetail(payload.run);
-          });
+        for (const button of queueListEl.querySelectorAll("[data-action='analyze']")) {
+          button.addEventListener("click", () => analyzePr(button.dataset.prId));
         }
+        for (const button of queueListEl.querySelectorAll("[data-action='details']")) {
+          button.addEventListener("click", () => showDetails(button.dataset.runId));
+        }
+      }
+
+      async function analyzePr(prId) {
+        const row = state.rows.find((item) => item.pull_request?.id === prId);
+        if (!row) return;
+        const pr = row.pull_request;
+        state.activeAnalysisPrId = prId;
+        state.selectedPrId = prId;
+        state.selectedRunId = null;
+        state.currentRun = null;
+        workflowPanelEl.classList.remove("hidden");
+        detailEl.classList.add("hidden");
+        updateWorkflowHeader(
+          `Analyzing #${pr.number}`,
+          `${pr.repository?.full_name || "repository"} / ${pr.title || "Untitled PR"}`
+        );
+        startFlowAnimation();
+        renderQueue();
+        try {
+          const response = await fetch(`/api/prs/${encodeURIComponent(prId)}/analyze`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              enabled_agents: [...state.enabledAgents],
+              agent_delay_ms: state.delayMs
+            })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "PR analysis failed");
+          state.selectedRunId = data.run.id;
+          state.currentRun = data.run;
+          updateWorkflowHeader("Agent run complete", "Show details is now available in the PR list.");
+          renderAgentWorkflow(data.run);
+          await loadQueue({ preferredRunId: data.run.id });
+        } catch (error) {
+          agentOutputEl.innerHTML = `<div class="error">${esc(error.message || error)}</div>`;
+        } finally {
+          state.activeAnalysisPrId = null;
+          stopFlowAnimation();
+          renderQueue();
+        }
+      }
+
+      async function showDetails(runId) {
+        if (!runId) return;
+        const payload = await fetchJson(`/api/runs/${encodeURIComponent(runId)}`);
+        state.selectedRunId = runId;
+        state.selectedPrId = payload.run?.pull_request_id || null;
+        workflowPanelEl.classList.add("hidden");
+        detailEl.classList.remove("hidden");
+        renderDetail(payload.run);
+        detailEl.scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
       function renderAgentWorkflow(run = state.currentRun) {
@@ -1337,6 +1487,11 @@
           });
         }
         renderAgentOutput(run);
+      }
+
+      function updateWorkflowHeader(title, subtitle) {
+        workflowTitleEl.textContent = title;
+        workflowSubtitleEl.textContent = subtitle;
       }
 
       function flowStep(agent, run, index) {
@@ -1448,37 +1603,43 @@
         const summary = run.summary || {};
         const score = numericScore(summary.risk_score);
         const status = summary.status || run.state || "queued";
-        const selected = run.id && run.id === state.selectedRunId ? " selected" : "";
         const tone = score >= 70 ? "hot" : score >= 40 ? "mid" : "";
-        return `<button class="queue-card${selected}" type="button" data-run-id="${escAttr(run.id || "")}" data-pr-id="${escAttr(pr.id || "")}">
-          <div class="queue-card-top">
-            <div>
-              <p class="queue-title">#${esc(pr.number || "")} ${esc(pr.title || "Untitled PR")}</p>
-              <div class="queue-subtitle">${esc(pr.repository?.full_name || "")} / ${esc(pr.author || "unknown")}</div>
+        const analyzing = state.activeAnalysisPrId === pr.id;
+        const canShowDetails = run.id && ["completed", "failed"].includes(run.state);
+        return `<article class="pr-row" data-pr-id="${escAttr(pr.id || "")}">
+          <div class="pr-row-main">
+            <div class="pr-title-line">
+              <h3>#${esc(pr.number || "")} ${esc(pr.title || "Untitled PR")}</h3>
             </div>
-            <div class="score-stack">
-              <div class="score-number">${scoreLabel(summary.risk_score)}</div>
-              <div class="score-track"><div class="score-fill ${tone}" style="width:${score}%"></div></div>
+            <div class="pr-meta">
+              <span class="muted">${esc(pr.repository?.full_name || "")}</span>
+              <span class="muted">${esc(pr.author || "unknown")}</span>
+              ${pill(status)}
+              ${pill(`${Object.keys(run.agent_results || {}).length} agents`, "info")}
             </div>
+            <p class="queue-action">${esc(summary.next_action || "No analysis has run yet.")}</p>
           </div>
-          <div class="hero-meta">
-            ${pill(status)}
-            ${pill(`${Object.keys(run.agent_results || {}).length} agents`, "info")}
-            ${summary.top_blocker ? pill("top blocker", "block") : pill("ready", "pass")}
+          <div class="score-stack">
+            <div class="score-number">${scoreLabel(summary.risk_score)}</div>
+            <div class="score-track"><div class="score-fill ${tone}" style="width:${score}%"></div></div>
           </div>
-          <p class="queue-action">${esc(summary.next_action || "Analysis pending.")}</p>
-        </button>`;
+          <div class="pr-row-actions">
+            <button class="small-button primary" type="button" data-action="analyze" data-pr-id="${escAttr(pr.id || "")}" ${analyzing ? "disabled" : ""}>
+              ${analyzing ? "Analyzing" : "Analyze"}
+            </button>
+            ${canShowDetails ? `<button class="small-button success" type="button" data-action="details" data-run-id="${escAttr(run.id)}">Show details</button>` : ""}
+          </div>
+        </article>`;
       }
 
       function renderDetail(run) {
-        if (!run) return renderEmpty();
+        if (!run) return;
         state.currentRun = run;
         const summary = run.summary || {};
         const pr = run.pull_request || {};
         const score = numericScore(summary.risk_score);
         const status = summary.status || run.state || "queued";
         const agentNames = Object.keys(run.agent_results || {});
-        updateHero({ run, pr, summary, score, status, agentCount: agentNames.length });
 
         detailEl.innerHTML = `
           <section class="panel detail-hero">
@@ -1546,58 +1707,6 @@
             <pre class="comment-box">${esc(summary.comment || "No comment generated.")}</pre>
           </section>
         `;
-        renderAgentWorkflow(run);
-      }
-
-      function updateHero({ run, pr, summary, score, status, agentCount }) {
-        heroCopyEl.textContent = summary.next_action || "MergeGuard is ready to analyze the next pull request.";
-        heroMetaEl.innerHTML = [
-          pill(status),
-          pill(`${agentCount} agents`, "info"),
-          pill(pr.repository?.full_name || "repo pending", "queued"),
-          pill(run.state || "unknown", run.state || "unknown")
-        ].join("");
-        riskPanelEl.innerHTML = `
-          ${riskDial(score)}
-          <div>
-            <p class="section-kicker">Selected run</p>
-            <h2>${esc(statusLabel(status))}</h2>
-            <p>${esc(summary.top_blocker || `Run ${run.id || "pending"}`)}</p>
-          </div>
-        `;
-      }
-
-      function renderEmpty() {
-        state.currentRun = null;
-        updateHero({
-          run: {},
-          pr: {},
-          summary: { next_action: "Select a pull request from the queue." },
-          score: 0,
-          status: "queued",
-          agentCount: 0
-        });
-        detailEl.innerHTML = `<div class="empty-state">Select a pull request from the queue.</div>`;
-        renderAgentWorkflow(null);
-      }
-
-      function runningState() {
-        state.currentRun = null;
-        updateHero({
-          run: { state: "running" },
-          pr: {},
-          summary: { next_action: "Invoking independent MergeGuard agents." },
-          score: 0,
-          status: "running",
-          agentCount: 9
-        });
-        return `<div class="empty-state">
-          <div>
-            ${pill("running", "running")}
-            <h2>Demo analysis running</h2>
-            <p class="muted">Invoking 9 independent agents and building the truth report.</p>
-          </div>
-        </div>`;
       }
 
       function metric(label, value, hint) {

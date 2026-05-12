@@ -70,6 +70,25 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
                 agent_delay_ms=int(settings.get("agent_delay_ms") or 0),
             )
             self.send_json({"run": run}, status=500 if run.get("state") == "failed" else 200)
+        elif path.startswith("/api/prs/") and path.endswith("/analyze"):
+            body = self.read_json(default={})
+            parts = path.strip("/").split("/")
+            if len(parts) != 4:
+                self.send_json({"error": "expected /api/prs/{pr_id}/analyze"}, status=400)
+                return
+            pr_id = parts[2]
+            store = self.store()
+            pr = store.get_pull_request(pr_id)
+            if not pr:
+                self.send_json({"error": "pull request not found"}, status=404)
+                return
+            payload = store.latest_input_payload_for_pr(pr_id) or fallback_payload_for_pr(pr)
+            run = MergeGuardOrchestrator(REPO_ROOT, store).analyze_pull_request(
+                payload,
+                enabled_agents=body.get("enabled_agents"),
+                agent_delay_ms=int(body.get("agent_delay_ms") or 0),
+            )
+            self.send_json({"run": run}, status=500 if run.get("state") == "failed" else 200)
         elif path.startswith("/api/overrides/"):
             body = self.read_json(default={})
             parts = path.strip("/").split("/")
@@ -126,6 +145,35 @@ def main() -> None:
     server = ThreadingHTTPServer((host, port), MergeGuardHandler)
     print(f"MergeGuard agentic dashboard: http://{host}:{port}")
     server.serve_forever()
+
+
+def fallback_payload_for_pr(pr: dict) -> dict:
+    fixture = REPO_ROOT / "fixtures/agentic/demo_pr.json"
+    if (
+        pr.get("repository", {}).get("full_name") == "acme/checkout"
+        and pr.get("number") == 1842
+        and fixture.exists()
+    ):
+        return json.loads(fixture.read_text())
+    return {
+        "repository": pr.get("repository", {}),
+        "pull_request": {
+            "number": pr.get("number"),
+            "title": pr.get("title") or f"PR #{pr.get('number')}",
+            "body": pr.get("body", ""),
+            "author": pr.get("author", "unknown"),
+            "base_sha": pr.get("base_sha", "base"),
+            "head_sha": pr.get("head_sha", "head"),
+            "base_ref": pr.get("base_ref", ""),
+            "head_ref": pr.get("head_ref", ""),
+            "url": pr.get("url", ""),
+            "labels": pr.get("labels", []),
+            "issue_refs": pr.get("issue_refs", []),
+            "commit_history": pr.get("commit_history", []),
+        },
+        "changed_files": [],
+        "settings": {},
+    }
 
 
 if __name__ == "__main__":

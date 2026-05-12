@@ -27,7 +27,8 @@ class LocalMergeGuardStore:
     def load(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if self.path.exists():
-            self.state = {**json.loads(json.dumps(EMPTY_STATE)), **json.loads(self.path.read_text())}
+            loaded = json.loads(self.path.read_text())
+            self.state = {**json.loads(json.dumps(EMPTY_STATE)), **loaded}
         else:
             self.save()
 
@@ -60,11 +61,13 @@ class LocalMergeGuardStore:
         pr_id: str,
         head_sha: str,
         pull_request: dict[str, Any] | None = None,
+        input_payload: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         run = {
             "id": new_id("run"),
             "pull_request_id": pr_id,
             "pull_request": pull_request or {},
+            "input_payload": input_payload or {},
             "head_sha": head_sha,
             "state": "running",
             "created_at": utc_now(),
@@ -142,14 +145,39 @@ class LocalMergeGuardStore:
         runs = [run for run in self.state["analysis_runs"] if run["pull_request_id"] == pr_id]
         return sorted(runs, key=lambda item: item["created_at"], reverse=True)[0] if runs else None
 
+    def get_pull_request(self, pr_id: str) -> dict[str, Any] | None:
+        return next((pr for pr in self.state["pull_requests"] if pr["id"] == pr_id), None)
+
+    def latest_input_payload_for_pr(self, pr_id: str) -> dict[str, Any] | None:
+        runs = [
+            run
+            for run in self.state["analysis_runs"]
+            if run["pull_request_id"] == pr_id and run.get("input_payload")
+        ]
+        if not runs:
+            return None
+        return sorted(runs, key=lambda item: item["created_at"], reverse=True)[0]["input_payload"]
+
     def queue(self) -> list[dict[str, Any]]:
         rows = []
         for pr in self.state["pull_requests"]:
             latest = self.latest_run_for_pr(pr["id"])
             rows.append({"pull_request": pr, "latest_run": latest})
-        return sorted(rows, key=lambda row: row.get("latest_run", {}).get("summary", {}).get("risk_score", 0), reverse=True)
+        return sorted(
+            rows,
+            key=lambda row: row.get("latest_run", {})
+            .get("summary", {})
+            .get("risk_score", 0),
+            reverse=True,
+        )
 
-    def record_override(self, run_id: str, finding_id: str, reviewer: str, reason: str) -> dict[str, Any]:
+    def record_override(
+        self,
+        run_id: str,
+        finding_id: str,
+        reviewer: str,
+        reason: str,
+    ) -> dict[str, Any]:
         item = {
             "id": new_id("override"),
             "analysis_run_id": run_id,

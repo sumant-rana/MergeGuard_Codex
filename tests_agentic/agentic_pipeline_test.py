@@ -57,6 +57,43 @@ class AgenticPipelineTest(unittest.TestCase):
         self.assertFalse(run["summary"].get("prompt_findings"))
         self.assertFalse(run["summary"].get("contract_findings"))
 
+    def test_analysis_run_stores_original_payload_for_pr_rerun(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        payload = json.loads((repo_root / "fixtures/agentic/demo_pr.json").read_text())
+        with tempfile.TemporaryDirectory() as tmp:
+            store = LocalMergeGuardStore(Path(tmp) / "store.json")
+            store.load()
+            run = MergeGuardOrchestrator(repo_root, store).analyze_demo_pr(payload)
+
+            stored_pr = store.get_pull_request(run["pull_request_id"])
+            stored_payload = store.latest_input_payload_for_pr(run["pull_request_id"])
+            queue_row = store.queue()[0]
+
+        self.assertIsNotNone(stored_pr)
+        self.assertIsNotNone(stored_payload)
+        self.assertEqual(stored_payload["pull_request"]["title"], payload["pull_request"]["title"])
+        self.assertEqual(stored_payload["changed_files"][0]["path"], payload["changed_files"][0]["path"])
+        self.assertEqual(queue_row["pull_request"]["id"], run["pull_request_id"])
+        self.assertEqual(queue_row["latest_run"]["id"], run["id"])
+
+    def test_stored_payload_can_drive_followup_analysis(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        payload = json.loads((repo_root / "fixtures/agentic/demo_pr.json").read_text())
+        with tempfile.TemporaryDirectory() as tmp:
+            store = LocalMergeGuardStore(Path(tmp) / "store.json")
+            store.load()
+            orchestrator = MergeGuardOrchestrator(repo_root, store)
+            first_run = orchestrator.analyze_demo_pr(payload)
+            stored_payload = store.latest_input_payload_for_pr(first_run["pull_request_id"])
+            second_run = orchestrator.analyze_pull_request(stored_payload)
+
+            latest = store.latest_run_for_pr(first_run["pull_request_id"])
+
+        self.assertEqual(second_run["state"], "completed")
+        self.assertNotEqual(first_run["id"], second_run["id"])
+        self.assertEqual(second_run["pull_request_id"], first_run["pull_request_id"])
+        self.assertEqual(latest["id"], second_run["id"])
+
 
 if __name__ == "__main__":
     unittest.main()
