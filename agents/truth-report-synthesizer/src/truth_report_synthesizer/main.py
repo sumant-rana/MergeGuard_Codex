@@ -26,6 +26,7 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     policy = prior.get("policy-gate", {}).get("output", {})
     prompt = prior.get("prompt-canary", {}).get("output", {})
     contracts = prior.get("contract-comparator", {}).get("output", {})
+    memory = prior.get("semantic-evidence-agent", {}).get("output", {})
     test_coverage = prior.get("test-coverage-validator", {}).get("output", {})
 
     risk_score = min(
@@ -35,10 +36,11 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         + len(policy.get("policy_findings", [])) * 12
         + len(prompt.get("prompt_findings", [])) * 16
         + len(contracts.get("contract_findings", [])) * 10
+        + len(memory.get("memory_findings", [])) * 4
         + len(test_coverage.get("coverage_findings", [])) * 9
         + (10 if test_coverage.get("coverage_status") == "blocked" else 0),
     )
-    blockers = collect_blockers(evidence, policy, prompt, contracts, test_coverage)
+    blockers = collect_blockers(evidence, policy, prompt, contracts, memory, test_coverage)
     status = "blocked" if any(item.get("severity") == "block" for item in blockers) else "review" if blockers or risk_score >= 45 else "pass"
     top_blocker = blockers[0]["message"] if blockers else None
     next_action = blockers[0].get("suggested_action") if blockers else "Proceed with normal review."
@@ -60,12 +62,19 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         "prompt_canary_runs": prompt.get("prompt_canary_runs", []),
         "prompt_findings": prompt.get("prompt_findings", []),
         "contract_findings": contracts.get("contract_findings", []),
+        "semantic_memory": memory,
+        "memory_matches": memory.get("semantic_matches", []),
+        "memory_evidence": memory.get("requirement_evidence", []),
+        "related_tests": memory.get("related_tests", []),
+        "similar_prs": memory.get("similar_prs", []),
+        "memory_findings": memory.get("memory_findings", []),
         "test_coverage": test_coverage,
         "test_coverage_score": test_coverage.get("coverage_score"),
         "test_coverage_findings": test_coverage.get("coverage_findings", []),
         "test_coverage_matrix": test_coverage.get("coverage_matrix", []),
         "suggested_tests": [
             *contracts.get("suggested_tests", []),
+            *memory.get("recommended_test_updates", []),
             *[
                 {"path": item["path"], "framework": "repo-default", "intent": item["suggested_action"]}
                 for item in evidence.get("missing_evidence_findings", [])
@@ -93,6 +102,7 @@ def collect_blockers(*sections: dict[str, Any]) -> list[dict[str, Any]]:
         "policy_findings",
         "prompt_findings",
         "contract_findings",
+        "memory_findings",
         "coverage_findings",
     ]
     for section in sections:
@@ -107,10 +117,12 @@ def build_checks(status: str, prior: dict[str, Any]) -> list[dict[str, Any]]:
     policy = prior.get("policy-gate", {}).get("output", {})
     prompt = prior.get("prompt-canary", {}).get("output", {})
     contracts = prior.get("contract-comparator", {}).get("output", {})
+    memory = prior.get("semantic-evidence-agent", {}).get("output", {})
     test_coverage = prior.get("test-coverage-validator", {}).get("output", {})
     return [
         {"name": "MergeGuard / Change Triage", "conclusion": "failure" if status == "blocked" else "neutral" if status == "review" else "success"},
         {"name": "MergeGuard / Requirement Match", "conclusion": "neutral" if any(link["evidence_status"] == "missing" for link in evidence.get("evidence_links", [])) else "success"},
+        {"name": "MergeGuard / Repository Memory", "conclusion": memory_conclusion(memory)},
         {"name": "MergeGuard / Verification Evidence", "conclusion": "neutral" if evidence.get("missing_evidence_findings") else "success"},
         {"name": "MergeGuard / Test Coverage", "conclusion": test_coverage_conclusion(test_coverage)},
         {"name": "MergeGuard / Behavior Impact", "conclusion": "neutral" if semantic.get("behavioral_deltas") else "success"},
@@ -127,6 +139,16 @@ def test_coverage_conclusion(test_coverage: dict[str, Any]) -> str:
     if status == "review" or test_coverage.get("coverage_findings"):
         return "neutral"
     return "success"
+
+
+def memory_conclusion(memory: dict[str, Any]) -> str:
+    if not memory:
+        return "neutral"
+    if memory.get("memory_findings"):
+        return "neutral"
+    if memory.get("related_tests") or memory.get("semantic_matches"):
+        return "success"
+    return "neutral"
 
 
 def render_comment(

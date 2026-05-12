@@ -82,6 +82,43 @@
         },
         "framework": "vitest"
       }
+    ],
+    "repository_memory": [
+      {
+        "type": "test",
+        "path": "payments/refund_processor.test.ts",
+        "title": "Refund retry test coverage",
+        "summary": "Existing tests cover transient refund failure retries, duplicate refund idempotency, and webhook notification retry behavior.",
+        "text": "expect processRefund to retry transient chargeGateway refund failures and not duplicate refund side effects."
+      },
+      {
+        "type": "test",
+        "path": "prompts/refund-agent.prompt.test.ts",
+        "title": "Refund agent prompt golden suite",
+        "summary": "Golden prompt tests require strict JSON output and reject instruction bypass text.",
+        "text": "refund agent prompt must not ignore previous instructions and must return valid JSON without trailing commas."
+      },
+      {
+        "type": "doc",
+        "path": "docs/refund-flow.md",
+        "title": "Refund flow acceptance criteria",
+        "summary": "Refund flow requires transient retry behavior, no customer PII persistence, and JSON-compatible webhook responses.",
+        "text": "Refund webhook responses remain JSON compatible and customer email is not persisted in logs or payment metadata."
+      },
+      {
+        "type": "prior_pr",
+        "pr_number": 1731,
+        "title": "Harden refund webhook response shape",
+        "summary": "Prior PR removed customerEmail from refund responses and added tests for receiptUrl compatibility.",
+        "text": "A previous refund response change required API contract tests and platform-team approval."
+      },
+      {
+        "type": "policy",
+        "path": "policies/payment-pii.yml",
+        "title": "Payment PII guardrail",
+        "summary": "Payment flows must not write customer email or other PII without security approval and explicit retention controls.",
+        "text": "PII writes in payment and refund code require security review, retention documentation, and changed tests."
+      }
     ]
   }
 }

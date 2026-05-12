@@ -11,6 +11,7 @@ AGENT_MODULES = {
     "intent-extractor": "agents/intent-extractor/src/intent_extractor/main.py",
     "evidence-mapper": "agents/evidence-mapper/src/evidence_mapper/main.py",
     "semantic-diff-explainer": "agents/semantic-diff-explainer/src/semantic_diff_explainer/main.py",
+    "semantic-evidence-agent": "agents/semantic-evidence-agent/src/semantic_evidence_agent/main.py",
     "concept-classifier": "agents/concept-classifier/src/concept_classifier/main.py",
     "policy-gate": "agents/policy-gate/src/policy_gate/main.py",
     "prompt-canary": "agents/prompt-canary/src/prompt_canary/main.py",

@@ -17,6 +17,7 @@ AGENT_SEQUENCE = [
     "policy-gate",
     "prompt-canary",
     "contract-comparator",
+    "semantic-evidence-agent",
     "evidence-mapper",
     "test-coverage-validator",
     "truth-report-synthesizer",
@@ -64,6 +65,12 @@ AGENT_CATALOG = [
         "label": "Contract Comparator",
         "stage": "Contracts",
         "description": "Compares runtime contract shapes and suggests property tests.",
+    },
+    {
+        "id": "semantic-evidence-agent",
+        "label": "Repository Memory",
+        "stage": "Memory",
+        "description": "Retrieves related tests, docs, prior PRs, and policy context from Magenta memory.",
     },
     {
         "id": "evidence-mapper",
@@ -223,6 +230,13 @@ def summary_from_results(prior_results: dict[str, Any], enabled: set[str]) -> di
         "owner_summary": compression.get("owner_summary", []),
         "hotspot_themes": compression.get("hotspot_themes", []),
         "test_coverage": prior_results.get("test-coverage-validator", {}).get("output", {}),
+        "semantic_memory": prior_results.get("semantic-evidence-agent", {}).get("output", {}),
+        "memory_matches": prior_results.get("semantic-evidence-agent", {})
+        .get("output", {})
+        .get("semantic_matches", []),
+        "memory_evidence": prior_results.get("semantic-evidence-agent", {})
+        .get("output", {})
+        .get("requirement_evidence", []),
         "test_coverage_findings": prior_results.get("test-coverage-validator", {})
         .get("output", {})
         .get("coverage_findings", []),

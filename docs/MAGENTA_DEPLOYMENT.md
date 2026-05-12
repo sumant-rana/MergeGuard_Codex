@@ -21,6 +21,7 @@ agents/concept-classifier
 agents/policy-gate
 agents/prompt-canary
 agents/contract-comparator
+agents/semantic-evidence-agent
 agents/test-coverage-validator
 agents/truth-report-synthesizer
 ```
@@ -58,7 +59,7 @@ Open:
 http://127.0.0.1:4100
 ```
 
-Click `Run Demo PR`. The tool invokes the ten independent agents, stores the OE-shaped execution envelopes, and renders the dashboard.
+Click `Run Demo PR`. The tool invokes the eleven independent agents, stores the OE-shaped execution envelopes, and renders the dashboard.
 
 ## Build And Deploy On Magenta
 
@@ -92,9 +93,19 @@ Deploy each workspace after its build completes:
 ./tools/bin/agentic deploy --workspace policy-gate
 ./tools/bin/agentic deploy --workspace prompt-canary
 ./tools/bin/agentic deploy --workspace contract-comparator
+./tools/bin/agentic deploy --workspace semantic-evidence-agent
 ./tools/bin/agentic deploy --workspace test-coverage-validator
 ./tools/bin/agentic deploy --workspace truth-report-synthesizer
 ```
+
+For repository memory retrieval, run Atlas setup and sync secrets before deploying memory-enabled agents:
+
+```sh
+./tools/bin/agentic atlas setup --context prod
+./tools/bin/agentic secret sync --context prod
+```
+
+The `semantic-evidence-agent` has `features.memory: true`, so deployed runs use Magenta memory, Voyage embeddings, and Atlas Vector Search through `app.memory`. Local demo runs use the deterministic memory shim documented in [Semantic Memory](SEMANTIC_MEMORY.md).
 
 ## Platform Payload Contract
 

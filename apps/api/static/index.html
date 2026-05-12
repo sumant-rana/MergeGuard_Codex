@@ -977,7 +977,7 @@
       .pipeline-board {
         position: relative;
         width: 100%;
-        min-width: 1040px;
+        min-width: 1240px;
         padding: 26px 18px 14px;
       }
 
@@ -1054,8 +1054,8 @@
         position: relative;
         z-index: 2;
         display: grid;
-        grid-template-columns: minmax(118px, 0.82fr) minmax(164px, 1.08fr) minmax(146px, 0.98fr) minmax(116px, 0.78fr) minmax(124px, 0.84fr);
-        gap: clamp(56px, 5.4vw, 118px);
+        grid-template-columns: minmax(118px, 0.78fr) minmax(164px, 1.02fr) minmax(130px, 0.82fr) minmax(146px, 0.94fr) minmax(116px, 0.76fr) minmax(124px, 0.82fr);
+        gap: clamp(42px, 4.6vw, 96px);
         align-items: center;
         min-height: 500px;
       }
@@ -1125,6 +1125,8 @@
 
       .pipeline-stage-coverage .pipeline-stage-head,
       .pipeline-stage-coverage .pipeline-stage-list,
+      .pipeline-stage-memory .pipeline-stage-head,
+      .pipeline-stage-memory .pipeline-stage-list,
       .pipeline-stage-decision .pipeline-stage-head,
       .pipeline-stage-decision .pipeline-stage-list {
         width: min(100%, 132px);
@@ -1327,6 +1329,11 @@
       .agent-icon.evidence {
         background: rgba(20, 184, 166, 0.16);
         color: #99f6e4;
+      }
+
+      .agent-icon.memory {
+        background: rgba(45, 212, 191, 0.18);
+        color: #ccfbf1;
       }
 
       .agent-icon.tests {
@@ -1742,13 +1749,13 @@
         }
 
         .pipeline-board {
-          min-width: 780px;
+          min-width: 940px;
           padding-inline: 4px;
         }
 
         .pipeline-stages {
-          grid-template-columns: 104px 132px 118px 96px 104px;
-          gap: 36px;
+          grid-template-columns: 104px 132px 104px 118px 96px 104px;
+          gap: 30px;
           min-height: 480px;
         }
 
@@ -1940,20 +1947,26 @@
           ]
         },
         {
-          id: "guardrails",
+          id: "memory",
           kicker: "Stage 3",
+          title: "Memory",
+          agentIds: ["semantic-evidence-agent"]
+        },
+        {
+          id: "guardrails",
+          kicker: "Stage 4",
           title: "Guardrails",
           agentIds: ["policy-gate", "evidence-mapper"]
         },
         {
           id: "coverage",
-          kicker: "Stage 4",
+          kicker: "Stage 5",
           title: "Coverage",
           agentIds: ["test-coverage-validator"]
         },
         {
           id: "decision",
-          kicker: "Stage 5",
+          kicker: "Stage 6",
           title: "Decision",
           agentIds: ["truth-report-synthesizer"]
         }
@@ -1964,10 +1977,11 @@
         "concept-classifier": ["review-compression"],
         "prompt-canary": ["review-compression"],
         "contract-comparator": ["review-compression"],
+        "semantic-evidence-agent": ["review-compression", "intent-extractor"],
         "policy-gate": ["concept-classifier", "prompt-canary", "contract-comparator"],
-        "evidence-mapper": ["intent-extractor"],
-        "test-coverage-validator": ["semantic-diff-explainer", "evidence-mapper"],
-        "truth-report-synthesizer": ["policy-gate", "test-coverage-validator"]
+        "evidence-mapper": ["intent-extractor", "semantic-evidence-agent"],
+        "test-coverage-validator": ["semantic-diff-explainer", "evidence-mapper", "semantic-evidence-agent"],
+        "truth-report-synthesizer": ["policy-gate", "test-coverage-validator", "semantic-evidence-agent"]
       };
 
       const agentVisuals = {
@@ -1978,6 +1992,7 @@
         "policy-gate": { icon: "GR", tone: "policy" },
         "prompt-canary": { icon: "PD", tone: "prompt" },
         "contract-comparator": { icon: "RC", tone: "contracts" },
+        "semantic-evidence-agent": { icon: "RM", tone: "memory" },
         "evidence-mapper": { icon: "VE", tone: "evidence" },
         "test-coverage-validator": { icon: "TC", tone: "tests" },
         "truth-report-synthesizer": { icon: "TR", tone: "report" }
@@ -2344,7 +2359,9 @@
         const routeKey = `${sourceId}->${targetId}`;
         const topLanes = {
           "semantic-diff-explainer->test-coverage-validator": 78,
-          "policy-gate->truth-report-synthesizer": 128
+          "policy-gate->truth-report-synthesizer": 128,
+          "semantic-evidence-agent->test-coverage-validator": 178,
+          "semantic-evidence-agent->truth-report-synthesizer": 228
         };
         if (topLanes[routeKey] != null) {
           return { y: topLanes[routeKey], exitOffset: 28, entryOffset: 30 };
@@ -2594,6 +2611,7 @@
 
       function detailTabs(run, summary, pr, agentNames) {
         const coverage = summary.test_coverage || {};
+        const memory = summary.semantic_memory || {};
         const coverageConfidence = coverage.confidence == null ? "n/a" : `${Math.round(coverage.confidence * 100)}%`;
         return [
           {
@@ -2641,6 +2659,29 @@
             description: "How PR requirements map to tests, changed files, and missing proof.",
             count: countItems(summary.evidence_links),
             content: cards(summary.evidence_links, evidenceCard, "No evidence gaps detected.")
+          },
+          {
+            id: "memory",
+            label: "Memory",
+            kicker: "Vector recall",
+            title: "Repository memory",
+            description: "Related tests, docs, prior PRs, and policy context retrieved through Magenta memory.",
+            count:
+              countItems(summary.memory_evidence)
+              + countItems(summary.related_tests)
+              + countItems(summary.similar_prs)
+              + countItems(summary.memory_matches),
+            content: `
+              <div class="summary-strip">
+                ${summaryItem("Provider", memory.memory_provider || "not configured")}
+                ${summaryItem("Indexed", memory.index?.records_stored == null ? "n/a" : `${memory.index.records_stored} records`)}
+                ${summaryItem("Matches", countItems(summary.memory_matches))}
+              </div>
+              <div class="tab-section">${cards(summary.memory_evidence, memoryEvidenceCard, "No requirement memory evidence found.")}</div>
+              <div class="tab-section">${cards(summary.related_tests, memoryHitCard, "No related repository tests found.")}</div>
+              <div class="tab-section">${cards(summary.similar_prs, memoryHitCard, "No similar prior PRs found.")}</div>
+              <div class="tab-section">${cards(summary.memory_matches, memoryHitCard, "No memory matches returned.")}</div>
+            `
           },
           {
             id: "tests",
@@ -2828,6 +2869,23 @@
         return `<div class="review-card-top"><h4>${esc(item.intent_text || item.message || "Evidence")}</h4>${pill(item.evidence_status || item.severity || "info")}</div>
           <p>${esc(item.suggested_action || "")}</p>
           <div class="muted">${esc((item.mapped_paths || item.evidence_paths || []).join(", ") || "no mapped paths")}</div>`;
+      }
+
+      function memoryEvidenceCard(item) {
+        const candidates = [
+          ...(item.test_candidates || []),
+          ...(item.doc_candidates || [])
+        ].map((candidate) => candidate.path || candidate.title).filter(Boolean);
+        return `<div class="review-card-top"><h4>${esc(item.intent_text || "Requirement memory")}</h4>${pill(item.status || "unknown")}</div>
+          <p>${esc(item.suggested_action || "Review retrieved repository memory.")}</p>
+          <div class="muted">${esc(candidates.join(", ") || "no candidate paths")}</div>`;
+      }
+
+      function memoryHitCard(item) {
+        const score = item.score == null ? "" : ` ${Math.round(Number(item.score) * 100)}%`;
+        return `<div class="review-card-top"><h4>${item.path ? `<code>${esc(item.path)}</code>` : esc(item.title || item.label || "Memory")}</h4>${pill(`${item.kind || "memory"}${score}`, "info")}</div>
+          <p>${esc(item.text || item.title || "")}</p>
+          <div class="muted">${esc(item.source || item.label || "repository memory")}</div>`;
       }
 
       function testCoverageFindingCard(item) {

@@ -7,6 +7,7 @@ The older Node prototype remains in the repository for comparison, but the curre
 - [Agentic Architecture](docs/AGENTIC_ARCHITECTURE.md)
 - [Run The Agentic Demo](docs/RUN_AGENTIC_DEMO.md)
 - [Magenta Deployment Notes](docs/MAGENTA_DEPLOYMENT.md)
+- [Semantic Memory](docs/SEMANTIC_MEMORY.md)
 - [Local GitHub PR Workflow](docs/LOCAL_GITHUB_PR_WORKFLOW.md)
 
 Each feature agent now exposes a Magenta-compatible `app`: it uses `magenta_sdklanggraph.App` in a Magenta runtime and falls back to the local shim only for dependency-free demo tests.
@@ -28,6 +29,7 @@ The current implementation is intentionally dependency-light so it can run from 
 - Concept taxonomy and YAML policy pack evaluation.
 - Prompt canary scoring for prompt/model/agent changes.
 - Runtime contract comparison and generated test suggestions.
+- Repository memory retrieval through the `semantic-evidence-agent`, using Magenta memory in deployment and a local deterministic fallback in demo mode.
 - Reviewer override capture, post-merge outcome capture, metrics, and audit export.
 
 ## What Is Implemented

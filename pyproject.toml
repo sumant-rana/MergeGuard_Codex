@@ -15,6 +15,7 @@ members = [
   "agents/intent-extractor",
   "agents/evidence-mapper",
   "agents/semantic-diff-explainer",
+  "agents/semantic-evidence-agent",
   "agents/concept-classifier",
   "agents/policy-gate",
   "agents/prompt-canary",

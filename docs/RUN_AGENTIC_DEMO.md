@@ -41,11 +41,11 @@ data/agentic_mergeguard.json
 
 Expected result:
 
-- 9 agent results.
+- 11 agent results.
 - Risk score `100`.
 - Status `blocked`.
-- 7 synthesized check results.
-- Findings from policy, prompt drift, runtime contracts, missing evidence, and behavior impact.
+- 9 synthesized check results.
+- Findings from policy, prompt drift, runtime contracts, missing evidence, behavior impact, and repository memory recall.
 
 ## Start The Dashboard
 
@@ -65,6 +65,7 @@ Click `Run Demo PR`. The dashboard will:
 - Persist the analysis run.
 - Show queue metrics.
 - Render independent agent results, hotspots, intent/evidence, behavior impact, policy guardrails, prompt drift checks, runtime contracts, checks, and generated PR comment.
+- Show a `Memory` dashboard tab with related tests, similar prior PRs, and requirement evidence retrieved by the Repository Memory agent.
 
 ## API Smoke Commands
 
@@ -163,5 +164,6 @@ Deployed agents accept a JSON message whose content is either the direct agent e
 - CODEOWNERS text
 - prompt drift check suite
 - shape-only runtime contract summaries
+- seeded repository memory for local Voyage/vector-search-style recall
 
 That lets the tool exercise every agent without installing a GitHub App.

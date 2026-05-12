@@ -60,6 +60,7 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     intent = prior.get("intent-extractor", {}).get("output", {})
     semantic = prior.get("semantic-diff-explainer", {}).get("output", {})
     evidence = prior.get("evidence-mapper", {}).get("output", {})
+    memory = prior.get("semantic-evidence-agent", {}).get("output", {})
     files = classified_files(payload, compression)
     tests = [file for file in files if file.get("classification") == "test" or is_test(file["path"])]
     targets = [
@@ -83,7 +84,10 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     findings = coverage_findings(coverage_matrix, intent_coverage, behavior_coverage, tests)
     score = coverage_score(coverage_matrix, intent_coverage, behavior_coverage, tests, targets)
     status = coverage_status(score, findings, targets)
-    recommendations = [recommendation_for(item) for item in findings[:8]]
+    recommendations = [
+        *[recommendation_for(item) for item in findings[:8]],
+        *memory_recommendations(memory, targets),
+    ][:10]
     output_confidence = output_confidence_for(score, coverage_matrix, tests, targets)
     output = {
         "coverage_score": score,
@@ -96,6 +100,12 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         "behavior_coverage": behavior_coverage,
         "coverage_findings": findings,
         "recommendations": recommendations,
+        "repository_memory": {
+            "provider": memory.get("memory_provider"),
+            "related_tests": memory.get("related_tests", []),
+            "requirement_evidence": memory.get("requirement_evidence", []),
+            "recommended_test_updates": memory.get("recommended_test_updates", []),
+        },
     }
     return make_agent_result(
         AGENT_ID,
@@ -386,6 +396,39 @@ def recommendation_for(finding: dict[str, Any]) -> dict[str, Any]:
         "framework": "repo-default",
         "intent": finding.get("suggested_action", "Add changed-behavior coverage."),
     }
+
+
+def memory_recommendations(memory: dict[str, Any], targets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    recommendations: list[dict[str, Any]] = []
+    target_paths = [target["path"] for target in targets[:4]]
+    for item in memory.get("recommended_test_updates", [])[:6]:
+        recommendations.append(
+            {
+                "path": item.get("path", "tests/repository-memory.test"),
+                "framework": item.get("framework", "repo-memory"),
+                "intent": item.get("intent")
+                or f"Use repository memory to validate {', '.join(target_paths)}.",
+                "source": "semantic-evidence-agent",
+                "memory_score": item.get("memory_score"),
+            }
+        )
+    if recommendations:
+        return recommendations
+    for test in memory.get("related_tests", [])[:3]:
+        path = test.get("path") or test.get("title") or "tests/repository-memory.test"
+        recommendations.append(
+            {
+                "path": path,
+                "framework": "repo-memory",
+                "intent": (
+                    f"Review existing test evidence against "
+                    f"{', '.join(target_paths) or 'the PR intent'}."
+                ),
+                "source": "semantic-evidence-agent",
+                "memory_score": test.get("score"),
+            }
+        )
+    return recommendations
 
 
 def test_file_summary(test: dict[str, Any]) -> dict[str, Any]:

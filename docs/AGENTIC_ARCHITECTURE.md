@@ -54,6 +54,7 @@ make magenta-validate
 | `policy-gate` / Policy Guardrails | Evaluates policy pack rules and emits pass/warn/block findings plus override suspend payloads. | `agents/policy-gate` |
 | `prompt-canary` / Prompt Drift Check | Runs deterministic prompt/model/agent workflow drift checks. | `agents/prompt-canary` |
 | `contract-comparator` | Compares shape-only runtime contracts and suggests property-test stubs. | `agents/contract-comparator` |
+| `semantic-evidence-agent` / Repository Memory | Uses Magenta memory to retrieve related tests, docs, prior PRs, and policy context. | `agents/semantic-evidence-agent` |
 | `test-coverage-validator` | Validates whether changed tests cover PR intent, behavioral deltas, and changed source functionality. | `agents/test-coverage-validator` |
 | `truth-report-synthesizer` | Aggregates all agent outputs into merge readiness, checks, PR comment, and dashboard summary. | `agents/truth-report-synthesizer` |
 
@@ -68,9 +69,10 @@ The demo orchestration order is:
 5. `policy-gate`
 6. `prompt-canary`
 7. `contract-comparator`
-8. `evidence-mapper`
-9. `test-coverage-validator`
-10. `truth-report-synthesizer`
+8. `semantic-evidence-agent`
+9. `evidence-mapper`
+10. `test-coverage-validator`
+11. `truth-report-synthesizer`
 
 The sequence is implemented in:
 

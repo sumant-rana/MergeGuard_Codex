@@ -57,7 +57,7 @@ class GitHubPrIngestTest(unittest.TestCase):
             run = MergeGuardOrchestrator(repo_root, store).analyze_pull_request(payload)
 
         self.assertEqual(run["state"], "completed")
-        self.assertEqual(len(run["agent_results"]), 10)
+        self.assertEqual(len(run["agent_results"]), 11)
         self.assertEqual(run["pull_request"]["base_ref"], "main")
         self.assertEqual(run["pull_request"]["issue_refs"][0]["number"], 19)
         self.assertTrue(run["summary"]["test_coverage_findings"])

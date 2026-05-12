@@ -28,7 +28,7 @@ test("review comment includes sticky marker and concise sections", () => {
   });
 
   assert.match(body, new RegExp(STICKY_COMMENT_MARKER));
-  assert.match(body, /MergeGuard Review Brief/);
+  assert.match(body, /MergeGuard Change Triage/);
   assert.match(body, /Risk Hotspots/);
   assert.match(body, /Safe To Skim/);
 });

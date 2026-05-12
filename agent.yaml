@@ -7,8 +7,6 @@ agents:
     path: agents/review-compression
   - name: intent-extractor
     path: agents/intent-extractor
-  - name: evidence-mapper
-    path: agents/evidence-mapper
   - name: semantic-diff-explainer
     path: agents/semantic-diff-explainer
   - name: concept-classifier
@@ -19,6 +17,10 @@ agents:
     path: agents/prompt-canary
   - name: contract-comparator
     path: agents/contract-comparator
+  - name: semantic-evidence-agent
+    path: agents/semantic-evidence-agent
+  - name: evidence-mapper
+    path: agents/evidence-mapper
   - name: test-coverage-validator
     path: agents/test-coverage-validator
   - name: truth-report-synthesizer
