@@ -804,62 +804,162 @@
 
       .agent-flow-shell {
         display: grid;
-        grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
-        gap: 14px;
+        gap: 12px;
       }
 
       .agent-flow-canvas {
-        display: flex;
-        gap: 34px;
-        align-items: center;
-        min-height: 290px;
-        overflow-x: auto;
-        padding: 18px;
+        position: relative;
+        min-height: 560px;
+        overflow: hidden;
+        padding: 24px;
         border: 1px dashed rgba(148, 163, 184, 0.22);
         border-radius: 8px;
         background:
-          linear-gradient(rgba(148, 163, 184, 0.04) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+          radial-gradient(circle, rgba(148, 163, 184, 0.16) 1px, transparent 1px),
           rgba(5, 10, 18, 0.46);
-        background-size: 22px 22px;
+        background-size: 24px 24px;
       }
 
       .flow-step {
-        position: relative;
-        flex: 0 0 186px;
+        position: absolute;
+        left: var(--x);
+        top: var(--y);
+        z-index: 2;
+        display: grid;
+        justify-items: center;
+        width: 148px;
+        transform: translate(-50%, -50%);
       }
 
-      .flow-step:not(:last-child)::after {
+      .flow-lines {
         position: absolute;
-        top: 52px;
-        left: calc(100% + 8px);
-        width: 20px;
-        height: 2px;
-        content: "";
-        background: linear-gradient(90deg, var(--blue), rgba(56, 189, 248, 0.12));
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .flow-line {
+        stroke: rgba(148, 163, 184, 0.28);
+        stroke-width: 2.4;
+        stroke-dasharray: 7 9;
+        stroke-linecap: round;
+      }
+
+      .flow-line.completed {
+        stroke: rgba(34, 197, 94, 0.62);
+        stroke-dasharray: 0;
+      }
+
+      .flow-line.failed {
+        stroke: rgba(244, 63, 94, 0.7);
+        stroke-dasharray: 0;
+      }
+
+      .flow-line.active {
+        stroke: rgba(56, 189, 248, 0.86);
+        animation: flowDash 0.9s linear infinite;
+      }
+
+      .flow-line.disabled,
+      .flow-line.skipped {
+        stroke: rgba(148, 163, 184, 0.17);
+      }
+
+      @keyframes flowDash {
+        to {
+          stroke-dashoffset: -32;
+        }
+      }
+
+      .mergeguard-hub {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        z-index: 3;
+        display: grid;
+        place-items: center;
+        width: 188px;
+        min-height: 132px;
+        padding: 16px;
+        border: 1px solid rgba(56, 189, 248, 0.54);
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, rgba(8, 145, 178, 0.32), rgba(22, 163, 74, 0.18)),
+          rgba(12, 18, 28, 0.98);
+        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.12), 0 18px 48px rgba(0, 0, 0, 0.32);
+        text-align: center;
+        transform: translate(-50%, -50%);
+      }
+
+      .hub-mark {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--blue), var(--green));
+        color: #031018;
+        font-size: 16px;
+        font-weight: 950;
+      }
+
+      .hub-label {
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 950;
+      }
+
+      .hub-caption {
+        margin-top: 4px;
+        color: var(--text-soft);
+        font-size: 12px;
       }
 
       .flow-node {
         display: grid;
-        gap: 10px;
-        min-height: 146px;
-        padding: 13px;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        background: rgba(12, 18, 28, 0.94);
-        box-shadow: var(--shadow-soft);
+        justify-items: center;
+        gap: 8px;
+        width: 100%;
         transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
       }
 
-      .flow-node.selected {
-        border-color: rgba(56, 189, 248, 0.66);
-        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3), var(--shadow-soft);
+      .flow-node-main {
+        display: grid;
+        place-items: center;
+        width: 74px;
+        height: 74px;
+        padding: 0;
+        border: 2px solid rgba(148, 163, 184, 0.32);
+        border-radius: 50%;
+        background: rgba(12, 18, 28, 0.96);
+        color: inherit;
+        cursor: pointer;
+        box-shadow: var(--shadow-soft), 0 14px 38px rgba(0, 0, 0, 0.24);
       }
 
-      .flow-node.active {
-        transform: translateY(-2px);
-        border-color: rgba(34, 197, 94, 0.72);
+      .flow-node.completed .flow-node-main {
+        border-color: rgba(34, 197, 94, 0.82);
+        box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1), var(--shadow-soft);
+      }
+
+      .flow-node.failed .flow-node-main {
+        border-color: rgba(244, 63, 94, 0.9);
+        box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.12), var(--shadow-soft);
+      }
+
+      .flow-node.active .flow-node-main {
+        border-color: rgba(56, 189, 248, 0.92);
         background: rgba(16, 35, 31, 0.96);
+        box-shadow: 0 0 0 5px rgba(56, 189, 248, 0.12), var(--shadow-soft);
+        transform: translateY(-2px);
+      }
+
+      .flow-node.selected .flow-node-main {
+        outline: 2px solid rgba(56, 189, 248, 0.52);
+        outline-offset: 5px;
       }
 
       .flow-node.skipped,
@@ -867,20 +967,68 @@
         opacity: 0.56;
       }
 
-      .flow-node-main {
+      .agent-icon {
         display: grid;
-        gap: 8px;
-        width: 100%;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        color: inherit;
-        text-align: left;
-        cursor: pointer;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        border-radius: 8px;
+        background: rgba(56, 189, 248, 0.13);
+        color: #bae6fd;
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .agent-icon.intent {
+        background: rgba(129, 140, 248, 0.16);
+        color: #c7d2fe;
+      }
+
+      .agent-icon.behavior {
+        background: rgba(245, 158, 11, 0.16);
+        color: #fde68a;
+      }
+
+      .agent-icon.concepts {
+        background: rgba(167, 139, 250, 0.17);
+        color: #ddd6fe;
+      }
+
+      .agent-icon.policy {
+        background: rgba(244, 63, 94, 0.16);
+        color: #fecdd3;
+      }
+
+      .agent-icon.prompt {
+        background: rgba(14, 165, 233, 0.16);
+        color: #bae6fd;
+      }
+
+      .agent-icon.contracts {
+        background: rgba(34, 197, 94, 0.15);
+        color: #bbf7d0;
+      }
+
+      .agent-icon.evidence {
+        background: rgba(20, 184, 166, 0.16);
+        color: #99f6e4;
+      }
+
+      .agent-icon.report {
+        background: rgba(248, 113, 113, 0.16);
+        color: #fecaca;
+      }
+
+      .flow-caption {
+        display: grid;
+        justify-items: center;
+        gap: 4px;
+        min-width: 0;
+        text-align: center;
       }
 
       .flow-stage {
-        color: var(--blue);
+        color: var(--muted);
         font-size: 10px;
         font-weight: 900;
         letter-spacing: 0.13em;
@@ -888,24 +1036,69 @@
       }
 
       .flow-label {
-        min-height: 36px;
+        min-height: 0;
         color: var(--text);
-        font-size: 15px;
+        font-size: 12px;
         font-weight: 900;
-        line-height: 1.12;
+        line-height: 1.15;
       }
 
       .flow-description {
-        min-height: 50px;
-        color: var(--text-soft);
-        font-size: 12px;
+        display: none;
+      }
+
+      .flow-status {
+        display: flex;
+        justify-content: center;
       }
 
       .flow-footer {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 2px;
+      }
+
+      .agent-output {
+        min-height: 230px;
+        max-height: 460px;
+        overflow: auto;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(7, 11, 17, 0.72);
+      }
+
+      .agent-output-layout {
+        display: grid;
+        grid-template-columns: minmax(220px, 0.42fr) minmax(0, 1fr);
+        gap: 14px;
+      }
+
+      .agent-output-summary {
+        display: grid;
+        align-content: start;
         gap: 10px;
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(12, 18, 28, 0.78);
+      }
+
+      .agent-output-summary h4 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .agent-output-summary p {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 12px;
+      }
+
+      .agent-output-json {
+        min-width: 0;
       }
 
       .switch {
@@ -951,16 +1144,6 @@
       .switch input:checked + span::after {
         transform: translateX(18px);
         background: var(--green);
-      }
-
-      .agent-output {
-        min-height: 290px;
-        max-height: 560px;
-        overflow: auto;
-        padding: 15px;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        background: rgba(7, 11, 17, 0.72);
       }
 
       .agent-output h4 {
@@ -1221,12 +1404,37 @@
         .pr-row,
         .agent-flow-shell,
         .agent-grid,
+        .agent-output-layout,
         .review-grid {
           grid-template-columns: 1fr;
         }
 
         .pr-row-actions {
           justify-content: flex-start;
+        }
+
+        .agent-flow-canvas {
+          min-height: 680px;
+        }
+
+        .flow-step {
+          width: 118px;
+        }
+
+        .flow-node-main {
+          width: 62px;
+          height: 62px;
+        }
+
+        .agent-icon {
+          width: 38px;
+          height: 38px;
+          font-size: 12px;
+        }
+
+        .mergeguard-hub {
+          width: 150px;
+          min-height: 112px;
         }
 
         .tab-panel-head {
@@ -1341,6 +1549,30 @@
         flowTimer: null,
         delayMs: 750,
         filters: { repo: "", owner: "", risk_state: "" }
+      };
+
+      const agentPositions = [
+        { x: 12, y: 22 },
+        { x: 30, y: 12 },
+        { x: 50, y: 14 },
+        { x: 70, y: 12 },
+        { x: 88, y: 22 },
+        { x: 16, y: 78 },
+        { x: 38, y: 86 },
+        { x: 62, y: 86 },
+        { x: 84, y: 78 }
+      ];
+
+      const agentVisuals = {
+        "review-compression": { icon: "RC", tone: "hotspots" },
+        "intent-extractor": { icon: "IN", tone: "intent" },
+        "semantic-diff-explainer": { icon: "SD", tone: "behavior" },
+        "concept-classifier": { icon: "CC", tone: "concepts" },
+        "policy-gate": { icon: "PG", tone: "policy" },
+        "prompt-canary": { icon: "PC", tone: "prompt" },
+        "contract-comparator": { icon: "CT", tone: "contracts" },
+        "evidence-mapper": { icon: "EV", tone: "evidence" },
+        "truth-report-synthesizer": { icon: "TR", tone: "report" }
       };
 
       const metricsEl = document.querySelector("#metrics");
@@ -1560,7 +1792,15 @@
           return;
         }
 
-        agentFlowEl.innerHTML = state.agents.map((agent, index) => flowStep(agent, run, index)).join("");
+        agentFlowEl.innerHTML = `
+          ${flowLineSvg(run)}
+          <div class="mergeguard-hub" aria-label="MergeGuard Tool">
+            <div class="hub-mark">MG</div>
+            <div class="hub-label">MergeGuard Tool</div>
+            <div class="hub-caption">orchestrates agent evidence</div>
+          </div>
+          ${state.agents.map((agent, index) => flowStep(agent, run, index)).join("")}
+        `;
         for (const button of agentFlowEl.querySelectorAll(".flow-node-main")) {
           button.addEventListener("click", () => {
             state.selectedAgentId = button.dataset.agentId;
@@ -1582,23 +1822,41 @@
         workflowSubtitleEl.textContent = subtitle;
       }
 
+      function flowLineSvg(run) {
+        return `<svg class="flow-lines" aria-hidden="true">
+          ${state.agents.map((agent, index) => {
+            const position = flowPosition(index);
+            return `<line
+              class="flow-line ${escAttr(flowVisualState(agent, run))}"
+              x1="50%"
+              y1="50%"
+              x2="${position.x}%"
+              y2="${position.y}%"></line>`;
+          }).join("")}
+        </svg>`;
+      }
+
       function flowStep(agent, run, index) {
         const result = run?.agent_results?.[agent.id];
         const enabled = state.enabledAgents.has(agent.id);
         const selected = agent.id === state.selectedAgentId ? " selected" : "";
-        const active = agent.id === state.runningAgentId ? " active" : "";
-        const status = result?.status || (enabled ? "ready" : "disabled");
+        const visualState = flowVisualState(agent, run);
+        const status = result?.status || (visualState === "active" ? "running" : enabled ? "ready" : "disabled");
         const disabled = !enabled ? " disabled" : "";
-        const skipped = status === "skipped" ? " skipped" : "";
-        return `<div class="flow-step">
-          <div class="flow-node${selected}${active}${disabled}${skipped}">
-            <button class="flow-node-main" type="button" data-agent-id="${escAttr(agent.id)}">
+        const visual = agentVisual(agent);
+        const position = flowPosition(index);
+        return `<div class="flow-step" style="--x:${position.x}%;--y:${position.y}%">
+          <div class="flow-node ${escAttr(visualState)}${selected}${disabled}">
+            <button class="flow-node-main" type="button" data-agent-id="${escAttr(agent.id)}" title="${escAttr(agent.label)}">
+              <span class="agent-icon ${escAttr(visual.tone)}">${esc(visual.icon)}</span>
+            </button>
+            <div class="flow-caption">
               <span class="flow-stage">${String(index + 1).padStart(2, "0")} / ${esc(agent.stage)}</span>
               <span class="flow-label">${esc(agent.label)}</span>
               <span class="flow-description">${esc(agent.description)}</span>
-            </button>
+            </div>
             <div class="flow-footer">
-              ${pill(status, status)}
+              <span class="flow-status">${pill(status, status)}</span>
               <label class="switch" title="Enable ${escAttr(agent.label)}">
                 <input class="agent-toggle" type="checkbox" data-agent-id="${escAttr(agent.id)}" ${enabled ? "checked" : ""} />
                 <span aria-hidden="true"></span>
@@ -1606,6 +1864,25 @@
             </div>
           </div>
         </div>`;
+      }
+
+      function flowVisualState(agent, run) {
+        const result = run?.agent_results?.[agent.id];
+        if (!state.enabledAgents.has(agent.id)) return "disabled";
+        if (agent.id === state.runningAgentId) return "active";
+        const status = String(result?.status || "").toLowerCase();
+        if (["failed", "failure", "error"].includes(status)) return "failed";
+        if (status === "skipped") return "skipped";
+        if (status) return "completed";
+        return "ready";
+      }
+
+      function flowPosition(index) {
+        return agentPositions[index % agentPositions.length];
+      }
+
+      function agentVisual(agent) {
+        return agentVisuals[agent.id] || { icon: agent.label.slice(0, 2).toUpperCase(), tone: "hotspots" };
       }
 
       function renderAgentOutput(run = state.currentRun) {
@@ -1617,11 +1894,17 @@
         const result = run?.agent_results?.[agent.id];
         const enabled = state.enabledAgents.has(agent.id);
         if (!result) {
-          agentOutputEl.innerHTML = `<p class="section-kicker">${esc(agent.stage)}</p>
-            <h4>${esc(agent.label)}</h4>
-            <div class="chip-row">${pill(enabled ? "ready" : "disabled", enabled ? "info" : "disabled")}</div>
-            <p class="muted">${esc(agent.description)}</p>
-            <pre>${esc(JSON.stringify({ agent_id: agent.id, status: enabled ? "ready" : "disabled" }, null, 2))}</pre>`;
+          agentOutputEl.innerHTML = `<div class="agent-output-layout">
+            <div class="agent-output-summary">
+              <p class="section-kicker">${esc(agent.stage)}</p>
+              <h4>${esc(agent.label)}</h4>
+              <div class="chip-row">${pill(enabled ? "ready" : "disabled", enabled ? "info" : "disabled")}</div>
+              <p>${esc(agent.description)}</p>
+            </div>
+            <div class="agent-output-json">
+              <pre>${esc(JSON.stringify({ agent_id: agent.id, status: enabled ? "ready" : "disabled" }, null, 2))}</pre>
+            </div>
+          </div>`;
           return;
         }
         const payload = {
@@ -1632,14 +1915,20 @@
           output: result.output || {},
           trace: result.trace || []
         };
-        agentOutputEl.innerHTML = `<p class="section-kicker">${esc(agent.stage)}</p>
-          <h4>${esc(agent.label)}</h4>
-          <div class="chip-row">
-            ${pill(result.status || "completed")}
-            ${result.confidence == null ? "" : pill(`${Math.round(result.confidence * 100)}% confidence`, "pass")}
+        agentOutputEl.innerHTML = `<div class="agent-output-layout">
+          <div class="agent-output-summary">
+            <p class="section-kicker">${esc(agent.stage)}</p>
+            <h4>${esc(agent.label)}</h4>
+            <div class="chip-row">
+              ${pill(result.status || "completed")}
+              ${result.confidence == null ? "" : pill(`${Math.round(result.confidence * 100)}% confidence`, "pass")}
+            </div>
+            <p>${esc((result.messages || [agent.description])[0] || agent.description)}</p>
           </div>
-          <p class="muted">${esc((result.messages || [agent.description])[0] || agent.description)}</p>
-          <pre>${esc(JSON.stringify(payload, null, 2))}</pre>`;
+          <div class="agent-output-json">
+            <pre>${esc(JSON.stringify(payload, null, 2))}</pre>
+          </div>
+        </div>`;
       }
 
       function startFlowAnimation() {
