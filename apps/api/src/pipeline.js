@@ -326,35 +326,35 @@ function buildCheckResults({ summary, dashboardUrl, checkMode }) {
   return [
     buildReviewBriefCheck({ summary, dashboardUrl, checkMode }),
     buildNamedGate({
-      checkName: "Evidence Coverage",
+      checkName: "Verification Evidence",
       status: evidenceStatus(summary),
       summary: evidenceSummary(summary),
       dashboardUrl,
       checkMode
     }),
     buildNamedGate({
-      checkName: "Intent Match",
+      checkName: "Requirement Match",
       status: intentStatus(summary),
       summary: intentSummary(summary),
       dashboardUrl,
       checkMode
     }),
     buildNamedGate({
-      checkName: "Behavioral Diff",
+      checkName: "Behavior Impact",
       status: behaviorStatus(summary),
       summary: behaviorSummary(summary),
       dashboardUrl,
       checkMode
     }),
     buildNamedGate({
-      checkName: "Concept Policy",
+      checkName: "Policy Guardrails",
       status: policyStatus(summary),
       summary: policySummary(summary),
       dashboardUrl,
       checkMode
     }),
     buildNamedGate({
-      checkName: "Prompt Canary",
+      checkName: "Prompt Drift Check",
       status: promptStatus(summary),
       summary: promptSummary(summary),
       dashboardUrl,
@@ -407,7 +407,7 @@ function evidenceStatus(summary) {
 
 function evidenceSummary(summary) {
   const count = summary.evidence_findings?.length || 0;
-  return count ? `${count} missing evidence finding(s).` : "Changed behavior has Stage 1 evidence coverage.";
+  return count ? `${count} missing evidence finding(s).` : "Changed behavior has Stage 1 verification evidence.";
 }
 
 function intentStatus(summary) {
@@ -428,7 +428,7 @@ function behaviorStatus(summary) {
 
 function behaviorSummary(summary) {
   const count = summary.behavioral_deltas?.length || 0;
-  return count ? `${count} behavior delta(s) summarized.` : "No behavior deltas detected.";
+  return count ? `${count} behavior impact item(s) summarized.` : "No behavior impact detected.";
 }
 
 function policyStatus(summary) {
@@ -441,7 +441,7 @@ function policyStatus(summary) {
 
 function policySummary(summary) {
   const count = summary.policy_findings?.length || 0;
-  return count ? `${count} concept policy finding(s).` : "Concept policy rules pass.";
+  return count ? `${count} policy guardrail finding(s).` : "Policy guardrails pass.";
 }
 
 function promptStatus(summary) {
@@ -451,7 +451,7 @@ function promptStatus(summary) {
 function promptSummary(summary) {
   const runs = summary.prompt_canary_runs?.length || 0;
   const failures = summary.prompt_findings?.length || 0;
-  return runs ? `${runs} prompt canary suite(s), ${failures} failure(s).` : "No prompt/model canaries required.";
+  return runs ? `${runs} prompt drift suite(s), ${failures} failure(s).` : "No prompt/model drift checks required.";
 }
 
 function contractStatus(summary) {

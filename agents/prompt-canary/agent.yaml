@@ -1,7 +1,7 @@
 name: prompt-canary
 framework: langgraph
 entrypoint: prompt_canary.main:app
-description: Prompt canary agent for prompt/model/agent workflow drift, JSON format, refusal, latency, and cost checks.
+description: Prompt drift check agent for prompt/model/agent workflow drift, JSON format, refusal, latency, and cost checks.
 features:
   memory: true
   guardrails: true

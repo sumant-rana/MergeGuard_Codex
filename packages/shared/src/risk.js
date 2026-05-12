@@ -107,7 +107,7 @@ function nextActionFor({ status, topBlocker, testsChanged, hotspots, docsOnly })
 }
 
 function requiredActionForFile(file, testsChanged) {
-  if (file.classification === "prompt") return "Run or review prompt canary evidence.";
+  if (file.classification === "prompt") return "Run or review prompt drift check evidence.";
   if (file.classification === "security-sensitive" && !testsChanged) return "Inspect closely and require test or trace evidence.";
   if (file.classification === "security-sensitive") return "Inspect sensitive behavior and verify updated tests.";
   if (file.risk_score >= 45) return "Inspect behavior and failure modes.";
@@ -115,7 +115,7 @@ function requiredActionForFile(file, testsChanged) {
 }
 
 function suggestedTestAction(file) {
-  if (file.classification === "prompt") return `Add prompt canary coverage for ${file.path}.`;
+  if (file.classification === "prompt") return `Add prompt drift check coverage for ${file.path}.`;
   if (file.path.includes("auth")) return `Add auth success and denial-path tests for ${file.path}.`;
   if (file.path.includes("payment") || file.path.includes("billing")) return `Add monetary side-effect and idempotency tests for ${file.path}.`;
   if (file.path.includes("retry") || file.path.includes("timeout")) return `Add timeout, retry, and failure-mode tests for ${file.path}.`;

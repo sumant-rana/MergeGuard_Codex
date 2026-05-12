@@ -45,7 +45,7 @@ Expected result:
 - Risk score `100`.
 - Status `blocked`.
 - 7 synthesized check results.
-- Findings from policy, prompt canary, runtime contracts, missing evidence, and behavioral diff.
+- Findings from policy, prompt drift, runtime contracts, missing evidence, and behavior impact.
 
 ## Start The Dashboard
 
@@ -64,7 +64,7 @@ Click `Run Demo PR`. The dashboard will:
 - Invoke all agents through the local orchestration layer.
 - Persist the analysis run.
 - Show queue metrics.
-- Render independent agent results, hotspots, intent/evidence, behavioral diff, policy gates, prompt canaries, runtime contracts, checks, and generated PR comment.
+- Render independent agent results, hotspots, intent/evidence, behavior impact, policy guardrails, prompt drift checks, runtime contracts, checks, and generated PR comment.
 
 ## API Smoke Commands
 
@@ -161,7 +161,7 @@ Deployed agents accept a JSON message whose content is either the direct agent e
 - PR title/body
 - changed files with patches
 - CODEOWNERS text
-- prompt canary suite
+- prompt drift check suite
 - shape-only runtime contract summaries
 
 That lets the tool exercise every agent without installing a GitHub App.

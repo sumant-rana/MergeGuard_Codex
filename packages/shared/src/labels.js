@@ -27,7 +27,7 @@ export const MANAGED_LABELS = {
   policyBlocked: {
     name: "mergeguard/policy-blocked",
     color: "B60205",
-    description: "MergeGuard concept policy blocked this PR."
+    description: "MergeGuard policy guardrails blocked this PR."
   },
   promptDrift: {
     name: "mergeguard/prompt-drift",

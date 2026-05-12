@@ -37,9 +37,9 @@ AGENT_CATALOG = [
     },
     {
         "id": "semantic-diff-explainer",
-        "label": "Semantic Diff",
+        "label": "Behavior Impact",
         "stage": "Behavior",
-        "description": "Explains behavior deltas, divergent examples, and blast radius.",
+        "description": "Explains runtime behavior changes, divergent examples, and blast radius.",
     },
     {
         "id": "concept-classifier",
@@ -49,13 +49,13 @@ AGENT_CATALOG = [
     },
     {
         "id": "policy-gate",
-        "label": "Policy Gate",
+        "label": "Policy Guardrails",
         "stage": "Policy",
-        "description": "Evaluates concept policy rules and owner override requirements.",
+        "description": "Enforces team review rules and owner override requirements.",
     },
     {
         "id": "prompt-canary",
-        "label": "Prompt Canary",
+        "label": "Prompt Drift Check",
         "stage": "Prompt",
         "description": "Checks prompt, model, format, refusal, latency, and cost drift.",
     },
@@ -67,9 +67,9 @@ AGENT_CATALOG = [
     },
     {
         "id": "evidence-mapper",
-        "label": "Evidence Mapper",
+        "label": "Verification Evidence",
         "stage": "Evidence",
-        "description": "Maps intent and risky changes to tests, evidence, or missing proof.",
+        "description": "Links requirements and risky changes to tests, evidence, or missing proof.",
     },
     {
         "id": "test-coverage-validator",

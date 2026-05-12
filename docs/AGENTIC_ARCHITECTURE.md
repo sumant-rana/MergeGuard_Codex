@@ -48,11 +48,11 @@ make magenta-validate
 | --- | --- | --- |
 | `review-compression` / Change Triage | Classifies changed files, assigns owners, ranks hotspots, partitions must-inspect vs safe-to-skim. | `agents/review-compression` |
 | `intent-extractor` | Extracts `should`, `must_not`, and `out_of_scope` intent items from PR text. | `agents/intent-extractor` |
-| `evidence-mapper` | Maps intent and risky changes to tests/evidence or HITL author-preview questions. | `agents/evidence-mapper` |
-| `semantic-diff-explainer` | Produces behavior deltas, divergent examples, blast-radius summaries. | `agents/semantic-diff-explainer` |
+| `evidence-mapper` / Verification Evidence | Maps requirements and risky changes to tests/evidence or HITL author-preview questions. | `agents/evidence-mapper` |
+| `semantic-diff-explainer` / Behavior Impact | Produces behavior deltas, divergent examples, blast-radius summaries. | `agents/semantic-diff-explainer` |
 | `concept-classifier` | Tags changed code with concepts such as PII write, billing side effect, external HTTP call. | `agents/concept-classifier` |
-| `policy-gate` | Evaluates policy pack rules and emits pass/warn/block findings plus override suspend payloads. | `agents/policy-gate` |
-| `prompt-canary` | Runs deterministic prompt/model/agent workflow canary checks. | `agents/prompt-canary` |
+| `policy-gate` / Policy Guardrails | Evaluates policy pack rules and emits pass/warn/block findings plus override suspend payloads. | `agents/policy-gate` |
+| `prompt-canary` / Prompt Drift Check | Runs deterministic prompt/model/agent workflow drift checks. | `agents/prompt-canary` |
 | `contract-comparator` | Compares shape-only runtime contracts and suggests property-test stubs. | `agents/contract-comparator` |
 | `test-coverage-validator` | Validates whether changed tests cover PR intent, behavioral deltas, and changed source functionality. | `agents/test-coverage-validator` |
 | `truth-report-synthesizer` | Aggregates all agent outputs into merge readiness, checks, PR comment, and dashboard summary. | `agents/truth-report-synthesizer` |

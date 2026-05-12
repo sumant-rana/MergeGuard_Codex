@@ -1,7 +1,7 @@
 [project]
 name = "mergeguard-agent-policy-gate"
 version = "0.2.0"
-description = "MergeGuard policy-gate Magenta agent"
+description = "MergeGuard policy guardrails Magenta agent"
 requires-python = ">=3.11"
 dependencies = [
     "runner-shared[mongodb,tracing]",

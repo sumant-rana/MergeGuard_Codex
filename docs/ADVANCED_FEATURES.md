@@ -36,15 +36,15 @@ Intent is extracted from PR title and body. Items are classified as:
 - `must_not`
 - `out_of_scope`
 
-Each item receives `mapped_paths`, `evidence_status`, and `suggested_test`. The dashboard shows these in the "Intent Vs Implementation" region.
+Each item receives `mapped_paths`, `evidence_status`, and `suggested_test`. The dashboard shows these in the "Requirements vs Implementation" region.
 
-## Semantic Diff And Blast Radius
+## Behavior Impact And Blast Radius
 
 The analyzer extracts lightweight Python/TypeScript/JavaScript symbols from patch or fixture content. It then creates behavior deltas, divergent examples, downstream services, direct callers, and impacted test suggestions.
 
 This is deterministic and path/patch based. It is meant to be replaced incrementally by language-server or AST-backed workers.
 
-## Concept Policy Gates
+## Policy Guardrails
 
 Concept taxonomy:
 
@@ -76,11 +76,11 @@ Activate a policy:
 curl -X POST http://localhost:4000/api/policy-packs/POLICY_ID/activate
 ```
 
-## Prompt Canary Gate
+## Prompt Drift Check
 
 Prompt paths are detected under `prompts/`, `prompt/`, `.prompt`, `.prompt.md`, `.jinja`, and `.tmpl`.
 
-Fixture canary schema:
+Fixture drift-check schema:
 
 ```json
 {
@@ -101,7 +101,7 @@ Fixture canary schema:
 }
 ```
 
-Outputs include `prompt_canary_runs`, `summary.prompt_findings`, the `Prompt Canary` check result, and `mergeguard/prompt-drift` when failing.
+Outputs include `prompt_canary_runs`, `summary.prompt_findings`, the `Prompt Drift Check` check result, and `mergeguard/prompt-drift` when failing.
 
 ## Runtime Contracts
 
@@ -131,7 +131,7 @@ Record an override:
 ```sh
 curl -s http://localhost:4000/api/findings/FINDING_ID/override \
   -H 'content-type: application/json' \
-  -d '{"run_id":"RUN_ID","reviewer":"octocat","reason":"Accepted because production canary already covered this path."}'
+  -d '{"run_id":"RUN_ID","reviewer":"octocat","reason":"Accepted because production prompt drift checks already covered this path."}'
 ```
 
 Record a post-merge outcome:

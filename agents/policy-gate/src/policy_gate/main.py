@@ -16,7 +16,7 @@ from packages.policies.engine import default_policy_pack, evaluate_policy_pack  
 
 AGENT_ID = "policy-gate"
 
-app = create_app(AGENT_ID, "Evaluate policy pack rules against concept findings.")
+app = create_app(AGENT_ID, "Evaluate policy guardrails against concept findings.")
 
 
 def run(payload: dict[str, Any]) -> dict[str, Any]:

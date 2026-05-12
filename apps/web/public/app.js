@@ -164,12 +164,12 @@ async function renderDetail() {
     </section>
 
     <section class="detail-section">
-      <h3>Intent Vs Implementation</h3>
+      <h3>Requirements vs Implementation</h3>
       ${intentList(intentItems, summary.unexpected_scope_findings || [])}
     </section>
 
     <section class="detail-section">
-      <h3>Behavioral Diff</h3>
+      <h3>Behavior Impact</h3>
       ${behaviorList(behaviorDeltas)}
     </section>
 
@@ -189,7 +189,7 @@ async function renderDetail() {
     </section>
 
     <section class="detail-section">
-      <h3>Concept Policy Gates</h3>
+      <h3>Policy Guardrails</h3>
       ${policyList(policyFindings)}
     </section>
 
@@ -303,7 +303,7 @@ function blastList(items) {
 }
 
 function policyList(items) {
-  if (!items.length) return `<p class="subtle">Concept policy rules pass.</p>`;
+  if (!items.length) return `<p class="subtle">Policy guardrails pass.</p>`;
   return `<ul class="evidence-list">${items
     .map(
       (item) => `<li class="evidence-item">
@@ -316,7 +316,7 @@ function policyList(items) {
 }
 
 function promptList(items) {
-  if (!items.length) return `<p class="subtle">No prompt canaries required.</p>`;
+  if (!items.length) return `<p class="subtle">No prompt drift checks required.</p>`;
   return `<ul class="evidence-list">${items
     .map(
       (item) => `<li class="evidence-item">

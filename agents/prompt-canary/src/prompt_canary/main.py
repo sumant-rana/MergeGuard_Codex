@@ -40,7 +40,7 @@ def judge_prompt(file: dict[str, Any], raw_file: dict[str, Any], suite: dict[str
         and cost_delta_pct <= thresholds.get("cost_delta_pct", 35)
     )
     return {
-        "suite": suite.get("name", "default-prompt-canary"),
+        "suite": suite.get("name", "default-prompt-drift"),
         "prompt_path": file["path"],
         "model": suite.get("model", "repo-default"),
         "correctness": correctness,
@@ -50,7 +50,7 @@ def judge_prompt(file: dict[str, Any], raw_file: dict[str, Any], suite: dict[str
         "latency_delta_ms": latency_delta_ms,
         "cost_delta_pct": cost_delta_pct,
         "status": "pass" if passed else "fail",
-        "drift_summary": "Prompt canary passed." if passed else "Prompt canary drift exceeded thresholds.",
+        "drift_summary": "Prompt drift check passed." if passed else "Prompt drift exceeded thresholds.",
     }
 
 
@@ -68,8 +68,8 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
             "type": "prompt-canary-failure",
             "path": run["prompt_path"],
             "severity": "block",
-            "message": f"Prompt canary {run['suite']} failed for {run['prompt_path']}.",
-            "suggested_action": "Fix prompt drift or update golden canary with reviewer approval.",
+            "message": f"Prompt drift check {run['suite']} failed for {run['prompt_path']}.",
+            "suggested_action": "Fix prompt drift or update golden drift checks with reviewer approval.",
         }
         for run in runs
         if run["status"] == "fail"
@@ -78,14 +78,14 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         AGENT_ID,
         {"prompt_canary_runs": runs, "prompt_findings": findings},
         confidence=0.78,
-        messages=[f"ran {len(runs)} prompt canaries"],
+        messages=[f"ran {len(runs)} prompt drift checks"],
         trace=[{"step": "prompt_canary", "runs": len(runs), "failures": len(findings)}],
     )
 
 
 def default_suite(path: str) -> dict[str, Any]:
     return {
-        "name": "default-prompt-canary",
+        "name": "default-prompt-drift",
         "prompt_path": path,
         "model": "repo-default",
         "assertions": {"format": "json" if path.endswith(".json") else "text"},

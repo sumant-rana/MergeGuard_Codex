@@ -1,7 +1,7 @@
 name: semantic-diff-explainer
 framework: langgraph
 entrypoint: semantic_diff_explainer.main:app
-description: Behavioral diff agent that explains symbol-level behavior changes and blast radius.
+description: Behavior impact agent that explains symbol-level behavior changes and blast radius.
 features:
   memory: true
   guardrails: true

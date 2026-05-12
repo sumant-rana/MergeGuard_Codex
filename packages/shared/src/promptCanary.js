@@ -34,8 +34,8 @@ export function runPromptCanaries(files, rawFiles = [], suites = []) {
         cost,
         status: passed ? "pass" : "fail",
         drift_summary: passed
-          ? "Prompt canary heuristics stayed within configured thresholds."
-          : "Prompt canary drift exceeded configured thresholds.",
+          ? "Prompt drift checks stayed within configured thresholds."
+          : "Prompt drift exceeded configured thresholds.",
         before_output: suite.before_output || null,
         after_output: suite.after_output || null,
         assertions: suite.assertions || {}
@@ -51,8 +51,8 @@ export function promptFindingsFromCanaries(canaryRuns) {
       path: run.prompt_path,
       severity: "block",
       confidence: 0.76,
-      message: `Prompt canary suite ${run.suite} failed for ${run.prompt_path}.`,
-      suggested_action: "Fix the prompt/model change or update golden canaries with reviewer approval."
+      message: `Prompt drift check ${run.suite} failed for ${run.prompt_path}.`,
+      suggested_action: "Fix the prompt/model change or update golden drift checks with reviewer approval."
     }));
 }
 

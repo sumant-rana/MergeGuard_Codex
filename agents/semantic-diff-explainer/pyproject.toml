@@ -1,7 +1,7 @@
 [project]
 name = "mergeguard-agent-semantic-diff-explainer"
 version = "0.2.0"
-description = "MergeGuard semantic-diff-explainer Magenta agent"
+description = "MergeGuard behavior impact Magenta agent"
 requires-python = ">=3.11"
 dependencies = [
     "runner-shared[mongodb,tracing]",

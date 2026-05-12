@@ -30,9 +30,9 @@ The risky demo PR exercises all implemented gates:
 
 - Review compression and CODEOWNERS.
 - Intent/evidence mapping.
-- Behavioral diff and blast radius.
-- Concept policy.
-- Prompt canary.
+- Behavior impact and blast radius.
+- Policy guardrails.
+- Prompt drift check.
 - Runtime contract comparison.
 - Generated test suggestions.
 
@@ -80,7 +80,7 @@ Start the server again to recreate an empty store.
 4. Confirm:
    - The dashboard row appears.
    - The PR has a `MergeGuard Change Triage` check run.
-   - The PR has advisory gate checks for evidence, intent, behavioral diff, concept policy, prompt canary, and runtime contracts.
+   - The PR has advisory gate checks for evidence, intent, behavior impact, policy guardrails, prompt drift, and runtime contracts.
    - One sticky MergeGuard comment appears.
    - `mergeguard/missing-evidence` is applied.
 5. Push another commit to the PR.

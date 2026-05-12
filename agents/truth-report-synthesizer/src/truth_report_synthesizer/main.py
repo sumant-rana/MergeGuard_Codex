@@ -110,12 +110,12 @@ def build_checks(status: str, prior: dict[str, Any]) -> list[dict[str, Any]]:
     test_coverage = prior.get("test-coverage-validator", {}).get("output", {})
     return [
         {"name": "MergeGuard / Change Triage", "conclusion": "failure" if status == "blocked" else "neutral" if status == "review" else "success"},
-        {"name": "MergeGuard / Intent Match", "conclusion": "neutral" if any(link["evidence_status"] == "missing" for link in evidence.get("evidence_links", [])) else "success"},
-        {"name": "MergeGuard / Evidence Coverage", "conclusion": "neutral" if evidence.get("missing_evidence_findings") else "success"},
+        {"name": "MergeGuard / Requirement Match", "conclusion": "neutral" if any(link["evidence_status"] == "missing" for link in evidence.get("evidence_links", [])) else "success"},
+        {"name": "MergeGuard / Verification Evidence", "conclusion": "neutral" if evidence.get("missing_evidence_findings") else "success"},
         {"name": "MergeGuard / Test Coverage", "conclusion": test_coverage_conclusion(test_coverage)},
-        {"name": "MergeGuard / Behavioral Diff", "conclusion": "neutral" if semantic.get("behavioral_deltas") else "success"},
-        {"name": "MergeGuard / Concept Policy", "conclusion": "failure" if any(item["severity"] == "block" for item in policy.get("policy_findings", [])) else "neutral" if policy.get("policy_findings") else "success"},
-        {"name": "MergeGuard / Prompt Canary", "conclusion": "failure" if prompt.get("prompt_findings") else "success"},
+        {"name": "MergeGuard / Behavior Impact", "conclusion": "neutral" if semantic.get("behavioral_deltas") else "success"},
+        {"name": "MergeGuard / Policy Guardrails", "conclusion": "failure" if any(item["severity"] == "block" for item in policy.get("policy_findings", [])) else "neutral" if policy.get("policy_findings") else "success"},
+        {"name": "MergeGuard / Prompt Drift Check", "conclusion": "failure" if prompt.get("prompt_findings") else "success"},
         {"name": "MergeGuard / Runtime Contracts", "conclusion": "neutral" if contracts.get("contract_findings") else "success"},
     ]
 

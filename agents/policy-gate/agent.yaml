@@ -1,7 +1,7 @@
 name: policy-gate
 framework: langgraph
 entrypoint: policy_gate.main:app
-description: Policy gate agent that evaluates team YAML policy rules against concept findings and emits pass/warn/block decisions.
+description: Policy guardrails agent that evaluates team YAML review rules against concept findings and emits pass/warn/block decisions.
 features:
   memory: true
   guardrails: true

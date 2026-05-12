@@ -40,10 +40,10 @@ Delivered:
 - Evidence status: `proven`, `partial`, `missing`.
 - Unexpected risky scope detection.
 - Suggested tests for missing intent evidence.
-- `Intent Match` and `Evidence Coverage` check results.
+- `Requirement Match` and `Verification Evidence` check results.
 - `mergeguard/intent-drift` label support.
 
-## Stage 4: Semantic Diff And Blast Radius
+## Stage 4: Behavior Impact And Blast Radius
 
 Status: implemented as lightweight symbol, behavior, divergent-example, and blast-radius analysis.
 
@@ -52,10 +52,10 @@ Delivered:
 - Changed symbol extraction from patches or fixture content.
 - Behavior delta summaries with old behavior, new behavior, severity, confidence, category, and divergent examples.
 - Blast-radius summaries with direct callers, downstream services, owners, and impacted tests.
-- `Behavioral Diff` check result.
-- PR detail regions for behavioral diff and blast radius.
+- `Behavior Impact` check result.
+- PR detail regions for behavior impact and blast radius.
 
-## Stage 5: Concept Index And Policy Gates
+## Stage 5: Concept Index And Policy Guardrails
 
 Status: implemented with a concept taxonomy, default policy pack, YAML policy packs, policy checks, and audit output.
 
@@ -66,24 +66,24 @@ Delivered:
 - Default policy pack for PII, billing, external HTTP, and agent workflow risks.
 - Policy pack API: `GET/POST /api/policy-packs`.
 - Policy activation API: `POST /api/policy-packs/:id/activate`.
-- Concept policy findings, policy owners, and suggested actions.
-- `Concept Policy` check result.
+- Policy guardrail findings, policy owners, and suggested actions.
+- `Policy Guardrails` check result.
 - `mergeguard/policy-blocked` label support.
 - Audit export includes policies and policy findings.
 
-## Stage 6: Prompt Canary Gate
+## Stage 6: Prompt Drift Check
 
-Status: implemented with deterministic prompt canary scoring and prompt-drift check results.
+Status: implemented with deterministic prompt drift scoring and prompt-drift check results.
 
 Delivered:
 
 - Prompt/model changed-path detector.
 - Prompt suite schema support through fixture payloads.
 - Heuristic assertions for safety, JSON format, correctness, style, latency, and cost.
-- Before/after fields in the canary run model.
-- `Prompt Canary` check result.
+- Before/after fields in the prompt drift run model.
+- `Prompt Drift Check` check result.
 - `mergeguard/prompt-drift` label support.
-- PR detail region for prompt canary runs.
+- PR detail region for prompt drift check runs.
 
 ## Stage 7: Runtime Contracts And Generated Tests
 

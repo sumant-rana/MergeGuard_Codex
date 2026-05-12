@@ -143,7 +143,7 @@ def compute_pr_risk(files: list[dict[str, Any]]) -> int:
 
 def required_action(file: dict[str, Any]) -> str:
     if file["classification"] == "prompt":
-        return "Run prompt canaries and inspect prompt/model drift."
+        return "Run prompt drift checks and inspect prompt/model drift."
     if file["classification"] == "security-sensitive":
         return "Inspect behavior, authorization, failure modes, and evidence."
     return "Inspect changed behavior and verify tests."
