@@ -1,7 +1,10 @@
 node_modules/
 .DS_Store
+.idea/
 .env
 data/*.json
 coverage/
 dist/
 .next/
+tools/bin/agentic
+tools/bin/agentic_*

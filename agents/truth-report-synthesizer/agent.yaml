@@ -1,0 +1,10 @@
+name: truth-report-synthesizer
+framework: langgraph
+entrypoint: truth_report_synthesizer.main:app
+description: Truth Report synthesis agent that aggregates analyzer results into merge readiness, top blocker, PR comment, and dashboard summary.
+features:
+  memory: true
+  guardrails: true
+config:
+  provider: local
+  model: deterministic-demo

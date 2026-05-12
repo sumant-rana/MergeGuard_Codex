@@ -1,0 +1,23 @@
+name: mergeguard-command-center
+description: MergeGuard agentic demo monorepo manifest.
+version: 0.2.0
+platform: magenta
+agents:
+  - name: review-compression
+    path: agents/review-compression
+  - name: intent-extractor
+    path: agents/intent-extractor
+  - name: evidence-mapper
+    path: agents/evidence-mapper
+  - name: semantic-diff-explainer
+    path: agents/semantic-diff-explainer
+  - name: concept-classifier
+    path: agents/concept-classifier
+  - name: policy-gate
+    path: agents/policy-gate
+  - name: prompt-canary
+    path: agents/prompt-canary
+  - name: contract-comparator
+    path: agents/contract-comparator
+  - name: truth-report-synthesizer
+    path: agents/truth-report-synthesizer

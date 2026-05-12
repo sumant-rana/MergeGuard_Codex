@@ -1,0 +1,10 @@
+name: concept-classifier
+framework: langgraph
+entrypoint: concept_classifier.main:app
+description: Concept classifier agent for auth, PII, billing, SQL, prompt, agent, timeout, retry, and side-effect concepts.
+features:
+  memory: true
+  guardrails: true
+config:
+  provider: local
+  model: deterministic-demo

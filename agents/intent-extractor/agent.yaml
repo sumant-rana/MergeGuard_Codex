@@ -1,0 +1,10 @@
+name: intent-extractor
+framework: langgraph
+entrypoint: intent_extractor.main:app
+description: Intent extraction agent for PR title/body and linked work-item text.
+features:
+  memory: true
+  guardrails: true
+config:
+  provider: local
+  model: deterministic-demo

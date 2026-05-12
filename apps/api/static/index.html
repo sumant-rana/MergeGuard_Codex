@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MergeGuard Agentic Command Center</title>
+    <style>
+      :root { --bg:#f6f7f9; --text:#172033; --muted:#667085; --surface:#fff; --border:#d8dee8; --accent:#1d4ed8; --bad:#b42318; --warn:#a15c00; --ok:#0f7b4f; }
+      * { box-sizing: border-box; }
+      body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 Inter, ui-sans-serif, system-ui, sans-serif; }
+      header { display:flex; justify-content:space-between; gap:16px; align-items:center; padding:16px 22px; background:#101828; color:#fff; border-bottom:4px solid #22c55e; }
+      h1 { margin:0; font-size:21px; }
+      button { min-height:36px; border:1px solid var(--border); border-radius:6px; background:#fff; color:var(--text); font-weight:700; cursor:pointer; }
+      button:disabled { cursor:wait; opacity:.68; }
+      main { display:grid; grid-template-columns:minmax(420px,.85fr) minmax(520px,1.15fr); gap:16px; padding:16px; }
+      .panel { background:var(--surface); border:1px solid var(--border); border-radius:8px; box-shadow:0 1px 2px rgba(16,24,40,.07); }
+      .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px; }
+      .metric { padding:13px; }
+      .metric span { display:block; color:var(--muted); font-size:12px; font-weight:800; text-transform:uppercase; }
+      .metric strong { display:block; margin-top:4px; font-size:25px; }
+      table { width:100%; border-collapse:collapse; }
+      th,td { padding:10px 12px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
+      th { color:var(--muted); font-size:12px; text-transform:uppercase; background:#f8fafc; }
+      tr[data-run] { cursor:pointer; }
+      tr[data-run]:hover { background:#eef6ff; }
+      .detail { padding:16px; }
+      .pill { display:inline-flex; min-width:74px; justify-content:center; padding:3px 8px; border-radius:999px; color:#fff; font-size:12px; font-weight:800; }
+      .blocked { background:var(--bad); } .review { background:var(--warn); } .pass { background:var(--ok); }
+      .failed { background:var(--bad); } .running { background:var(--accent); } .queued { background:var(--muted); }
+      .section { margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+      .error { margin-bottom:12px; padding:10px 12px; border:1px solid #f4b4ae; border-radius:6px; background:#fff1f0; color:var(--bad); font-weight:700; }
+      h2,h3,p { margin-top:0; }
+      code { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+      ul { padding-left:18px; }
+      .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+      .card { border:1px solid var(--border); border-radius:6px; padding:10px; background:#fff; }
+      .muted { color:var(--muted); }
+      @media (max-width: 980px) { main { grid-template-columns:1fr; } .metrics { grid-template-columns:repeat(2,1fr); } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <div style="color:#b8c1d1;font-size:12px;font-weight:800;text-transform:uppercase;">MergeGuard</div>
+        <h1>Agentic Command Center</h1>
+      </div>
+      <button id="run-demo">Run Demo PR</button>
+    </header>
+    <main>
+      <section>
+        <div class="metrics" id="metrics"></div>
+        <div class="panel">
+          <table>
+            <thead><tr><th>Risk</th><th>PR</th><th>Status</th><th>Agents</th></tr></thead>
+            <tbody id="queue"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="panel detail" id="detail">Run or select a PR analysis.</section>
+    </main>
+    <script>
+      const q = document.querySelector("#queue");
+      const metrics = document.querySelector("#metrics");
+      const detail = document.querySelector("#detail");
+      const runButton = document.querySelector("#run-demo");
+      runButton.onclick = async () => {
+        const previousLabel = runButton.textContent;
+        runButton.disabled = true;
+        runButton.textContent = "Running...";
+        detail.innerHTML = `<h2>${pill("running")} Demo analysis running</h2><p class="muted">Invoking 9 independent agents.</p>`;
+        try {
+          const response = await fetch("/api/demo/analyze", {method:"POST", headers:{"content-type":"application/json"}, body:"{}"});
+          const data = await response.json();
+          if (data.run) renderDetail(data.run);
+          await load(data.run?.id);
+          if (!response.ok) throw new Error(data.run?.summary?.next_action || data.error || "Demo analysis failed");
+        } catch (err) {
+          detail.insertAdjacentHTML("afterbegin", `<div class="error">${esc(err.message || err)}</div>`);
+        } finally {
+          runButton.disabled = false;
+          runButton.textContent = previousLabel;
+        }
+      };
+      async function load(selectedRunId) {
+        const data = await (await fetch("/api/queue")).json();
+        renderMetrics(data.metrics);
+        renderQueue(data.queue);
+        const selected = data.queue
+          .map(row => row.latest_run)
+          .find(run => run?.id === selectedRunId);
+        if (selected) renderDetail(selected);
+        else if (data.queue[0]?.latest_run) renderDetail(data.queue[0].latest_run);
+      }
+      function renderMetrics(m) {
+        metrics.innerHTML = [
+          ["Open PRs", m.open_prs], ["Runs", m.analysis_runs], ["High Risk", m.high_risk], ["Agent Execs", m.agent_executions]
+        ].map(([k,v]) => `<div class="panel metric"><span>${k}</span><strong>${v}</strong></div>`).join("");
+      }
+      function renderQueue(rows) {
+        q.innerHTML = rows.length ? rows.map(row => {
+          const run = row.latest_run || {summary:{}};
+          const s = run.summary || {};
+          const status = s.status || run.state || "queued";
+          return `<tr data-run="${run.id || ""}"><td><strong>${s.risk_score ?? "n/a"}</strong></td><td>#${row.pull_request.number} ${esc(row.pull_request.title)}<div class="muted">${esc(row.pull_request.repository.full_name)}</div></td><td>${pill(status)}</td><td>${Object.keys(run.agent_results || {}).length}</td></tr>`;
+        }).join("") : `<tr><td colspan="4" class="muted">No analyses yet.</td></tr>`;
+        [...q.querySelectorAll("tr[data-run]")].forEach(tr => tr.onclick = async () => {
+          const data = await (await fetch(`/api/runs/${tr.dataset.run}`)).json();
+          renderDetail(data.run);
+        });
+      }
+      function renderDetail(run) {
+        const s = run.summary || {};
+        const pr = run.pull_request || {};
+        const status = s.status || run.state || "queued";
+        detail.innerHTML = `<h2>${pill(status)} Risk ${s.risk_score ?? "n/a"}/100</h2>
+          <p class="muted">Run <code>${esc(run.id)}</code> · ${Object.keys(run.agent_results || {}).length} agents · ${esc(run.state || "unknown")}</p>
+          ${pr.number ? section("PR Context", `
+            <li><strong>#${esc(pr.number)} ${esc(pr.title || "")}</strong></li>
+            <li class="muted">${esc(pr.repository?.full_name || "")} · ${esc(pr.base_ref || pr.base_sha || "")} -> ${esc(pr.head_ref || pr.head_sha || "")}</li>
+            ${pr.url ? `<li><a href="${esc(pr.url)}" target="_blank" rel="noreferrer">${esc(pr.url)}</a></li>` : ""}
+          `) : ""}
+          ${cards("Linked Issues", pr.issue_refs, issue => `<strong>#${esc(issue.number)}</strong><div>${esc(issue.title || "")}</div><div class="muted">${esc(issue.state || "")}</div>`)}
+          ${cards("Commit History", pr.commit_history, commit => `<strong><code>${esc((commit.oid || "").slice(0, 12))}</code></strong><div>${esc(commit.message || "")}</div><div class="muted">${esc(commit.authored_date || "")}</div>`)}
+          <p><strong>Top blocker:</strong> ${esc(s.top_blocker || "None")}</p>
+          <p><strong>Next action:</strong> ${esc(s.next_action || "")}</p>
+          ${section("Independent Agents", Object.keys(run.agent_results || {}).map(a => `<li><code>${a}</code></li>`).join(""))}
+          ${cards("Hotspots", s.hotspots, h => `<strong><code>${esc(h.path)}</code></strong><div>${esc(h.reason)}</div><div class="muted">owners: ${esc((h.owners || []).join(", "))}</div>`)}
+          ${cards("Intent And Evidence", s.evidence_links, e => `<strong>${esc(e.evidence_status)}</strong><div>${esc(e.intent_text)}</div><div class="muted">${esc((e.mapped_paths || []).join(", "))}</div>`)}
+          ${cards("Behavioral Diff", s.behavioral_deltas, d => `<strong><code>${esc(d.path)}</code></strong><div>${esc(d.new_behavior)}</div><div class="muted">${esc(d.divergent_input || "")}</div>`)}
+          ${cards("Policy Findings", s.policy_findings, p => `<strong>${esc(p.rule_id)}</strong><div>${esc(p.message)}</div><div class="muted">${esc(p.owner)} · ${esc(p.severity)}</div>`)}
+          ${cards("Prompt Canaries", s.prompt_canary_runs, c => `<strong>${esc(c.suite)} · ${esc(c.status)}</strong><div>${esc(c.drift_summary)}</div>`)}
+          ${cards("Runtime Contracts", s.contract_findings, c => `<strong><code>${esc(c.path)}</code></strong><div>${esc(c.violated_assumption)}</div>`)}
+          ${cards("Checks", s.checks, c => `<strong>${esc(c.name)}</strong><div>${esc(c.conclusion)}</div>`)}
+          ${section("Generated PR Comment", `<pre style="white-space:pre-wrap">${esc(s.comment || "")}</pre>`)}
+        `;
+      }
+      function section(title, html) { return `<div class="section"><h3>${title}</h3><ul>${html || "<li class='muted'>None</li>"}</ul></div>`; }
+      function cards(title, items, fn) { return `<div class="section"><h3>${title}</h3><div class="grid">${(items || []).map(x => `<div class="card">${fn(x)}</div>`).join("") || "<p class='muted'>None</p>"}</div></div>`; }
+      function pill(s) { return `<span class="pill ${esc(s || "review")}">${esc(String(s || "review").toUpperCase())}</span>`; }
+      function esc(v) { return String(v ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+      load();
+    </script>
+  </body>
+</html>

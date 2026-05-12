@@ -1,6 +1,16 @@
 # MergeGuard Command Center
 
-MergeGuard Command Center is a GitHub-native ReviewOps dashboard for pull requests. This repository implements a local-first prototype of all stages from `mergeguard_implementation_spec.md`, with deterministic analyzers that can be replaced incrementally by deeper production workers.
+MergeGuard Command Center is now implemented as an agentic demo architecture: each ReviewOps feature is a separate Magenta-style agent, and the dashboard/tool orchestrates those agents end to end without requiring GitHub App installation.
+
+The older Node prototype remains in the repository for comparison, but the current implementation path is Python-based and documented here:
+
+- [Agentic Architecture](docs/AGENTIC_ARCHITECTURE.md)
+- [Run The Agentic Demo](docs/RUN_AGENTIC_DEMO.md)
+- [Magenta Deployment Notes](docs/MAGENTA_DEPLOYMENT.md)
+- [Local GitHub PR Workflow](docs/LOCAL_GITHUB_PR_WORKFLOW.md)
+
+Each feature agent now exposes a Magenta-compatible `app`: it uses `magenta_sdklanggraph.App` in a Magenta runtime and falls back to the local shim only for dependency-free demo tests.
+Deployed agents accept the same analysis envelope as a JSON `agentic invoke` message and return the structured `AgentResult` JSON consumed by the dashboard.
 
 The current implementation is intentionally dependency-light so it can run from a clean workspace:
 
@@ -34,6 +44,51 @@ All stages are implemented as a runnable local monorepo:
 | `tests` | Node test runner coverage for classifier, risk flow, sticky comments, signatures, and webhook idempotency. |
 
 Stage coverage and extension points are documented in [docs/STAGE_IMPLEMENTATION.md](docs/STAGE_IMPLEMENTATION.md). Advanced feature behavior is documented in [docs/ADVANCED_FEATURES.md](docs/ADVANCED_FEATURES.md).
+
+## Quick Agentic Demo
+
+Validate the latest Magenta CLI and manifests:
+
+```sh
+make magenta-version
+make magenta-validate
+```
+
+Run the full pipeline once:
+
+```sh
+python3 apps/worker/main.py
+```
+
+Start the dashboard:
+
+```sh
+python3 apps/api/main.py
+```
+
+Open:
+
+```text
+http://127.0.0.1:4100
+```
+
+Run tests:
+
+```sh
+make test-agentic
+```
+
+Analyze a real GitHub PR from a local checkout:
+
+```sh
+scripts/mergeguard_pr.py analyze --repo /absolute/path/to/target-repo --pr 123
+```
+
+Or create a PR and immediately process it:
+
+```sh
+scripts/mergeguard_pr.py create --repo /absolute/path/to/target-repo --base main --title "Fix issue" --body "Fixes #123"
+```
 
 ## Requirements
 

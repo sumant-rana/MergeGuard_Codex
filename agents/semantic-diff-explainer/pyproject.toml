@@ -1,0 +1,28 @@
+[project]
+name = "mergeguard-agent-semantic-diff-explainer"
+version = "0.2.0"
+description = "MergeGuard semantic-diff-explainer Magenta agent"
+requires-python = ">=3.11"
+dependencies = [
+    "runner-shared[mongodb,tracing]",
+    "magenta-sdklanggraph",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+semantic-diff-explainer = "semantic_diff_explainer.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/semantic_diff_explainer"]
+
+[tool.uv.sources]
+runner-shared = { git = "https://github.com/10gen/magenta-client-libraries", subdirectory = "packages/runner-shared" }
+magenta-sdklanggraph = { git = "https://github.com/10gen/magenta-client-libraries", subdirectory = "packages/magenta-sdklanggraph" }
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

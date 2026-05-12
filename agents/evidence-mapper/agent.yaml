@@ -1,0 +1,10 @@
+name: evidence-mapper
+framework: langgraph
+entrypoint: evidence_mapper.main:app
+description: Evidence mapping agent that links intent and behavior claims to tests, traces, canaries, contracts, or HITL questions.
+features:
+  memory: true
+  guardrails: true
+config:
+  provider: local
+  model: deterministic-demo

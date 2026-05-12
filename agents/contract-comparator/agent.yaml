@@ -1,0 +1,13 @@
+name: contract-comparator
+framework: langgraph
+entrypoint: contract_comparator.main:app
+description: Runtime contract comparator agent for shape-only contract drift and generated property-test stubs.
+features:
+  memory: true
+  guardrails: true
+services:
+  tool:
+    sandbox: true
+config:
+  provider: local
+  model: deterministic-demo

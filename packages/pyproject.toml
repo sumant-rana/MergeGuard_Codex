@@ -1,0 +1,9 @@
+[project]
+name = "mergeguard-shared"
+version = "0.2.0"
+description = "Shared MergeGuard runtime modules copied into Magenta workspace images."
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.uv]
+package = false
