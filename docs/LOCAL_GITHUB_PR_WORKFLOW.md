@@ -59,27 +59,41 @@ scripts/mergeguard_pr.py create \
   --body "Fixes #123. Ensure retry failure stays idempotent."
 ```
 
-Run this from, or point `--repo` at, a target repository that is on a feature branch with commits. GitHub cannot create a PR from `main` into `main`. A minimal flow is:
+If the target repo is currently on the base branch, the script now automates the
+demo flow:
 
-```sh
-cd /absolute/path/to/target-repo
-git switch -c mergeguard-demo
-# make a change
-git add .
-git commit -m "Fix issue"
-git push -u origin mergeguard-demo
-```
+- detects the default/base branch
+- creates a branch like `mergeguard-demo-pr-a1b2c3d4`
+- writes demo files that exercise the MergeGuard agents
+- commits and pushes that branch
+- opens the GitHub PR
+- posts the collected PR payload to `/api/github/pr/analyze`
 
-Then rerun the `create` command, or pass the branch explicitly:
+The target repository must have a clean working tree before the script creates
+the generated branch. If you already have a real feature branch with committed
+changes, pass it explicitly:
 
 ```sh
 scripts/mergeguard_pr.py create \
   --repo /absolute/path/to/target-repo \
   --base main \
-  --head mergeguard-demo \
+  --head refund-retry \
   --title "Fix issue" \
   --body "Fixes #123"
 ```
+
+To force a generated demo PR even when you are not currently on the base branch:
+
+```sh
+scripts/mergeguard_pr.py create \
+  --repo /absolute/path/to/target-repo \
+  --base main \
+  --demo
+```
+
+Use `--branch-prefix` to change the generated branch prefix, or `--no-auto-demo`
+to restore the strict behavior where `main -> main` is rejected instead of
+auto-generating demo changes.
 
 The script runs `gh pr create`, then immediately calls:
 
