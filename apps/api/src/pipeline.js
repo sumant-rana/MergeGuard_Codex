@@ -174,7 +174,7 @@ export async function processPullRequestWebhook({ deliveryId, payload, store, gi
       blastRadius: [],
       checkResults: [
         {
-          check_name: "MergeGuard Review Brief",
+          check_name: "MergeGuard Change Triage",
           conclusion: "failure",
           summary: error.message,
           blocking: true,
@@ -377,7 +377,7 @@ function buildReviewBriefCheck({ summary, dashboardUrl, checkMode }) {
   else if (summary.status === "review") conclusion = "neutral";
 
   return {
-    check_name: "MergeGuard Review Brief",
+    check_name: "MergeGuard Change Triage",
     conclusion,
     summary: `${summary.status.toUpperCase().replace("_", " ")} · Risk ${summary.risk_score}/100 · ${summary.next_action}`,
     blocking: conclusion === "failure",

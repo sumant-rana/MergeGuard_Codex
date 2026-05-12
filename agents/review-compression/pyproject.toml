@@ -1,7 +1,7 @@
 [project]
 name = "mergeguard-agent-review-compression"
 version = "0.2.0"
-description = "MergeGuard review-compression Magenta agent"
+description = "MergeGuard change triage Magenta agent"
 requires-python = ">=3.11"
 dependencies = [
     "runner-shared[mongodb,tracing]",

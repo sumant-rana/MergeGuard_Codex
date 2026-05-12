@@ -1687,7 +1687,7 @@
       ];
 
       const agentVisuals = {
-        "review-compression": { icon: "RC", tone: "hotspots" },
+        "review-compression": { icon: "TR", tone: "hotspots" },
         "intent-extractor": { icon: "IN", tone: "intent" },
         "semantic-diff-explainer": { icon: "SD", tone: "behavior" },
         "concept-classifier": { icon: "CC", tone: "concepts" },
@@ -2379,9 +2379,13 @@
               </div>
             </div>
           </div>
-          <h4>${esc(item.name || "MergeGuard check")}</h4>
+          <h4>${esc(displayCheckName(item.name || "MergeGuard check"))}</h4>
           <p>${esc(item.summary || item.details || "No additional check details.")}</p>
         </article>`;
+      }
+
+      function displayCheckName(name) {
+        return String(name || "").replace("MergeGuard / Review Brief", "MergeGuard / Change Triage");
       }
 
       function checkTone(value) {

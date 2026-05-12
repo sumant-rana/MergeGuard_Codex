@@ -12,7 +12,7 @@ export function renderReviewComment({ pr, run, summary, dashboardUrl }) {
   const checklist = summary.checklist || [];
 
   return `${STICKY_COMMENT_MARKER}
-## MergeGuard Review Brief
+## MergeGuard Change Triage
 
 **Merge readiness:** ${state} · **Risk:** ${summary.risk_score ?? "n/a"}/100  
 **Top blocker:** ${topBlocker}  

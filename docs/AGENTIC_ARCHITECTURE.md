@@ -46,7 +46,7 @@ make magenta-validate
 
 | Agent | Responsibility | Deployable Path |
 | --- | --- | --- |
-| `review-compression` | Classifies changed files, assigns owners, ranks hotspots, partitions must-inspect vs safe-to-skim. | `agents/review-compression` |
+| `review-compression` / Change Triage | Classifies changed files, assigns owners, ranks hotspots, partitions must-inspect vs safe-to-skim. | `agents/review-compression` |
 | `intent-extractor` | Extracts `should`, `must_not`, and `out_of_scope` intent items from PR text. | `agents/intent-extractor` |
 | `evidence-mapper` | Maps intent and risky changes to tests/evidence or HITL author-preview questions. | `agents/evidence-mapper` |
 | `semantic-diff-explainer` | Produces behavior deltas, divergent examples, blast-radius summaries. | `agents/semantic-diff-explainer` |

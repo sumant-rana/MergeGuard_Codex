@@ -109,7 +109,7 @@ def build_checks(status: str, prior: dict[str, Any]) -> list[dict[str, Any]]:
     contracts = prior.get("contract-comparator", {}).get("output", {})
     test_coverage = prior.get("test-coverage-validator", {}).get("output", {})
     return [
-        {"name": "MergeGuard / Review Brief", "conclusion": "failure" if status == "blocked" else "neutral" if status == "review" else "success"},
+        {"name": "MergeGuard / Change Triage", "conclusion": "failure" if status == "blocked" else "neutral" if status == "review" else "success"},
         {"name": "MergeGuard / Intent Match", "conclusion": "neutral" if any(link["evidence_status"] == "missing" for link in evidence.get("evidence_links", [])) else "success"},
         {"name": "MergeGuard / Evidence Coverage", "conclusion": "neutral" if evidence.get("missing_evidence_findings") else "success"},
         {"name": "MergeGuard / Test Coverage", "conclusion": test_coverage_conclusion(test_coverage)},

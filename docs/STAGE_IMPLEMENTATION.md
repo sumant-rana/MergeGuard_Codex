@@ -15,9 +15,9 @@ Delivered:
 - Pull request ingestion for `opened`, `synchronize`, `reopened`, `ready_for_review`, and `edited`.
 - Changed-file fetch through GitHub REST when credentials are configured.
 - Fixture changed-file ingestion for local development.
-- Heuristic review compression, missing evidence, risk score, merge readiness, queue dashboard, PR detail dashboard, sticky PR comment, check runs, labels, JSON store, and Postgres schema.
+- Heuristic change triage, missing evidence, risk score, merge readiness, queue dashboard, PR detail dashboard, sticky PR comment, check runs, labels, JSON store, and Postgres schema.
 
-## Stage 2: Review Compression Dashboard
+## Stage 2: Change Triage Dashboard
 
 Status: implemented as deterministic local analysis.
 

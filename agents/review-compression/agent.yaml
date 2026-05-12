@@ -1,7 +1,7 @@
 name: review-compression
 framework: langgraph
 entrypoint: review_compression.main:app
-description: Deterministic review compression agent for changed-file classification, owner routing, hotspots, and safe-to-skim partitioning.
+description: Deterministic change triage agent for changed-file classification, owner routing, hotspots, and safe-to-skim partitioning.
 features:
   memory: false
   guardrails: false

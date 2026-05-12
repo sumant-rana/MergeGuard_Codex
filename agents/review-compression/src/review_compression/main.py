@@ -26,7 +26,7 @@ from packages.core.analysis_utils import (  # noqa: E402
 
 AGENT_ID = "review-compression"
 
-app = create_app(AGENT_ID, "Classify changed files and route reviewer attention.")
+app = create_app(AGENT_ID, "Triage changed files and route reviewer attention.")
 
 
 @app.tool()

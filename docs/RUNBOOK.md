@@ -79,7 +79,7 @@ Start the server again to recreate an empty store.
 3. Open a PR with one risky source file change and no test change.
 4. Confirm:
    - The dashboard row appears.
-   - The PR has a `MergeGuard Review Brief` check run.
+   - The PR has a `MergeGuard Change Triage` check run.
    - The PR has advisory gate checks for evidence, intent, behavioral diff, concept policy, prompt canary, and runtime contracts.
    - One sticky MergeGuard comment appears.
    - `mergeguard/missing-evidence` is applied.

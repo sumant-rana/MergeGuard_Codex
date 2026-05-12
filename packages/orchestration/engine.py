@@ -25,9 +25,9 @@ AGENT_SEQUENCE = [
 AGENT_CATALOG = [
     {
         "id": "review-compression",
-        "label": "Review Compression",
-        "stage": "Hotspots",
-        "description": "Classifies changed files, owners, risk, and review routing.",
+        "label": "Change Triage",
+        "stage": "Triage",
+        "description": "Ranks changed files by review risk, owners, hotspots, and skim-safe areas.",
     },
     {
         "id": "intent-extractor",

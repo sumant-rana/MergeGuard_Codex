@@ -2,7 +2,7 @@
 
 The implementation covers every stage from the spec as a local-first ReviewOps prototype. Later stages use deterministic heuristics and structured fixtures so teams can validate workflow shape before replacing individual engines with deeper analyzers.
 
-## Review Compression
+## Change Triage
 
 Inputs:
 
