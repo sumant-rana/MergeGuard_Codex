@@ -570,6 +570,211 @@
         gap: 10px;
       }
 
+      .agent-workflow-panel {
+        display: grid;
+        gap: 14px;
+      }
+
+      .workflow-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
+      .delay-control {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: min(340px, 100%);
+        color: var(--text-soft);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .delay-control input {
+        width: min(220px, 42vw);
+        accent-color: var(--blue);
+      }
+
+      .agent-flow-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+        gap: 14px;
+      }
+
+      .agent-flow-canvas {
+        display: flex;
+        gap: 34px;
+        align-items: center;
+        min-height: 290px;
+        overflow-x: auto;
+        padding: 18px;
+        border: 1px dashed rgba(148, 163, 184, 0.22);
+        border-radius: 8px;
+        background:
+          linear-gradient(rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+          rgba(5, 10, 18, 0.46);
+        background-size: 22px 22px;
+      }
+
+      .flow-step {
+        position: relative;
+        flex: 0 0 186px;
+      }
+
+      .flow-step:not(:last-child)::after {
+        position: absolute;
+        top: 52px;
+        left: calc(100% + 8px);
+        width: 20px;
+        height: 2px;
+        content: "";
+        background: linear-gradient(90deg, var(--blue), rgba(56, 189, 248, 0.12));
+      }
+
+      .flow-node {
+        display: grid;
+        gap: 10px;
+        min-height: 146px;
+        padding: 13px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(12, 18, 28, 0.94);
+        box-shadow: var(--shadow-soft);
+        transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+      }
+
+      .flow-node.selected {
+        border-color: rgba(56, 189, 248, 0.66);
+        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3), var(--shadow-soft);
+      }
+
+      .flow-node.active {
+        transform: translateY(-2px);
+        border-color: rgba(34, 197, 94, 0.72);
+        background: rgba(16, 35, 31, 0.96);
+      }
+
+      .flow-node.skipped,
+      .flow-node.disabled {
+        opacity: 0.56;
+      }
+
+      .flow-node-main {
+        display: grid;
+        gap: 8px;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .flow-stage {
+        color: var(--blue);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .flow-label {
+        min-height: 36px;
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 900;
+        line-height: 1.12;
+      }
+
+      .flow-description {
+        min-height: 50px;
+        color: var(--text-soft);
+        font-size: 12px;
+      }
+
+      .flow-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .switch {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        width: 42px;
+        height: 24px;
+      }
+
+      .switch input {
+        position: absolute;
+        opacity: 0;
+      }
+
+      .switch span {
+        width: 42px;
+        height: 24px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.13);
+        cursor: pointer;
+        transition: background 0.16s ease, border-color 0.16s ease;
+      }
+
+      .switch span::after {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        content: "";
+        background: var(--muted);
+        transition: transform 0.16s ease, background 0.16s ease;
+      }
+
+      .switch input:checked + span {
+        border-color: rgba(34, 197, 94, 0.42);
+        background: rgba(34, 197, 94, 0.18);
+      }
+
+      .switch input:checked + span::after {
+        transform: translateX(18px);
+        background: var(--green);
+      }
+
+      .agent-output {
+        min-height: 290px;
+        max-height: 560px;
+        overflow: auto;
+        padding: 15px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(7, 11, 17, 0.72);
+      }
+
+      .agent-output h4 {
+        margin: 0 0 8px;
+        font-size: 16px;
+      }
+
+      .agent-output pre {
+        margin: 12px 0 0;
+        padding: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        border-radius: 8px;
+        background: #05070b;
+        color: #dbeafe;
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+
       .agent-card,
       .review-card {
         padding: 13px;
@@ -809,6 +1014,7 @@
         .summary-strip,
         .metrics,
         .filters,
+        .agent-flow-shell,
         .agent-grid,
         .review-grid {
           grid-template-columns: 1fr;
@@ -874,6 +1080,24 @@
 
       <section id="metrics" class="metrics" aria-label="Metrics"></section>
 
+      <section id="agent-workflow-panel" class="panel agent-workflow-panel" aria-label="Agent workflow">
+        <div class="workflow-toolbar">
+          <div>
+            <p class="section-kicker">Agent workflow</p>
+            <h3 class="panel-title">Available agents</h3>
+          </div>
+          <label class="delay-control">
+            Execution gap
+            <input id="agent-delay" type="range" min="0" max="2000" step="250" value="750" />
+            <span id="agent-delay-value">750ms</span>
+          </label>
+        </div>
+        <div class="agent-flow-shell">
+          <div id="agent-flow" class="agent-flow-canvas"></div>
+          <aside id="agent-output" class="agent-output"></aside>
+        </div>
+      </section>
+
       <section class="workspace">
         <aside id="queue-panel" class="panel queue-pane" aria-label="Pull request queue">
           <div class="panel-header">
@@ -918,6 +1142,13 @@
         rows: [],
         selectedRunId: null,
         selectedPrId: null,
+        currentRun: null,
+        agents: [],
+        enabledAgents: new Set(),
+        selectedAgentId: null,
+        runningAgentId: null,
+        flowTimer: null,
+        delayMs: 750,
         filters: { repo: "", owner: "", risk_state: "" }
       };
 
@@ -933,26 +1164,47 @@
       const heroMetaEl = document.querySelector("#hero-meta");
       const riskPanelEl = document.querySelector("#risk-panel");
       const queueCountEl = document.querySelector("#queue-count");
+      const agentFlowEl = document.querySelector("#agent-flow");
+      const agentOutputEl = document.querySelector("#agent-output");
+      const agentDelayEl = document.querySelector("#agent-delay");
+      const agentDelayValueEl = document.querySelector("#agent-delay-value");
 
       runButton.addEventListener("click", runDemo);
       refreshButton.addEventListener("click", () => loadQueue());
+      agentDelayEl.addEventListener("input", () => {
+        state.delayMs = Number(agentDelayEl.value);
+        agentDelayValueEl.textContent = `${state.delayMs}ms`;
+      });
       document.querySelector("#filters").addEventListener("change", (event) => {
         state.filters[event.target.name] = event.target.value;
         loadQueue();
       });
 
+      await loadAgents();
       await loadQueue();
+
+      async function loadAgents() {
+        const data = await fetchJson("/api/agents");
+        state.agents = data.agents || [];
+        state.enabledAgents = new Set(state.agents.map((agent) => agent.id));
+        state.selectedAgentId = state.agents[0]?.id || null;
+        renderAgentWorkflow();
+      }
 
       async function runDemo() {
         const previous = runButton.textContent;
         runButton.disabled = true;
         runButton.textContent = "Running...";
+        startFlowAnimation();
         detailEl.innerHTML = runningState();
         try {
           const response = await fetch("/api/demo/analyze", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: "{}"
+            body: JSON.stringify({
+              enabled_agents: [...state.enabledAgents],
+              agent_delay_ms: state.delayMs
+            })
           });
           const data = await response.json();
           if (data.run) {
@@ -967,6 +1219,7 @@
         } catch (error) {
           detailEl.insertAdjacentHTML("afterbegin", `<div class="error">${esc(error.message || error)}</div>`);
         } finally {
+          stopFlowAnimation();
           runButton.disabled = false;
           runButton.textContent = previous;
         }
@@ -1062,6 +1315,115 @@
         }
       }
 
+      function renderAgentWorkflow(run = state.currentRun) {
+        if (!state.agents.length) {
+          agentFlowEl.innerHTML = `<div class="empty-state">Loading agents.</div>`;
+          agentOutputEl.innerHTML = `<p class="muted">No agent selected.</p>`;
+          return;
+        }
+
+        agentFlowEl.innerHTML = state.agents.map((agent, index) => flowStep(agent, run, index)).join("");
+        for (const button of agentFlowEl.querySelectorAll(".flow-node-main")) {
+          button.addEventListener("click", () => {
+            state.selectedAgentId = button.dataset.agentId;
+            renderAgentWorkflow();
+          });
+        }
+        for (const toggle of agentFlowEl.querySelectorAll(".agent-toggle")) {
+          toggle.addEventListener("change", () => {
+            if (toggle.checked) state.enabledAgents.add(toggle.dataset.agentId);
+            else state.enabledAgents.delete(toggle.dataset.agentId);
+            renderAgentWorkflow();
+          });
+        }
+        renderAgentOutput(run);
+      }
+
+      function flowStep(agent, run, index) {
+        const result = run?.agent_results?.[agent.id];
+        const enabled = state.enabledAgents.has(agent.id);
+        const selected = agent.id === state.selectedAgentId ? " selected" : "";
+        const active = agent.id === state.runningAgentId ? " active" : "";
+        const status = result?.status || (enabled ? "ready" : "disabled");
+        const disabled = !enabled ? " disabled" : "";
+        const skipped = status === "skipped" ? " skipped" : "";
+        return `<div class="flow-step">
+          <div class="flow-node${selected}${active}${disabled}${skipped}">
+            <button class="flow-node-main" type="button" data-agent-id="${escAttr(agent.id)}">
+              <span class="flow-stage">${String(index + 1).padStart(2, "0")} / ${esc(agent.stage)}</span>
+              <span class="flow-label">${esc(agent.label)}</span>
+              <span class="flow-description">${esc(agent.description)}</span>
+            </button>
+            <div class="flow-footer">
+              ${pill(status, status)}
+              <label class="switch" title="Enable ${escAttr(agent.label)}">
+                <input class="agent-toggle" type="checkbox" data-agent-id="${escAttr(agent.id)}" ${enabled ? "checked" : ""} />
+                <span aria-hidden="true"></span>
+              </label>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      function renderAgentOutput(run = state.currentRun) {
+        const agent = state.agents.find((item) => item.id === state.selectedAgentId) || state.agents[0];
+        if (!agent) {
+          agentOutputEl.innerHTML = `<p class="muted">No agent selected.</p>`;
+          return;
+        }
+        const result = run?.agent_results?.[agent.id];
+        const enabled = state.enabledAgents.has(agent.id);
+        if (!result) {
+          agentOutputEl.innerHTML = `<p class="section-kicker">${esc(agent.stage)}</p>
+            <h4>${esc(agent.label)}</h4>
+            <div class="chip-row">${pill(enabled ? "ready" : "disabled", enabled ? "info" : "disabled")}</div>
+            <p class="muted">${esc(agent.description)}</p>
+            <pre>${esc(JSON.stringify({ agent_id: agent.id, status: enabled ? "ready" : "disabled" }, null, 2))}</pre>`;
+          return;
+        }
+        const payload = {
+          agent_id: result.agent_id,
+          status: result.status,
+          confidence: result.confidence,
+          messages: result.messages || [],
+          output: result.output || {},
+          trace: result.trace || []
+        };
+        agentOutputEl.innerHTML = `<p class="section-kicker">${esc(agent.stage)}</p>
+          <h4>${esc(agent.label)}</h4>
+          <div class="chip-row">
+            ${pill(result.status || "completed")}
+            ${result.confidence == null ? "" : pill(`${Math.round(result.confidence * 100)}% confidence`, "pass")}
+          </div>
+          <p class="muted">${esc((result.messages || [agent.description])[0] || agent.description)}</p>
+          <pre>${esc(JSON.stringify(payload, null, 2))}</pre>`;
+      }
+
+      function startFlowAnimation() {
+        stopFlowAnimation();
+        const enabled = state.agents.filter((agent) => state.enabledAgents.has(agent.id));
+        if (!enabled.length) return;
+        let index = 0;
+        state.runningAgentId = enabled[0].id;
+        renderAgentWorkflow();
+        state.flowTimer = window.setInterval(() => {
+          index += 1;
+          if (index >= enabled.length) {
+            stopFlowAnimation();
+            return;
+          }
+          state.runningAgentId = enabled[index].id;
+          renderAgentWorkflow();
+        }, Math.max(250, state.delayMs || 750));
+      }
+
+      function stopFlowAnimation() {
+        if (state.flowTimer) window.clearInterval(state.flowTimer);
+        state.flowTimer = null;
+        state.runningAgentId = null;
+        renderAgentWorkflow();
+      }
+
       function filteredRows() {
         return state.rows.filter((row) => {
           const pr = row.pull_request || {};
@@ -1110,6 +1472,7 @@
 
       function renderDetail(run) {
         if (!run) return renderEmpty();
+        state.currentRun = run;
         const summary = run.summary || {};
         const pr = run.pull_request || {};
         const score = numericScore(summary.risk_score);
@@ -1183,6 +1546,7 @@
             <pre class="comment-box">${esc(summary.comment || "No comment generated.")}</pre>
           </section>
         `;
+        renderAgentWorkflow(run);
       }
 
       function updateHero({ run, pr, summary, score, status, agentCount }) {
@@ -1204,6 +1568,7 @@
       }
 
       function renderEmpty() {
+        state.currentRun = null;
         updateHero({
           run: {},
           pr: {},
@@ -1213,9 +1578,11 @@
           agentCount: 0
         });
         detailEl.innerHTML = `<div class="empty-state">Select a pull request from the queue.</div>`;
+        renderAgentWorkflow(null);
       }
 
       function runningState() {
+        state.currentRun = null;
         updateHero({
           run: { state: "running" },
           pr: {},

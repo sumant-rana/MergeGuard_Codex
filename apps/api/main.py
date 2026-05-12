@@ -10,7 +10,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 from packages.mongo import LocalMergeGuardStore
-from packages.orchestration.engine import MergeGuardOrchestrator
+from packages.orchestration.engine import AGENT_CATALOG, AGENT_SEQUENCE, MergeGuardOrchestrator
 from packages.github_pr import normalize_github_pr_payload
 
 
@@ -28,10 +28,15 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
         elif path == "/api/queue":
             store = self.store()
             self.send_json({"queue": store.queue(), "metrics": store.metrics()})
+        elif path == "/api/agents":
+            self.send_json({"agents": AGENT_CATALOG, "sequence": AGENT_SEQUENCE})
         elif path.startswith("/api/runs/"):
             run_id = path.rsplit("/", 1)[-1]
             run = self.store().get_run(run_id)
-            self.send_json({"run": run} if run else {"error": "not found"}, status=200 if run else 404)
+            self.send_json(
+                {"run": run} if run else {"error": "not found"},
+                status=200 if run else 404,
+            )
         elif path == "/api/metrics":
             self.send_json(self.store().metrics())
         else:
@@ -44,22 +49,35 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
             fixture = body.get("fixture", "fixtures/agentic/demo_pr.json")
             payload = json.loads((REPO_ROOT / fixture).read_text())
             store = self.store()
-            run = MergeGuardOrchestrator(REPO_ROOT, store).analyze_demo_pr(payload)
+            run = MergeGuardOrchestrator(REPO_ROOT, store).analyze_demo_pr(
+                payload,
+                enabled_agents=body.get("enabled_agents"),
+                agent_delay_ms=int(body.get("agent_delay_ms") or 0),
+            )
             self.send_json({"run": run}, status=500 if run.get("state") == "failed" else 200)
         elif path == "/api/github/pr/analyze":
             try:
-                payload = normalize_github_pr_payload(self.read_json(default={}))
+                body = self.read_json(default={})
+                payload = normalize_github_pr_payload(body)
             except ValueError as exc:
                 self.send_json({"error": str(exc)}, status=400)
                 return
             store = self.store()
-            run = MergeGuardOrchestrator(REPO_ROOT, store).analyze_pull_request(payload)
+            settings = body.get("mergeguard") if isinstance(body.get("mergeguard"), dict) else {}
+            run = MergeGuardOrchestrator(REPO_ROOT, store).analyze_pull_request(
+                payload,
+                enabled_agents=settings.get("enabled_agents"),
+                agent_delay_ms=int(settings.get("agent_delay_ms") or 0),
+            )
             self.send_json({"run": run}, status=500 if run.get("state") == "failed" else 200)
         elif path.startswith("/api/overrides/"):
             body = self.read_json(default={})
             parts = path.strip("/").split("/")
             if len(parts) != 4:
-                self.send_json({"error": "expected /api/overrides/{run_id}/{finding_id}"}, status=400)
+                self.send_json(
+                    {"error": "expected /api/overrides/{run_id}/{finding_id}"},
+                    status=400,
+                )
                 return
             _, _, run_id, finding_id = parts
             item = self.store().record_override(
