@@ -17,6 +17,7 @@ members = [
     "mergeguard-agent-prompt-canary",
     "mergeguard-agent-review-compression",
     "mergeguard-agent-semantic-diff-explainer",
+    "mergeguard-agent-test-coverage-validator",
     "mergeguard-agent-truth-report-synthesizer",
     "mergeguard-agentic-demo",
     "mergeguard-shared",
@@ -1581,6 +1582,23 @@ requires-dist = [
 name = "mergeguard-agent-semantic-diff-explainer"
 version = "0.2.0"
 source = { editable = "agents/semantic-diff-explainer" }
+dependencies = [
+    { name = "magenta-sdklanggraph" },
+    { name = "python-dotenv" },
+    { name = "runner-shared", extra = ["mongodb", "tracing"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "magenta-sdklanggraph", git = "https://github.com/10gen/magenta-client-libraries?subdirectory=packages%2Fmagenta-sdklanggraph" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "runner-shared", extras = ["mongodb", "tracing"], git = "https://github.com/10gen/magenta-client-libraries?subdirectory=packages%2Frunner-shared" },
+]
+
+[[package]]
+name = "mergeguard-agent-test-coverage-validator"
+version = "0.2.0"
+source = { editable = "agents/test-coverage-validator" }
 dependencies = [
     { name = "magenta-sdklanggraph" },
     { name = "python-dotenv" },

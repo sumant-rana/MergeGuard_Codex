@@ -1014,6 +1014,11 @@
         color: #99f6e4;
       }
 
+      .agent-icon.tests {
+        background: rgba(34, 197, 94, 0.18);
+        color: #bbf7d0;
+      }
+
       .agent-icon.report {
         background: rgba(248, 113, 113, 0.16);
         color: #fecaca;
@@ -1554,13 +1559,14 @@
       const agentPositions = [
         { x: 12, y: 22 },
         { x: 30, y: 12 },
-        { x: 50, y: 14 },
+        { x: 50, y: 10 },
         { x: 70, y: 12 },
         { x: 88, y: 22 },
-        { x: 16, y: 78 },
-        { x: 38, y: 86 },
-        { x: 62, y: 86 },
-        { x: 84, y: 78 }
+        { x: 90, y: 78 },
+        { x: 70, y: 90 },
+        { x: 50, y: 88 },
+        { x: 30, y: 90 },
+        { x: 10, y: 78 }
       ];
 
       const agentVisuals = {
@@ -1572,6 +1578,7 @@
         "prompt-canary": { icon: "PC", tone: "prompt" },
         "contract-comparator": { icon: "CT", tone: "contracts" },
         "evidence-mapper": { icon: "EV", tone: "evidence" },
+        "test-coverage-validator": { icon: "TC", tone: "tests" },
         "truth-report-synthesizer": { icon: "TR", tone: "report" }
       };
 
@@ -2058,6 +2065,8 @@
       }
 
       function detailTabs(run, summary, pr, agentNames) {
+        const coverage = summary.test_coverage || {};
+        const coverageConfidence = coverage.confidence == null ? "n/a" : `${Math.round(coverage.confidence * 100)}%`;
         return [
           {
             id: "overview",
@@ -2107,6 +2116,23 @@
             description: "How PR intent maps to tests, changed files, and missing proof.",
             count: countItems(summary.evidence_links),
             content: cards(summary.evidence_links, evidenceCard, "No evidence gaps detected.")
+          },
+          {
+            id: "tests",
+            label: "Tests",
+            kicker: "Functional coverage",
+            title: "Changed-test coverage",
+            description: "How changed tests cover source changes, PR intent, and behavior deltas.",
+            count: countItems(summary.test_coverage_findings) + countItems(summary.test_coverage_matrix),
+            content: `
+              <div class="summary-strip">
+                ${summaryItem("Coverage score", coverage.coverage_score == null ? "n/a" : `${coverage.coverage_score}%`)}
+                ${summaryItem("Coverage status", statusLabel(coverage.coverage_status || "unknown"))}
+                ${summaryItem("Confidence", coverageConfidence)}
+              </div>
+              <div class="tab-section">${cards(summary.test_coverage_findings, testCoverageFindingCard, "No test coverage gaps detected.")}</div>
+              <div class="tab-section">${cards(summary.test_coverage_matrix, testCoverageCard, "No changed source targets required tests.")}</div>
+            `
           },
           {
             id: "behavior",
@@ -2240,6 +2266,20 @@
         return `<div class="review-card-top"><h4>${esc(item.intent_text || item.message || "Evidence")}</h4>${pill(item.evidence_status || item.severity || "info")}</div>
           <p>${esc(item.suggested_action || "")}</p>
           <div class="muted">${esc((item.mapped_paths || item.evidence_paths || []).join(", ") || "no mapped paths")}</div>`;
+      }
+
+      function testCoverageFindingCard(item) {
+        return `<div class="review-card-top"><h4>${esc(item.message || "Coverage gap")}</h4>${pill(item.severity || "review")}</div>
+          <p>${esc(item.suggested_action || "Add or link changed-test evidence.")}</p>
+          <div class="muted">${esc(item.path || "changed behavior")}</div>`;
+      }
+
+      function testCoverageCard(item) {
+        const tests = (item.matched_tests || []).map((test) => test.path).join(", ");
+        return `<div class="review-card-top"><h4><code>${esc(item.path)}</code></h4>${pill(item.status || "unknown")}</div>
+          <p>${esc(item.reason || "")}</p>
+          <div class="muted">coverage ${esc(Math.round(Number(item.coverage || 0) * 100))}% / confidence ${esc(Math.round(Number(item.confidence || 0) * 100))}%</div>
+          <div class="muted">${esc(tests || "no matched changed tests")}</div>`;
       }
 
       function behaviorCard(item) {

@@ -54,6 +54,7 @@ make magenta-validate
 | `policy-gate` | Evaluates policy pack rules and emits pass/warn/block findings plus override suspend payloads. | `agents/policy-gate` |
 | `prompt-canary` | Runs deterministic prompt/model/agent workflow canary checks. | `agents/prompt-canary` |
 | `contract-comparator` | Compares shape-only runtime contracts and suggests property-test stubs. | `agents/contract-comparator` |
+| `test-coverage-validator` | Validates whether changed tests cover PR intent, behavioral deltas, and changed source functionality. | `agents/test-coverage-validator` |
 | `truth-report-synthesizer` | Aggregates all agent outputs into merge readiness, checks, PR comment, and dashboard summary. | `agents/truth-report-synthesizer` |
 
 ## Orchestration Flow
@@ -68,7 +69,8 @@ The demo orchestration order is:
 6. `prompt-canary`
 7. `contract-comparator`
 8. `evidence-mapper`
-9. `truth-report-synthesizer`
+9. `test-coverage-validator`
+10. `truth-report-synthesizer`
 
 The sequence is implemented in:
 

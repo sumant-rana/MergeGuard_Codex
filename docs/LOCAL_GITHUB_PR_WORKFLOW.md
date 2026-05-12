@@ -153,7 +153,7 @@ The endpoint accepts this shape:
 }
 ```
 
-The API normalizes the payload, runs all nine agents, stores the run, and updates the dashboard queue.
+The API normalizes the payload, runs all ten agents, stores the run, and updates the dashboard queue.
 
 ## Webhook Alternative
 

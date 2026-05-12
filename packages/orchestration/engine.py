@@ -18,6 +18,7 @@ AGENT_SEQUENCE = [
     "prompt-canary",
     "contract-comparator",
     "evidence-mapper",
+    "test-coverage-validator",
     "truth-report-synthesizer",
 ]
 
@@ -69,6 +70,12 @@ AGENT_CATALOG = [
         "label": "Evidence Mapper",
         "stage": "Evidence",
         "description": "Maps intent and risky changes to tests, evidence, or missing proof.",
+    },
+    {
+        "id": "test-coverage-validator",
+        "label": "Test Coverage Validator",
+        "stage": "Tests",
+        "description": "Checks whether changed tests cover PR intent, behavior, and source changes.",
     },
     {
         "id": "truth-report-synthesizer",
@@ -215,6 +222,10 @@ def summary_from_results(prior_results: dict[str, Any], enabled: set[str]) -> di
         "safe_to_skim": compression.get("safe_to_skim", []),
         "owner_summary": compression.get("owner_summary", []),
         "hotspot_themes": compression.get("hotspot_themes", []),
+        "test_coverage": prior_results.get("test-coverage-validator", {}).get("output", {}),
+        "test_coverage_findings": prior_results.get("test-coverage-validator", {})
+        .get("output", {})
+        .get("coverage_findings", []),
         "checks": [],
         "comment": "",
         "enabled_agents": sorted(enabled, key=AGENT_SEQUENCE.index),

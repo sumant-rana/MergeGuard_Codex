@@ -26,6 +26,7 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     policy = prior.get("policy-gate", {}).get("output", {})
     prompt = prior.get("prompt-canary", {}).get("output", {})
     contracts = prior.get("contract-comparator", {}).get("output", {})
+    test_coverage = prior.get("test-coverage-validator", {}).get("output", {})
 
     risk_score = min(
         100,
@@ -33,9 +34,11 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         + len(evidence.get("missing_evidence_findings", [])) * 8
         + len(policy.get("policy_findings", [])) * 12
         + len(prompt.get("prompt_findings", [])) * 16
-        + len(contracts.get("contract_findings", [])) * 10,
+        + len(contracts.get("contract_findings", [])) * 10
+        + len(test_coverage.get("coverage_findings", [])) * 9
+        + (10 if test_coverage.get("coverage_status") == "blocked" else 0),
     )
-    blockers = collect_blockers(evidence, policy, prompt, contracts)
+    blockers = collect_blockers(evidence, policy, prompt, contracts, test_coverage)
     status = "blocked" if any(item.get("severity") == "block" for item in blockers) else "review" if blockers or risk_score >= 45 else "pass"
     top_blocker = blockers[0]["message"] if blockers else None
     next_action = blockers[0].get("suggested_action") if blockers else "Proceed with normal review."
@@ -57,12 +60,17 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         "prompt_canary_runs": prompt.get("prompt_canary_runs", []),
         "prompt_findings": prompt.get("prompt_findings", []),
         "contract_findings": contracts.get("contract_findings", []),
+        "test_coverage": test_coverage,
+        "test_coverage_score": test_coverage.get("coverage_score"),
+        "test_coverage_findings": test_coverage.get("coverage_findings", []),
+        "test_coverage_matrix": test_coverage.get("coverage_matrix", []),
         "suggested_tests": [
             *contracts.get("suggested_tests", []),
             *[
                 {"path": item["path"], "framework": "repo-default", "intent": item["suggested_action"]}
                 for item in evidence.get("missing_evidence_findings", [])
             ],
+            *test_coverage.get("recommendations", []),
         ],
         "owner_summary": compression.get("owner_summary", []),
         "hotspot_themes": compression.get("hotspot_themes", []),
@@ -80,7 +88,13 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
 
 def collect_blockers(*sections: dict[str, Any]) -> list[dict[str, Any]]:
     blockers: list[dict[str, Any]] = []
-    keys = ["missing_evidence_findings", "policy_findings", "prompt_findings", "contract_findings"]
+    keys = [
+        "missing_evidence_findings",
+        "policy_findings",
+        "prompt_findings",
+        "contract_findings",
+        "coverage_findings",
+    ]
     for section in sections:
         for key in keys:
             blockers.extend(section.get(key, []))
@@ -93,15 +107,26 @@ def build_checks(status: str, prior: dict[str, Any]) -> list[dict[str, Any]]:
     policy = prior.get("policy-gate", {}).get("output", {})
     prompt = prior.get("prompt-canary", {}).get("output", {})
     contracts = prior.get("contract-comparator", {}).get("output", {})
+    test_coverage = prior.get("test-coverage-validator", {}).get("output", {})
     return [
         {"name": "MergeGuard / Review Brief", "conclusion": "failure" if status == "blocked" else "neutral" if status == "review" else "success"},
         {"name": "MergeGuard / Intent Match", "conclusion": "neutral" if any(link["evidence_status"] == "missing" for link in evidence.get("evidence_links", [])) else "success"},
         {"name": "MergeGuard / Evidence Coverage", "conclusion": "neutral" if evidence.get("missing_evidence_findings") else "success"},
+        {"name": "MergeGuard / Test Coverage", "conclusion": test_coverage_conclusion(test_coverage)},
         {"name": "MergeGuard / Behavioral Diff", "conclusion": "neutral" if semantic.get("behavioral_deltas") else "success"},
         {"name": "MergeGuard / Concept Policy", "conclusion": "failure" if any(item["severity"] == "block" for item in policy.get("policy_findings", [])) else "neutral" if policy.get("policy_findings") else "success"},
         {"name": "MergeGuard / Prompt Canary", "conclusion": "failure" if prompt.get("prompt_findings") else "success"},
         {"name": "MergeGuard / Runtime Contracts", "conclusion": "neutral" if contracts.get("contract_findings") else "success"},
     ]
+
+
+def test_coverage_conclusion(test_coverage: dict[str, Any]) -> str:
+    status = test_coverage.get("coverage_status")
+    if status == "blocked":
+        return "failure"
+    if status == "review" or test_coverage.get("coverage_findings"):
+        return "neutral"
+    return "success"
 
 
 def render_comment(

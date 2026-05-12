@@ -19,6 +19,7 @@ members = [
   "agents/policy-gate",
   "agents/prompt-canary",
   "agents/contract-comparator",
+  "agents/test-coverage-validator",
   "agents/truth-report-synthesizer"
 ]
 

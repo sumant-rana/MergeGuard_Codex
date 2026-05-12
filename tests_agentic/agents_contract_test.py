@@ -64,6 +64,31 @@ class AgentContractTest(unittest.TestCase):
         self.assertEqual(prompt["output"]["prompt_canary_runs"][0]["status"], "fail")
         self.assertTrue(contract["output"]["contract_findings"])
 
+    def test_test_coverage_validator_contract(self) -> None:
+        compression = self.invoke("review-compression")
+        intent = self.invoke("intent-extractor")
+        semantic = self.invoke("semantic-diff-explainer", {"review-compression": compression})
+        evidence = self.invoke(
+            "evidence-mapper",
+            {"review-compression": compression, "intent-extractor": intent},
+        )
+        coverage = self.invoke(
+            "test-coverage-validator",
+            {
+                "review-compression": compression,
+                "intent-extractor": intent,
+                "semantic-diff-explainer": semantic,
+                "evidence-mapper": evidence,
+            },
+        )
+        output = coverage["output"]
+        self.assertEqual(coverage["agent_id"], "test-coverage-validator")
+        self.assertEqual(coverage["status"], "failed")
+        self.assertEqual(output["coverage_status"], "blocked")
+        self.assertLess(output["coverage_score"], 50)
+        self.assertTrue(output["coverage_findings"])
+        self.assertTrue(output["coverage_matrix"])
+
     def test_platform_message_payload_contract(self) -> None:
         payload = {"payload": {"analysis_run_id": "run-1", "changed_files": []}}
         self.assertEqual(_payload_from_message({"content": json.dumps(payload)}), payload["payload"])

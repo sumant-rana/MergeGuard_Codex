@@ -1,0 +1,10 @@
+name: test-coverage-validator
+framework: langgraph
+entrypoint: test_coverage_validator.main:app
+description: Test coverage validation agent that checks whether PR tests cover changed functionality, behavior, and intent.
+features:
+  memory: true
+  guardrails: true
+config:
+  provider: local
+  model: deterministic-demo

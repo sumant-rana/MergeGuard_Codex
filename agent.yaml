@@ -19,5 +19,7 @@ agents:
     path: agents/prompt-canary
   - name: contract-comparator
     path: agents/contract-comparator
+  - name: test-coverage-validator
+    path: agents/test-coverage-validator
   - name: truth-report-synthesizer
     path: agents/truth-report-synthesizer

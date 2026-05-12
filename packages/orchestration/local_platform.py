@@ -15,6 +15,7 @@ AGENT_MODULES = {
     "policy-gate": "agents/policy-gate/src/policy_gate/main.py",
     "prompt-canary": "agents/prompt-canary/src/prompt_canary/main.py",
     "contract-comparator": "agents/contract-comparator/src/contract_comparator/main.py",
+    "test-coverage-validator": "agents/test-coverage-validator/src/test_coverage_validator/main.py",
     "truth-report-synthesizer": "agents/truth-report-synthesizer/src/truth_report_synthesizer/main.py",
 }
 
