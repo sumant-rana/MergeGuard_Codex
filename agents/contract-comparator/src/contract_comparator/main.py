@@ -20,6 +20,7 @@ app = create_app(AGENT_ID, "Compare shape-only runtime contracts and propose pro
 
 @app.tool(is_local=False)
 def diff_contract(contract: dict[str, Any]) -> dict[str, Any] | None:
+    """Compare old and new contract shapes and return removed or changed-type fields."""
     old = contract.get("old") or contract.get("before") or {}
     new = contract.get("new") or contract.get("after") or {}
     removed = [key for key in old if key not in new]

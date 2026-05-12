@@ -20,6 +20,7 @@ app = create_app(AGENT_ID, "Evaluate prompt/model/agent workflow drift.")
 
 @app.tool()
 def judge_prompt(file: dict[str, Any], raw_file: dict[str, Any], suite: dict[str, Any]) -> dict[str, Any]:
+    """Score a prompt-related file change against a canary suite for drift, format, latency, and cost."""
     patch = str(raw_file.get("patch", "")).lower()
     unsafe = any(marker in patch for marker in ["ignore previous", "bypass", "disable safety", "reveal secret"])
     format_fail = suite.get("assertions", {}).get("format") == "json" and "trailing comma" in patch

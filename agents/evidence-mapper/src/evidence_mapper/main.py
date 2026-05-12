@@ -21,6 +21,7 @@ app = create_app(AGENT_ID, "Map intent and findings to tests, canaries, contract
 
 @app.tool()
 def map_intent(item: dict[str, Any], files: list[dict[str, Any]]) -> dict[str, Any]:
+    """Map an intent item to changed files, tests, or HITL questions that cover it."""
     terms = item.get("terms") or important_terms(item.get("text", ""))
     matched_files = [
         file

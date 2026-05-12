@@ -21,6 +21,7 @@ app = create_app(AGENT_ID, "Explain changed behavior and blast radius.")
 
 @app.tool(is_local=False)
 def extract_function_deltas(file: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract symbol-level behavior deltas and blast-radius signals from a changed file."""
     symbols = file.get("symbols") or [{"name": file["path"], "kind": "file", "confidence": 0.4}]
     hits = risk_hits(file["path"], " ".join(file.get("risk_reasons", [])))
     deltas = []

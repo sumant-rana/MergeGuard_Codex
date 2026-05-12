@@ -36,6 +36,7 @@ app = create_app(AGENT_ID, "Classify changed functions and files into review con
 
 @app.tool()
 def classify_concepts(file: dict[str, Any], raw_file: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """Tag a changed file with concept findings (auth, PII, billing, SQL, prompt, etc.)."""
     raw_file = raw_file or {}
     haystack = "\n".join(
         str(part).lower()
