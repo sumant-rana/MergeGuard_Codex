@@ -1,0 +1,29 @@
+[project]
+name = "mergeguard-agent-semantic-evidence-agent"
+version = "0.2.0"
+description = "MergeGuard semantic evidence memory Magenta agent"
+requires-python = ">=3.11"
+dependencies = [
+    "runner-shared[mongodb,tracing]",
+    "magenta-sdklanggraph",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+semantic-evidence-agent = "semantic_evidence_agent.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/semantic_evidence_agent"]
+
+[tool.uv.sources]
+runner-shared = { git = "https://github.com/10gen/magenta-client-libraries", subdirectory = "packages/runner-shared" }
+magenta-sdklanggraph = { git = "https://github.com/10gen/magenta-client-libraries", subdirectory = "packages/magenta-sdklanggraph" }
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+

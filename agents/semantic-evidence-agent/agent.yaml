@@ -1,0 +1,11 @@
+name: semantic-evidence-agent
+framework: langgraph
+entrypoint: semantic_evidence_agent.main:app
+description: Repository memory agent that indexes PR evidence and retrieves related tests, docs, prior PRs, and policy context through Magenta memory.
+features:
+  memory: true
+  guardrails: true
+config:
+  provider: local
+  model: deterministic-demo
+
