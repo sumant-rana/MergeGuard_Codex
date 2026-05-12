@@ -59,6 +59,28 @@ scripts/mergeguard_pr.py create \
   --body "Fixes #123. Ensure retry failure stays idempotent."
 ```
 
+Run this from, or point `--repo` at, a target repository that is on a feature branch with commits. GitHub cannot create a PR from `main` into `main`. A minimal flow is:
+
+```sh
+cd /absolute/path/to/target-repo
+git switch -c mergeguard-demo
+# make a change
+git add .
+git commit -m "Fix issue"
+git push -u origin mergeguard-demo
+```
+
+Then rerun the `create` command, or pass the branch explicitly:
+
+```sh
+scripts/mergeguard_pr.py create \
+  --repo /absolute/path/to/target-repo \
+  --base main \
+  --head mergeguard-demo \
+  --title "Fix issue" \
+  --body "Fixes #123"
+```
+
 The script runs `gh pr create`, then immediately calls:
 
 ```text

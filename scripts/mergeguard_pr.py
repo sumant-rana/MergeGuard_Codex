@@ -116,6 +116,8 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
 
 
 def create_pr(args: argparse.Namespace, repo: Path) -> str | None:
+    assert_create_branch_is_valid(args, repo)
+
     cmd = ["gh", "pr", "create"]
     if args.fill or not (args.title or args.body or args.body_file):
         cmd.append("--fill")
@@ -143,6 +145,40 @@ def create_pr(args: argparse.Namespace, repo: Path) -> str | None:
     if output:
         print(output)
     return selector
+
+
+def assert_create_branch_is_valid(args: argparse.Namespace, repo: Path) -> None:
+    if not args.base:
+        return
+
+    head = normalize_branch_name(args.head) if args.head else current_branch(repo)
+    base = normalize_branch_name(args.base)
+    if head and base and head == base:
+        raise CommandError(
+            "cannot create a PR because the head branch is the same as the base branch "
+            f"({head!r}).\n"
+            "Create and push a feature branch first, then rerun this command:\n"
+            "  cd /path/to/target-repo\n"
+            "  git switch -c mergeguard-demo\n"
+            "  # make a change, then commit it\n"
+            "  git push -u origin mergeguard-demo\n"
+            "Then run mergeguard_pr.py create again, or pass --head mergeguard-demo."
+        )
+
+
+def current_branch(repo: Path) -> str:
+    branch = run_text(["git", "branch", "--show-current"], repo).strip()
+    if branch:
+        return branch
+    branch = run_text(["git", "rev-parse", "--abbrev-ref", "HEAD"], repo).strip()
+    return "" if branch == "HEAD" else branch
+
+
+def normalize_branch_name(value: str | None) -> str:
+    if not value:
+        return ""
+    branch = value.rsplit(":", 1)[-1]
+    return branch.removeprefix("refs/heads/")
 
 
 def collect_pr_payload(repo: Path, *, selector: str | None, created_by_cli: bool) -> dict[str, Any]:
