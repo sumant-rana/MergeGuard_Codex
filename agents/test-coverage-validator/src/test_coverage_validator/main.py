@@ -30,6 +30,7 @@ def evaluate_target_coverage(
     intent_items: list[dict[str, Any]],
     behavior_deltas: list[dict[str, Any]],
 ) -> dict[str, Any]:
+    """Evaluate which tests cover a given target's intent items and behavior deltas."""
     target_terms = target_terms_for(target, intent_items, behavior_deltas)
     matches = sorted(
         [test_match(target, test, target_terms) for test in tests],

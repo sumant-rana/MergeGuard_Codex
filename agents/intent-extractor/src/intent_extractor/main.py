@@ -22,6 +22,7 @@ app = create_app(AGENT_ID, "Extract review intent from PR text and linked work i
 
 @app.tool()
 def extract_items(text: str) -> list[dict[str, Any]]:
+    """Extract should / must-not / out-of-scope intent items from PR or work-item text."""
     chunks = [
         chunk.strip(" -\t")
         for chunk in re.split(r"\n|[.;]", text)

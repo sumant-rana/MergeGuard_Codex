@@ -1,4 +1,11 @@
 node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
 .DS_Store
 .idea/
 .env
@@ -8,3 +15,9 @@ dist/
 .next/
 tools/bin/agentic
 tools/bin/agentic_*
+.agentic/
+.env.*
+agents/*/.gitignore
+agents/*/logs/
+agents/*/.devcontainer/
+logs/

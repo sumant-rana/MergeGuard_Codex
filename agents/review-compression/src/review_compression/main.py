@@ -31,6 +31,7 @@ app = create_app(AGENT_ID, "Triage changed files and route reviewer attention.")
 
 @app.tool()
 def classify_file(file: dict[str, Any], settings: dict[str, Any]) -> dict[str, Any]:
+    """Classify a changed file into category, risk signals, and required reviewer action."""
     path = normalize_path(file.get("path", ""))
     patch = str(file.get("patch", ""))
     content = str(file.get("content", ""))
