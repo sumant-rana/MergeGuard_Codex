@@ -774,6 +774,111 @@
         margin-top: 16px;
       }
 
+      .overview-check-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .overview-check-card {
+        --overview-color: var(--blue);
+        --overview-glow: rgba(56, 189, 248, 0.14);
+        --overview-border: rgba(56, 189, 248, 0.3);
+        display: grid;
+        justify-items: center;
+        align-content: start;
+        min-height: 202px;
+        padding: 16px 12px;
+        border: 1px solid var(--overview-border);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 50% -12%, var(--overview-glow), transparent 62%),
+          rgba(13, 20, 32, 0.84);
+        text-align: center;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .overview-check-card.success {
+        --overview-color: var(--green);
+        --overview-glow: rgba(34, 197, 94, 0.18);
+        --overview-border: rgba(34, 197, 94, 0.38);
+      }
+
+      .overview-check-card.neutral {
+        --overview-color: var(--amber);
+        --overview-glow: rgba(245, 158, 11, 0.18);
+        --overview-border: rgba(245, 158, 11, 0.38);
+      }
+
+      .overview-check-card.failure {
+        --overview-color: var(--red);
+        --overview-glow: rgba(244, 63, 94, 0.2);
+        --overview-border: rgba(244, 63, 94, 0.42);
+      }
+
+      .overview-status-dial {
+        --status-score: 100;
+        width: 106px;
+        aspect-ratio: 1;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background:
+          conic-gradient(var(--overview-color) calc(var(--status-score) * 1%), rgba(148, 163, 184, 0.16) 0),
+          radial-gradient(circle at center, #101827 0 58%, transparent 59%);
+        box-shadow:
+          0 0 28px var(--overview-glow),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      }
+
+      .overview-status-inner {
+        display: grid;
+        place-items: center;
+        width: 74px;
+        aspect-ratio: 1;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 50%;
+        background: #090f19;
+      }
+
+      .overview-status-label {
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 950;
+        line-height: 1;
+        text-transform: uppercase;
+      }
+
+      .overview-status-caption {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .overview-check-card h4 {
+        width: 100%;
+        margin: 12px 0 0;
+        overflow-wrap: anywhere;
+        color: #dbeafe;
+        font-size: 12px;
+        line-height: 1.24;
+      }
+
+      .overview-check-card p {
+        display: -webkit-box;
+        width: 100%;
+        margin: 8px 0 0;
+        overflow: hidden;
+        color: var(--text-soft);
+        font-size: 11px;
+        line-height: 1.36;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+      }
+
       .agent-workflow-panel {
         display: grid;
         gap: 14px;
@@ -1454,6 +1559,18 @@
           grid-template-columns: 1fr;
         }
       }
+
+      @media (max-width: 760px) {
+        .overview-check-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 520px) {
+        .overview-check-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
@@ -2077,10 +2194,7 @@
             count: countItems(summary.checks),
             content: `
               <div class="tab-section">
-                ${cards(summary.checks, checkCard, "No checks generated for this run.")}
-              </div>
-              <div class="tab-section">
-                <pre class="comment-box">${esc(summary.comment || "No generated review comment yet.")}</pre>
+                ${overviewChecks(summary.checks)}
               </div>
             `
           },
@@ -2245,9 +2359,36 @@
         return `<div class="review-grid">${list.slice(0, 8).map((item) => `<article class="review-card">${renderer(item)}</article>`).join("")}</div>`;
       }
 
-      function checkCard(item) {
-        return `<div class="review-card-top"><h4>${esc(item.name || "MergeGuard check")}</h4>${pill(item.conclusion || item.status || "unknown")}</div>
-          <p>${esc(item.summary || item.details || "No additional check details.")}</p>`;
+      function overviewChecks(items) {
+        const list = items || [];
+        if (!list.length) return `<p class="muted">No checks generated for this run.</p>`;
+        return `<div class="overview-check-grid">${list.slice(0, 8).map(overviewCheckCard).join("")}</div>`;
+      }
+
+      function overviewCheckCard(item) {
+        const state = item.conclusion || item.status || "unknown";
+        const tone = checkTone(state);
+        const label = tone === "success" ? "success" : tone === "failure" ? "failure" : "neutral";
+        const score = tone === "neutral" ? 72 : 100;
+        return `<article class="overview-check-card ${escAttr(tone)}">
+          <div class="overview-status-dial" style="--status-score:${score}">
+            <div class="overview-status-inner">
+              <div>
+                <div class="overview-status-label">${esc(label)}</div>
+                <div class="overview-status-caption">state</div>
+              </div>
+            </div>
+          </div>
+          <h4>${esc(item.name || "MergeGuard check")}</h4>
+          <p>${esc(item.summary || item.details || "No additional check details.")}</p>
+        </article>`;
+      }
+
+      function checkTone(value) {
+        const key = String(value || "neutral").toLowerCase().replace(/[^a-z0-9_]+/g, "_");
+        if (["success", "pass", "passed", "completed", "ok"].includes(key)) return "success";
+        if (key.includes("fail") || key.includes("block") || key.includes("error") || key.includes("critical")) return "failure";
+        return "neutral";
       }
 
       function ownerCard(item) {
