@@ -187,8 +187,10 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    host = "127.0.0.1"
-    port = 4100
+    # Allow override via env so the same entrypoint works in a container
+    # (bind 0.0.0.0) and in a host shell (bind loopback).
+    host = os.environ.get("MERGEGUARD_HOST", "127.0.0.1")
+    port = int(os.environ.get("MERGEGUARD_PORT", "4100"))
     server = ThreadingHTTPServer((host, port), MergeGuardHandler)
     print(f"MergeGuard agentic dashboard: http://{host}:{port}")
     server.serve_forever()

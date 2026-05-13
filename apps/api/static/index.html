@@ -5382,15 +5382,21 @@
         const result = run?.agent_results?.[agent.id];
         const enabled = state.enabledAgents.has(agent.id);
         if (!result) {
+          const hasRun = Boolean(run?.id);
+          const emptyMessage = !enabled
+            ? "This agent is disabled. Enable it in the pipeline panel to include it in the next run."
+            : hasRun
+              ? "This agent didn't run for the current analysis (pipeline failed earlier or the agent was skipped). Run a fresh analysis to populate."
+              : "No analysis has been run yet. Click “Run Demo PR” to populate agent outputs.";
           agentOutputEl.innerHTML = `<div class="agent-output-layout">
             <div class="agent-output-summary">
               <p class="section-kicker">${esc(agent.stage)}</p>
               <h4>${esc(agent.label)}</h4>
-              <div class="chip-row">${pill(enabled ? "ready" : "disabled", enabled ? "info" : "disabled")}</div>
+              <div class="chip-row">${pill(enabled ? (hasRun ? "no output" : "awaiting run") : "disabled", enabled ? "info" : "disabled")}</div>
               <p>${esc(agent.description)}</p>
             </div>
             <div class="agent-output-json">
-              <pre>${esc(JSON.stringify({ agent_id: agent.id, status: enabled ? "ready" : "disabled" }, null, 2))}</pre>
+              <p class="muted" style="padding: 1rem; margin: 0;">${esc(emptyMessage)}</p>
             </div>
           </div>`;
           return;

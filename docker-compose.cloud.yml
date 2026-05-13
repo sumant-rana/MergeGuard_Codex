@@ -1,0 +1,82 @@
+# MergeGuard — CLOUD MODE compose.
+#
+# Brings up a single ``mergeguard-cloud`` container that serves the
+# dashboard + JSON API on port 4100 and routes all agent invocations to
+# Magenta cloud workspaces via SSE
+# (``POST /api/v1/invokeWorkspaceStream``).
+#
+# What this does NOT bring up:
+#   • The local Magenta `--all` agent stack (no OE/AER/memory-server).
+#   • Local MongoDB — MergeGuard's store is the JSON file under ./data.
+#
+# Required env (set in repo-root .env or export before ``make up-cloud``):
+#   MAGENTA_API_KEY                    Bearer token (``agentic api-key create``)
+#   MAGENTA_PROJECT_ID                 ← X-Project-ID header
+#   WORKSPACE_REVIEW_COMPRESSION       ← workspace IDs, one per agent
+#   WORKSPACE_INTENT_EXTRACTOR
+#   WORKSPACE_SEMANTIC_DIFF_EXPLAINER
+#   WORKSPACE_CONCEPT_CLASSIFIER
+#   WORKSPACE_SLOP_DETECTOR
+#   WORKSPACE_POLICY_GATE
+#   WORKSPACE_PROMPT_CANARY
+#   WORKSPACE_CONTRACT_COMPARATOR
+#   WORKSPACE_SEMANTIC_EVIDENCE_AGENT
+#   WORKSPACE_EVIDENCE_MAPPER
+#   WORKSPACE_TEST_COVERAGE_VALIDATOR
+#   WORKSPACE_TRUTH_REPORT_SYNTHESIZER
+#
+# Optional:
+#   MAGENTA_BASE_URL                   default: https://agentic-platform.mongodb.com
+#   CLOUD_MAX_CONCURRENT_INVOKES       cap concurrent in-flight invokes per workspace
+
+services:
+  mergeguard-cloud:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mergeguard:dev
+    container_name: mergeguard-cloud
+    ports:
+      - "4100:4100"
+    environment:
+      AGENT_MODE: cloud
+      ORG_ID: "${ORG_ID:-61c134dfdd9f5ec1f8d555fe}"
+      MERGEGUARD_HOST: "0.0.0.0"
+      MAGENTA_BASE_URL: "${MAGENTA_BASE_URL:-https://agentic-platform.mongodb.com}"
+      MAGENTA_API_KEY: "${MAGENTA_API_KEY:?MAGENTA_API_KEY must be set for cloud mode}"
+      MAGENTA_PROJECT_ID: "${MAGENTA_PROJECT_ID:?MAGENTA_PROJECT_ID must be set for cloud mode}"
+      MERGEGUARD_DATA_FILE: /app/data/agentic_mergeguard.json
+      MERGEGUARD_ALLOW_FIXTURE_FILES: "true"
+      # GitHub webhook integration. POST /webhooks/github verifies the
+      # X-Hub-Signature-256 header against this secret before accepting.
+      GITHUB_WEBHOOK_SECRET: "${GITHUB_WEBHOOK_SECRET:?GITHUB_WEBHOOK_SECRET must be set for cloud mode}"
+      # Optional GitHub App credentials — used by webhook_handler if it
+      # needs to fetch PR files / post check runs. Skipped silently when
+      # blank (fixture mode covers the demo path).
+      GITHUB_APP_ID: "${GITHUB_APP_ID:-}"
+      GITHUB_APP_PRIVATE_KEY_PATH: "${GITHUB_APP_PRIVATE_KEY_PATH:-/secrets/github-app-private-key.pem}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+      CLOUD_MAX_CONCURRENT_INVOKES: "${CLOUD_MAX_CONCURRENT_INVOKES:-2}"
+      # Per-agent workspace IDs. Adapter requires every entry — see
+      # packages/orchestration/platform_factory.py:_workspace_env_var.
+      WORKSPACE_REVIEW_COMPRESSION: "${WORKSPACE_REVIEW_COMPRESSION:?WORKSPACE_REVIEW_COMPRESSION must be set for cloud mode}"
+      WORKSPACE_INTENT_EXTRACTOR: "${WORKSPACE_INTENT_EXTRACTOR:?WORKSPACE_INTENT_EXTRACTOR must be set for cloud mode}"
+      WORKSPACE_SEMANTIC_DIFF_EXPLAINER: "${WORKSPACE_SEMANTIC_DIFF_EXPLAINER:?WORKSPACE_SEMANTIC_DIFF_EXPLAINER must be set for cloud mode}"
+      WORKSPACE_CONCEPT_CLASSIFIER: "${WORKSPACE_CONCEPT_CLASSIFIER:?WORKSPACE_CONCEPT_CLASSIFIER must be set for cloud mode}"
+      WORKSPACE_SLOP_DETECTOR: "${WORKSPACE_SLOP_DETECTOR:?WORKSPACE_SLOP_DETECTOR must be set for cloud mode}"
+      WORKSPACE_POLICY_GATE: "${WORKSPACE_POLICY_GATE:?WORKSPACE_POLICY_GATE must be set for cloud mode}"
+      WORKSPACE_PROMPT_CANARY: "${WORKSPACE_PROMPT_CANARY:?WORKSPACE_PROMPT_CANARY must be set for cloud mode}"
+      WORKSPACE_CONTRACT_COMPARATOR: "${WORKSPACE_CONTRACT_COMPARATOR:?WORKSPACE_CONTRACT_COMPARATOR must be set for cloud mode}"
+      WORKSPACE_SEMANTIC_EVIDENCE_AGENT: "${WORKSPACE_SEMANTIC_EVIDENCE_AGENT:?WORKSPACE_SEMANTIC_EVIDENCE_AGENT must be set for cloud mode}"
+      WORKSPACE_EVIDENCE_MAPPER: "${WORKSPACE_EVIDENCE_MAPPER:?WORKSPACE_EVIDENCE_MAPPER must be set for cloud mode}"
+      WORKSPACE_TEST_COVERAGE_VALIDATOR: "${WORKSPACE_TEST_COVERAGE_VALIDATOR:?WORKSPACE_TEST_COVERAGE_VALIDATOR must be set for cloud mode}"
+      WORKSPACE_TRUTH_REPORT_SYNTHESIZER: "${WORKSPACE_TRUTH_REPORT_SYNTHESIZER:?WORKSPACE_TRUTH_REPORT_SYNTHESIZER must be set for cloud mode}"
+    volumes:
+      - ./data:/app/data
+      - ./fixtures:/app/fixtures:ro
+      # GitHub App private key (optional) — read-only mount; skipped silently
+      # if the file is missing on the host.
+      - ./secrets:/secrets:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

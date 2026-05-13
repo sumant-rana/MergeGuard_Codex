@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -11,11 +12,22 @@ for _repo_root in [*Path(__file__).resolve().parents, Path("/app")]:
             sys.path.insert(0, _repo_root_str)
         break
 
-from packages.agent_runtime import create_app, make_agent_result, register_entrypoint  # noqa: E402
+from packages.agent_runtime import (  # noqa: E402
+    call_llm_json,
+    create_app,
+    llm_available,
+    make_agent_result,
+    register_default_llm,
+    register_entrypoint,
+)
 
 AGENT_ID = "truth-report-synthesizer"
 
 app = create_app(AGENT_ID, "Synthesize analyzer outputs into merge readiness and dashboard view.")
+# Register a Grove-pointed LangChain LLM with the Magenta runtime so calls
+# show up as traces in the playground. No-op when langchain isn't
+# available (in-process shim mode on the host).
+register_default_llm(app)
 
 
 def run(payload: dict[str, Any]) -> dict[str, Any]:
@@ -91,7 +103,11 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         "owner_summary": compression.get("owner_summary", []),
         "hotspot_themes": compression.get("hotspot_themes", []),
         "checks": build_checks(status, prior),
-        "comment": render_comment(status, risk_score, top_blocker, next_action, compression, blockers),
+        "comment": render_comment(
+            status, risk_score, top_blocker, next_action, compression, blockers,
+            behavioral_deltas=semantic.get("behavioral_deltas", []),
+            intent_items=prior.get("intent-extractor", {}).get("output", {}).get("intent_items", []),
+        ),
     }
     return make_agent_result(
         AGENT_ID,
@@ -178,8 +194,47 @@ def render_comment(
     next_action: str | None,
     compression: dict[str, Any],
     blockers: list[dict[str, Any]],
+    *,
+    behavioral_deltas: list[dict[str, Any]] | None = None,
+    intent_items: list[dict[str, Any]] | None = None,
 ) -> str:
-    hotspots = "\n".join(f"- `{item['path']}` risk {item['risk_score']}: {item['reason']}" for item in compression.get("hotspots", [])[:5])
+    """Produce the reviewer-facing PR comment.
+
+    LLM-first: synthesizes a focused, plain-English summary over the
+    structured agent outputs. Falls back to the deterministic template if
+    the LLM is unavailable or returns a malformed response — the dashboard
+    always renders something useful.
+    """
+    if llm_available():
+        llm_text = _render_comment_via_llm(
+            status=status,
+            risk_score=risk_score,
+            top_blocker=top_blocker,
+            next_action=next_action,
+            compression=compression,
+            blockers=blockers,
+            behavioral_deltas=behavioral_deltas or [],
+            intent_items=intent_items or [],
+        )
+        if llm_text:
+            return llm_text
+    return _render_comment_template(
+        status, risk_score, top_blocker, next_action, compression, blockers,
+    )
+
+
+def _render_comment_template(
+    status: str,
+    risk_score: int,
+    top_blocker: str | None,
+    next_action: str | None,
+    compression: dict[str, Any],
+    blockers: list[dict[str, Any]],
+) -> str:
+    hotspots = "\n".join(
+        f"- `{item['path']}` risk {item['risk_score']}: {item['reason']}"
+        for item in compression.get("hotspots", [])[:5]
+    )
     blockers_text = "\n".join(f"- {item['message']}" for item in blockers[:5]) or "- None"
     return (
         "<!-- mergeguard:comment -->\n"
@@ -192,6 +247,73 @@ def render_comment(
         "### Blockers And Evidence Gaps\n"
         f"{blockers_text}\n"
     )
+
+
+_TRUTH_REPORT_SYSTEM_PROMPT = (
+    "You are MergeGuard's senior reviewer assistant. You write concise, "
+    "actionable pull-request review summaries in GitHub-flavored markdown.\n\n"
+    "Rules:\n"
+    "- Lead with merge readiness and the single most important blocker. No fluff.\n"
+    "- Quote specific file paths in backticks when referencing them.\n"
+    "- Do NOT invent issues that aren't in the structured inputs. If a section\n"
+    "  has no items, say so or omit it.\n"
+    "- Keep the whole comment under ~300 words.\n"
+    "- Output a single JSON object: {\"comment_markdown\": \"...\"}.\n"
+    "- Inside comment_markdown, start with `<!-- mergeguard:comment -->`\n"
+    "  followed by `## MergeGuard Truth Report` then your content.\n"
+)
+
+
+def _render_comment_via_llm(
+    *,
+    status: str,
+    risk_score: int,
+    top_blocker: str | None,
+    next_action: str | None,
+    compression: dict[str, Any],
+    blockers: list[dict[str, Any]],
+    behavioral_deltas: list[dict[str, Any]],
+    intent_items: list[dict[str, Any]],
+) -> str | None:
+    structured = {
+        "readiness": status,
+        "risk_score": risk_score,
+        "top_blocker": top_blocker,
+        "next_action": next_action,
+        "hotspots": compression.get("hotspots", [])[:8],
+        "blockers": [
+            {
+                "message": b.get("message"),
+                "severity": b.get("severity"),
+                "suggested_action": b.get("suggested_action"),
+                "source_agent": b.get("source_agent"),
+            }
+            for b in blockers[:10]
+        ],
+        "behavioral_deltas": behavioral_deltas[:6],
+        "intent_items": [
+            {"text": i.get("text"), "category": i.get("category")}
+            for i in intent_items[:8]
+        ],
+    }
+    user_prompt = (
+        "Synthesize the following MergeGuard analysis into a reviewer-facing "
+        "comment. Use the schema in your system prompt.\n\n"
+        f"```json\n{json.dumps(structured, indent=2)}\n```"
+    )
+    result = call_llm_json(
+        app=app,
+        system=_TRUTH_REPORT_SYSTEM_PROMPT,
+        user=user_prompt,
+        temperature=0.0,
+        max_tokens=900,
+    )
+    if not result:
+        return None
+    text = result.get("comment_markdown")
+    if not isinstance(text, str) or not text.strip():
+        return None
+    return text
 
 
 register_entrypoint(app, run)

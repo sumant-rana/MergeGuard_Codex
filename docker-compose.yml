@@ -1,0 +1,57 @@
+# MergeGuard — LOCAL MODE compose.
+#
+# Brings up a single ``mergeguard`` container that:
+#   • serves the dashboard + JSON API on port 4100
+#   • runs the worker's pipeline against the dockerized Magenta agents
+#     (12 OE + 12 AER + 12 memory-server containers) brought up by
+#     ``agentic dev up --all``.
+#
+# The agent stack lives under .agentic/docker-compose.dev.all.yml and is
+# owned by the agentic CLI. This file is the MergeGuard-app side that
+# joins that stack's docker network so it can resolve
+# ``http://oe-<agent-name>:8000`` by service name.
+#
+# Usage:
+#   agentic dev up --all                                       # start the agent stack
+#   docker compose -f docker-compose.yml up -d --build         # this container
+#
+# Override the container name + host port to run alongside another deploy:
+#   MERGEGUARD_CONTAINER_NAME=mergeguard-local \
+#   MERGEGUARD_HOST_PORT=4101 \
+#   docker compose -p mergeguard-local up -d
+#
+# The .agentic stack's docker network is named ``mergeguard_codex-all_default``
+# (from ``name: mergeguard_codex-all`` in the generated compose).
+
+services:
+  mergeguard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mergeguard:dev
+    container_name: "${MERGEGUARD_CONTAINER_NAME:-mergeguard}"
+    ports:
+      - "${MERGEGUARD_HOST_PORT:-4100}:4100"
+    networks:
+      - mergeguard_codex-all_default
+    environment:
+      # Talk to the 12 OE containers in the agent stack by service name.
+      AGENT_MODE: local
+      OE_BASE_URL_TEMPLATE: "http://oe-{agent}:{port}"
+      ORG_ID: "${ORG_ID:-61c134dfdd9f5ec1f8d555fe}"
+      # Bind 0.0.0.0 so the dashboard is reachable from outside the container.
+      MERGEGUARD_HOST: "0.0.0.0"
+      # MergeGuard's JSON store path inside the container.
+      MERGEGUARD_DATA_FILE: /app/data/agentic_mergeguard.json
+      MERGEGUARD_ALLOW_FIXTURE_FILES: "true"
+    volumes:
+      # Persist runs across container recreates.
+      - ./data:/app/data
+      - ./fixtures:/app/fixtures:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+networks:
+  mergeguard_codex-all_default:
+    external: true

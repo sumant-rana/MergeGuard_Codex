@@ -6,5 +6,5 @@ features:
   memory: false
   guardrails: true
 config:
-  provider: local
-  model: deterministic-demo
+  provider: anthropic
+  model: claude-opus-4-7

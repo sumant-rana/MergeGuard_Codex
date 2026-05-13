@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import PurePosixPath, Path
@@ -12,7 +13,14 @@ for _repo_root in [*Path(__file__).resolve().parents, Path("/app")]:
             sys.path.insert(0, _repo_root_str)
         break
 
-from packages.agent_runtime import create_app, make_agent_result, register_entrypoint  # noqa: E402
+from packages.agent_runtime import (  # noqa: E402
+    call_llm_json,
+    create_app,
+    llm_available,
+    make_agent_result,
+    register_default_llm,
+    register_entrypoint,
+)
 from packages.core.analysis_utils import important_terms, is_test, normalize_path  # noqa: E402
 
 AGENT_ID = "test-coverage-validator"
@@ -21,6 +29,7 @@ app = create_app(
     AGENT_ID,
     "Validate whether changed tests cover changed functionality, PR intent, and behavior deltas.",
 )
+register_default_llm(app)
 
 
 @app.tool()
@@ -89,6 +98,20 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         *memory_recommendations(memory, targets),
     ][:10]
     output_confidence = output_confidence_for(score, coverage_matrix, tests, targets)
+
+    # LLM-augmented coverage judgment: reads the actual diff context and
+    # asks "do these tests actually exercise these changes?" — orthogonal
+    # to the path/term matching the deterministic coverage_matrix is doing.
+    llm_assessment = None
+    if llm_available() and targets:
+        llm_assessment = _assess_coverage_via_llm(
+            payload=payload,
+            targets=targets,
+            tests=tests,
+            intent_items=intent_items,
+            behavior_deltas=behavior_deltas,
+        )
+
     output = {
         "coverage_score": score,
         "coverage_status": status,
@@ -100,6 +123,7 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         "behavior_coverage": behavior_coverage,
         "coverage_findings": findings,
         "recommendations": recommendations,
+        "llm_coverage_assessment": llm_assessment,
         "repository_memory": {
             "provider": memory.get("memory_provider"),
             "related_tests": memory.get("related_tests", []),
@@ -107,10 +131,15 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
             "recommended_test_updates": memory.get("recommended_test_updates", []),
         },
     }
+    # NOTE: a 'blocked' coverage verdict is a DOMAIN finding (the PR's tests
+    # don't cover the changes well enough to merge), not an agent crash.
+    # Keep agent.status = 'completed' and let the orchestrator's blocker
+    # aggregation respond to coverage_findings / coverage_status. Reporting
+    # 'failed' here made the dashboard misrender this as an execution error.
     return make_agent_result(
         AGENT_ID,
         output,
-        status="failed" if status == "blocked" else "completed",
+        status="completed",
         confidence=output_confidence,
         messages=[f"test coverage {score}% with {len(findings)} gaps"],
         trace=[
@@ -475,6 +504,131 @@ def related_text(path: str, text: str) -> bool:
     path_terms = set(important_terms(path))
     text_terms = set(important_terms(text))
     return bool(path_terms & text_terms)
+
+
+# ── LLM-augmented coverage judgment ────────────────────────────────────────
+
+
+_TEST_COVERAGE_SYSTEM_PROMPT = (
+    "You are a code reviewer judging whether the CHANGED tests in a pull "
+    "request actually exercise the CHANGED source code's new behavior.\n\n"
+    "Inputs:\n"
+    "  • targets       — changed implementation files (path + patch excerpt)\n"
+    "  • tests         — changed test files (path + patch excerpt)\n"
+    "  • intent_items  — what the author says the PR should / must not do\n"
+    "  • behavior_deltas — old vs new behavior the diff-explainer identified\n\n"
+    "For each target, decide:\n"
+    "  status: 'covered'   — at least one changed test contains an assertion\n"
+    "                        that would catch a regression in this target's\n"
+    "                        new behavior.\n"
+    "          'partial'   — a changed test touches the same area but assertions\n"
+    "                        don't cover the new behavior (missing cases, weak\n"
+    "                        assertions, only happy-path).\n"
+    "          'missing'   — no changed test exercises this target.\n\n"
+    "Rules:\n"
+    "- Quote only the file paths provided. Do not invent test names.\n"
+    "- 'gaps' is a short list of specific missing test cases (e.g.,\n"
+    "  'no test for retry path when gateway returns 5xx').\n"
+    "- 'confidence': 0-1. Lower if you're inferring.\n"
+    "- 'overall' status: 'covered' if all targets covered, 'review' if any\n"
+    "  partial/missing.\n\n"
+    "Output a single JSON object:\n"
+    '{"overall": "covered"|"review",\n'
+    ' "target_assessments": [\n'
+    '   {"path": str, "status": "covered"|"partial"|"missing", "covering_tests": [str],\n'
+    '    "gaps": [str], "reasoning": str, "confidence": float}\n'
+    " ]}"
+)
+
+
+def _assess_coverage_via_llm(
+    *,
+    payload: dict[str, Any],
+    targets: list[dict[str, Any]],
+    tests: list[dict[str, Any]],
+    intent_items: list[dict[str, Any]],
+    behavior_deltas: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    raw_changed = payload.get("changed_files", [])
+    patches_by_path = {
+        f.get("path"): (f.get("patch", "") or "")[:1800]
+        for f in raw_changed
+        if isinstance(f, dict) and f.get("path")
+    }
+
+    target_payload = [
+        {
+            "path": t.get("path"),
+            "classification": t.get("classification"),
+            "patch_excerpt": patches_by_path.get(t.get("path"), ""),
+        }
+        for t in targets[:10]
+    ]
+    test_payload = [
+        {
+            "path": t.get("path"),
+            "patch_excerpt": patches_by_path.get(t.get("path"), ""),
+        }
+        for t in tests[:10]
+    ]
+    intent_payload = [
+        {"text": i.get("text"), "category": i.get("category")}
+        for i in intent_items[:6]
+        if isinstance(i, dict)
+    ]
+    behavior_payload = [
+        {
+            "path": d.get("path"),
+            "new_behavior": d.get("new_behavior"),
+            "divergent_input": d.get("divergent_input"),
+        }
+        for d in behavior_deltas[:6]
+        if isinstance(d, dict)
+    ]
+
+    user_prompt = (
+        "Judge whether the changed tests cover the changed sources. Use the "
+        "system-prompt schema.\n\n"
+        f"```json\n{json.dumps({'targets': target_payload, 'tests': test_payload, 'intent_items': intent_payload, 'behavior_deltas': behavior_payload}, indent=2)}\n```"
+    )
+
+    result = call_llm_json(
+        app=app,
+        system=_TEST_COVERAGE_SYSTEM_PROMPT,
+        user=user_prompt,
+        temperature=0.0,
+        max_tokens=1500,
+    )
+    if not result:
+        return None
+    assessments = result.get("target_assessments")
+    if not isinstance(assessments, list):
+        return None
+
+    valid_statuses = {"covered", "partial", "missing"}
+    cleaned: list[dict[str, Any]] = []
+    for raw in assessments:
+        if not isinstance(raw, dict) or not raw.get("path"):
+            continue
+        status = raw.get("status")
+        if status not in valid_statuses:
+            status = "missing"
+        cleaned.append(
+            {
+                "path": str(raw.get("path")),
+                "status": status,
+                "covering_tests": [str(p) for p in (raw.get("covering_tests") or [])][:4],
+                "gaps": [str(g) for g in (raw.get("gaps") or [])][:5],
+                "reasoning": str(raw.get("reasoning") or ""),
+                "confidence": float(raw.get("confidence") or 0.7),
+            }
+        )
+
+    overall = result.get("overall")
+    if overall not in {"covered", "review"}:
+        overall = "review" if any(a["status"] != "covered" for a in cleaned) else "covered"
+
+    return {"overall": overall, "target_assessments": cleaned}
 
 
 register_entrypoint(app, run)

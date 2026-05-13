@@ -74,16 +74,37 @@ def _normalize_pull_request(pr: Any) -> dict[str, Any]:
 
     commit_history = _normalize_commit_history(pr.get("commit_history") or pr.get("commits") or [])
 
+    # GitHub's REST webhook payload puts SHAs + ref names under nested
+    # ``head`` / ``base`` objects (e.g. ``pull_request.head.sha``). The
+    # GraphQL shape uses flat ``head_ref_oid``/``headRefName``. Support both
+    # so downstream agents and the check-runs poster get real SHAs.
+    head_obj = pr.get("head") if isinstance(pr.get("head"), dict) else {}
+    base_obj = pr.get("base") if isinstance(pr.get("base"), dict) else {}
+
     return {
         **pr,
         "number": int(pr["number"]),
         "title": str(pr.get("title") or f"PR #{pr['number']}"),
         "body": body,
-        "author": _author_name(pr.get("author")),
-        "base_sha": str(pr.get("base_sha") or pr.get("base_ref_oid") or "unknown-base"),
-        "head_sha": str(pr.get("head_sha") or pr.get("head_ref_oid") or "unknown-head"),
-        "base_ref": pr.get("base_ref") or pr.get("baseRefName") or "",
-        "head_ref": pr.get("head_ref") or pr.get("headRefName") or "",
+        "author": _author_name(pr.get("author") or pr.get("user")),
+        "base_sha": str(
+            pr.get("base_sha")
+            or pr.get("base_ref_oid")
+            or base_obj.get("sha")
+            or "unknown-base"
+        ),
+        "head_sha": str(
+            pr.get("head_sha")
+            or pr.get("head_ref_oid")
+            or head_obj.get("sha")
+            or "unknown-head"
+        ),
+        "base_ref": (
+            pr.get("base_ref") or pr.get("baseRefName") or base_obj.get("ref") or ""
+        ),
+        "head_ref": (
+            pr.get("head_ref") or pr.get("headRefName") or head_obj.get("ref") or ""
+        ),
         "labels": _normalize_labels(pr.get("labels") or []),
         "issue_refs": issue_refs,
         "commit_history": commit_history,

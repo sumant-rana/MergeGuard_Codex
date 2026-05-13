@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -12,12 +13,20 @@ for _repo_root in [*Path(__file__).resolve().parents, Path("/app")]:
             sys.path.insert(0, _repo_root_str)
         break
 
-from packages.agent_runtime import create_app, make_agent_result, register_entrypoint  # noqa: E402
+from packages.agent_runtime import (  # noqa: E402
+    call_llm_json,
+    create_app,
+    llm_available,
+    make_agent_result,
+    register_default_llm,
+    register_entrypoint,
+)
 from packages.core.analysis_utils import important_terms  # noqa: E402
 
 AGENT_ID = "intent-extractor"
 
 app = create_app(AGENT_ID, "Extract review intent from PR text and linked work items.")
+register_default_llm(app)
 
 
 @app.tool()
@@ -68,7 +77,18 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         ]
         if part
     )
-    items = extract_items(text)
+
+    mode = "fallback"
+    items: list[dict[str, Any]] = []
+    if llm_available() and text.strip():
+        llm_items = _extract_via_llm(pr=pr, text=text)
+        if llm_items is not None:
+            items = llm_items
+            mode = "llm"
+    if not items:
+        items = extract_items(text)
+        mode = "fallback" if mode != "llm" else mode
+
     output = {
         "intent_items": items,
         "requires_author_preview": any(item["confidence"] < 0.65 for item in items),
@@ -81,9 +101,102 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         AGENT_ID,
         output,
         confidence=min([item["confidence"] for item in items], default=0.7),
-        messages=[f"extracted {len(items)} intent items"],
-        trace=[{"step": "extract_intent", "item_count": len(items)}],
+        messages=[f"extracted {len(items)} intent items via {mode}"],
+        trace=[{"step": "extract_intent", "mode": mode, "item_count": len(items)}],
     )
+
+
+# ── LLM path ────────────────────────────────────────────────────────────────
+
+
+_INTENT_SYSTEM_PROMPT = (
+    "You extract reviewer-relevant INTENT from a pull request's text. "
+    "Read the PR title, body, linked issues, and commit messages, then "
+    "identify discrete claims the author is making.\n\n"
+    "Each item must be one of three categories:\n"
+    "  - 'should'        — something the PR is trying to do / add / fix / support.\n"
+    "  - 'must_not'      — an explicit prohibition / constraint (e.g., 'must not\n"
+    "                      expose PII', 'do not change the public API').\n"
+    "  - 'out_of_scope'  — explicitly excluded from this PR (e.g., 'not changing\n"
+    "                      billing logic', 'follow-up will handle X').\n\n"
+    "Rules:\n"
+    "- Quote or closely paraphrase the author's own words in 'text'. Do not invent claims.\n"
+    "- Extract at most 12 items. Skip filler like 'opened PR', 'see linked ticket'.\n"
+    "- 'severity': 'review_required' for must_not, 'warn' otherwise.\n"
+    "- 'confidence': 0-1, lower if the claim is implicit or hedged.\n"
+    "- 'terms': 2-5 lowercase keywords from the claim that a code-search would match.\n\n"
+    "Output a single JSON object:\n"
+    '{"intent_items": [\n'
+    '   {"id": "intent-N", "text": str, "category": "should"|"must_not"|"out_of_scope",\n'
+    '    "source": "pr_text", "terms": [str], "confidence": float, "severity": "warn"|"review_required"}\n'
+    "]}"
+)
+
+
+def _extract_via_llm(pr: dict[str, Any], text: str) -> list[dict[str, Any]] | None:
+    structured_input = {
+        "title": pr.get("title", ""),
+        "body": pr.get("body", ""),
+        "issue_refs": [
+            {"number": i.get("number"), "title": i.get("title"), "state": i.get("state")}
+            for i in (pr.get("issue_refs") or [])[:10] if isinstance(i, dict)
+        ],
+        "commits": [
+            {"oid": (c.get("oid") or "")[:12], "message": c.get("message", "")}
+            for c in (pr.get("commit_history") or [])[:15] if isinstance(c, dict)
+        ],
+        "combined_text_preview": text[:3500],
+    }
+    user_prompt = (
+        "Extract intent items from the following pull request. Use the system-prompt schema.\n\n"
+        f"```json\n{json.dumps(structured_input, indent=2)}\n```"
+    )
+
+    result = call_llm_json(
+        app=app,
+        system=_INTENT_SYSTEM_PROMPT,
+        user=user_prompt,
+        temperature=0.0,
+        max_tokens=1200,
+    )
+    if not result:
+        return None
+    items = result.get("intent_items")
+    if not isinstance(items, list):
+        return None
+
+    valid_categories = {"should", "must_not", "out_of_scope"}
+    valid_severities = {"warn", "review_required"}
+    cleaned: list[dict[str, Any]] = []
+    for idx, raw in enumerate(items):
+        if not isinstance(raw, dict):
+            continue
+        text_field = str(raw.get("text") or "").strip()
+        if not text_field:
+            continue
+        category = raw.get("category")
+        if category not in valid_categories:
+            continue
+        severity = raw.get("severity")
+        if severity not in valid_severities:
+            severity = "review_required" if category == "must_not" else "warn"
+        terms = raw.get("terms")
+        if not isinstance(terms, list) or not terms:
+            terms = important_terms(text_field)
+        cleaned.append(
+            {
+                "id": str(raw.get("id") or f"intent-{idx + 1}"),
+                "text": text_field,
+                "category": category,
+                "source": str(raw.get("source") or "pr_text"),
+                "terms": [str(t).lower() for t in terms][:8],
+                "confidence": float(raw.get("confidence") or 0.75),
+                "severity": severity,
+            }
+        )
+        if len(cleaned) >= 16:
+            break
+    return cleaned
 
 
 def pr_context(pr: dict[str, Any]) -> str:
