@@ -7,6 +7,7 @@ from typing import Any
 from packages.core.models import AgentEnvelope, Repository, to_plain
 from packages.mongo import LocalMergeGuardStore
 from packages.orchestration import LocalPlatformClient
+from packages.orchestration.platform_factory import build_platform_client
 
 
 AGENT_SEQUENCE = [
@@ -104,7 +105,10 @@ class MergeGuardOrchestrator:
     def __init__(self, repo_root: str | Path, store: LocalMergeGuardStore) -> None:
         self.repo_root = Path(repo_root)
         self.store = store
-        self.platform = LocalPlatformClient(self.repo_root)
+        # AGENT_MODE env var selects the platform client: in-process (default),
+        # local (dockerized OE containers), or cloud (Magenta tenant API).
+        # See packages/orchestration/platform_factory.py.
+        self.platform = build_platform_client(self.repo_root)
 
     def analyze_demo_pr(
         self,
