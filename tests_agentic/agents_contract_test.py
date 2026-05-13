@@ -57,6 +57,16 @@ class AgentContractTest(unittest.TestCase):
         self.assertTrue(concepts["output"]["concept_findings"])
         self.assertEqual(policy["output"]["policy_status"], "block")
 
+    def test_slop_detector_contract(self) -> None:
+        compression = self.invoke("review-compression")
+        slop = self.invoke("slop-detector", {"review-compression": compression})
+        output = slop["output"]
+        self.assertEqual(slop["agent_id"], "slop-detector")
+        self.assertEqual(output["slop_status"], "review")
+        self.assertTrue(output["slop_findings"])
+        self.assertTrue(output["remove_candidates"])
+        self.assertEqual(output["remove_candidates"][0]["path"], "scratch/refund_debug_helper.ts")
+
     def test_prompt_and_contract_contract(self) -> None:
         compression = self.invoke("review-compression")
         prompt = self.invoke("prompt-canary", {"review-compression": compression})

@@ -44,6 +44,14 @@
       "additions": 16,
       "deletions": 2,
       "changes": 18
+    },
+    {
+      "path": "scratch/refund_debug_helper.ts",
+      "status": "added",
+      "additions": 24,
+      "deletions": 0,
+      "changes": 24,
+      "patch": "@@\n+// TODO remove before merge\n+console.log('refund debug request', request)\n+debugger\n+export function refundDebugSlop(input: any) {\n+  const fakeRefund = { id: 'tmp', customerEmail: 'debug@example.com' }\n+  // old implementation copied while testing\n+  // export function oldRefund() { return null }\n+  return true\n+}"
     }
   ],
   "settings": {

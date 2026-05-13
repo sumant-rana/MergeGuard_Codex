@@ -1,0 +1,1 @@
+"""Slop detector agent package."""

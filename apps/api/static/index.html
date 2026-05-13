@@ -1311,6 +1311,11 @@
         color: #ddd6fe;
       }
 
+      .agent-icon.slop {
+        background: rgba(249, 115, 22, 0.18);
+        color: #fed7aa;
+      }
+
       .agent-icon.policy {
         background: rgba(244, 63, 94, 0.16);
         color: #fecdd3;
@@ -1942,6 +1947,7 @@
           agentIds: [
             "semantic-diff-explainer",
             "concept-classifier",
+            "slop-detector",
             "prompt-canary",
             "contract-comparator"
           ]
@@ -1975,13 +1981,14 @@
       const agentDependencies = {
         "semantic-diff-explainer": ["review-compression"],
         "concept-classifier": ["review-compression"],
+        "slop-detector": ["review-compression"],
         "prompt-canary": ["review-compression"],
         "contract-comparator": ["review-compression"],
         "semantic-evidence-agent": ["review-compression", "intent-extractor"],
         "policy-gate": ["concept-classifier", "prompt-canary", "contract-comparator"],
         "evidence-mapper": ["intent-extractor", "semantic-evidence-agent"],
         "test-coverage-validator": ["semantic-diff-explainer", "evidence-mapper", "semantic-evidence-agent"],
-        "truth-report-synthesizer": ["policy-gate", "test-coverage-validator", "semantic-evidence-agent"]
+        "truth-report-synthesizer": ["policy-gate", "test-coverage-validator", "semantic-evidence-agent", "slop-detector"]
       };
 
       const agentVisuals = {
@@ -1989,6 +1996,7 @@
         "intent-extractor": { icon: "IN", tone: "intent" },
         "semantic-diff-explainer": { icon: "BI", tone: "behavior" },
         "concept-classifier": { icon: "CC", tone: "concepts" },
+        "slop-detector": { icon: "SD", tone: "slop" },
         "policy-gate": { icon: "GR", tone: "policy" },
         "prompt-canary": { icon: "PD", tone: "prompt" },
         "contract-comparator": { icon: "RC", tone: "contracts" },
@@ -2361,7 +2369,8 @@
           "semantic-diff-explainer->test-coverage-validator": 78,
           "policy-gate->truth-report-synthesizer": 128,
           "semantic-evidence-agent->test-coverage-validator": 178,
-          "semantic-evidence-agent->truth-report-synthesizer": 228
+          "semantic-evidence-agent->truth-report-synthesizer": 228,
+          "slop-detector->truth-report-synthesizer": 278
         };
         if (topLanes[routeKey] != null) {
           return { y: topLanes[routeKey], exitOffset: 28, entryOffset: 30 };
@@ -2612,6 +2621,7 @@
       function detailTabs(run, summary, pr, agentNames) {
         const coverage = summary.test_coverage || {};
         const memory = summary.semantic_memory || {};
+        const slop = summary.slop || {};
         const coverageConfidence = coverage.confidence == null ? "n/a" : `${Math.round(coverage.confidence * 100)}%`;
         return [
           {
@@ -2649,6 +2659,27 @@
               <div class="tab-section">${barList(summary.hotspot_themes || [], "theme", "count")}</div>
               <div class="tab-section">${cards(summary.owner_summary, ownerCard, "No owner routing found.")}</div>
               <div class="tab-section">${cards(summary.hotspots, hotspotCard, "No hotspots flagged.")}</div>
+            `
+          },
+          {
+            id: "slop",
+            label: "Slop",
+            kicker: "Review hygiene",
+            title: "Files to remove or rework",
+            description: "Debug leftovers, placeholders, noisy churn, weak tests, and unrelated files surfaced for reviewer action.",
+            count:
+              countItems(summary.slop_findings)
+              + countItems(summary.remove_candidates)
+              + countItems(summary.rework_candidates),
+            content: `
+              <div class="summary-strip">
+                ${summaryItem("Slop score", slop.slop_score == null ? "0" : `${slop.slop_score}/100`)}
+                ${summaryItem("Remove", `${countItems(summary.remove_candidates)} candidates`)}
+                ${summaryItem("Rework", `${countItems(summary.rework_candidates)} candidates`)}
+              </div>
+              <div class="tab-section">${cards(summary.remove_candidates, slopCard, "No remove candidates detected.")}</div>
+              <div class="tab-section">${cards(summary.rework_candidates, slopCard, "No rework candidates detected.")}</div>
+              <div class="tab-section">${cards(summary.slop_findings, slopCard, "No review slop detected.")}</div>
             `
           },
           {
@@ -2863,6 +2894,17 @@
         return `<div class="review-card-top"><h4><code>${esc(item.path)}</code></h4>${scoreChip(item.risk_score)}</div>
           <p>${esc(item.reason || "")}</p>
           <div class="muted">${esc((item.owners || []).join(", ") || "unassigned")}</div>`;
+      }
+
+      function slopCard(item) {
+        const signals = (item.signals || []).join(", ");
+        return `<div class="review-card-top"><h4><code>${esc(item.path || "changed file")}</code></h4>${pill(item.disposition || item.severity || "review")}</div>
+          <p>${esc(item.message || item.suggested_action || "Review hygiene finding.")}</p>
+          <div class="chip-row">
+            ${pill(item.category || "slop", item.severity || "neutral")}
+            ${item.score == null ? "" : scoreChip(item.score)}
+          </div>
+          <div class="muted">${esc(signals || item.suggested_action || "Inspect this change before merge.")}</div>`;
       }
 
       function evidenceCard(item) {

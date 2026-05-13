@@ -18,6 +18,7 @@ agents/intent-extractor
 agents/evidence-mapper
 agents/semantic-diff-explainer
 agents/concept-classifier
+agents/slop-detector
 agents/policy-gate
 agents/prompt-canary
 agents/contract-comparator
@@ -59,7 +60,7 @@ Open:
 http://127.0.0.1:4100
 ```
 
-Click `Run Demo PR`. The tool invokes the eleven independent agents, stores the OE-shaped execution envelopes, and renders the dashboard.
+Click `Run Demo PR`. The tool invokes the twelve independent agents, stores the OE-shaped execution envelopes, and renders the dashboard.
 
 ## Build And Deploy On Magenta
 
@@ -90,6 +91,7 @@ Deploy each workspace after its build completes:
 ./tools/bin/agentic deploy --workspace evidence-mapper
 ./tools/bin/agentic deploy --workspace semantic-diff-explainer
 ./tools/bin/agentic deploy --workspace concept-classifier
+./tools/bin/agentic deploy --workspace slop-detector
 ./tools/bin/agentic deploy --workspace policy-gate
 ./tools/bin/agentic deploy --workspace prompt-canary
 ./tools/bin/agentic deploy --workspace contract-comparator

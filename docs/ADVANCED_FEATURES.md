@@ -124,6 +124,20 @@ Contract fixtures compare shape-only summaries:
 
 Outputs include `contract_findings`, `summary.suggested_tests`, and the `Runtime Contracts` check result. Raw PII values are not required or stored by this flow.
 
+## Slop Detector
+
+The `slop-detector` agent runs after file triage and before downstream synthesis. It is deterministic and reviewer-facing: it looks for changes that often waste review time or should not ship with the PR.
+
+Signals include:
+
+- debug leftovers such as `console.log`, `debugger`, `pdb.set_trace`, `breakpoint`, and temporary print/dump calls
+- placeholder or work-in-progress markers such as `TODO remove`, `FIXME`, `WIP`, `fake`, `dummy`, and `not implemented`
+- weak implementation shortcuts such as `return true`, `return null`, empty Python bodies, or broad `any` typing
+- tests with scenario shape but no assertions, or snapshot-only changes that need explicit review
+- generated churn, copy-paste repetition, heavily commented added blocks, and unrelated files with no overlap with PR intent
+
+Outputs include `summary.slop_findings`, `summary.remove_candidates`, `summary.rework_candidates`, and the `Slop Detector` check result. The dashboard exposes a dedicated `Slop` tab so reviewers can quickly decide which files should be removed, justified, or reworked.
+
 ## Learning Loop
 
 Record an override:

@@ -26,6 +26,7 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     policy = prior.get("policy-gate", {}).get("output", {})
     prompt = prior.get("prompt-canary", {}).get("output", {})
     contracts = prior.get("contract-comparator", {}).get("output", {})
+    slop = prior.get("slop-detector", {}).get("output", {})
     memory = prior.get("semantic-evidence-agent", {}).get("output", {})
     test_coverage = prior.get("test-coverage-validator", {}).get("output", {})
 
@@ -36,11 +37,12 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         + len(policy.get("policy_findings", [])) * 12
         + len(prompt.get("prompt_findings", [])) * 16
         + len(contracts.get("contract_findings", [])) * 10
+        + len(slop.get("slop_findings", [])) * 6
         + len(memory.get("memory_findings", [])) * 4
         + len(test_coverage.get("coverage_findings", [])) * 9
         + (10 if test_coverage.get("coverage_status") == "blocked" else 0),
     )
-    blockers = collect_blockers(evidence, policy, prompt, contracts, memory, test_coverage)
+    blockers = collect_blockers(evidence, policy, prompt, contracts, slop, memory, test_coverage)
     status = "blocked" if any(item.get("severity") == "block" for item in blockers) else "review" if blockers or risk_score >= 45 else "pass"
     top_blocker = blockers[0]["message"] if blockers else None
     next_action = blockers[0].get("suggested_action") if blockers else "Proceed with normal review."
@@ -62,6 +64,11 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         "prompt_canary_runs": prompt.get("prompt_canary_runs", []),
         "prompt_findings": prompt.get("prompt_findings", []),
         "contract_findings": contracts.get("contract_findings", []),
+        "slop": slop,
+        "slop_score": slop.get("slop_score"),
+        "slop_findings": slop.get("slop_findings", []),
+        "remove_candidates": slop.get("remove_candidates", []),
+        "rework_candidates": slop.get("rework_candidates", []),
         "semantic_memory": memory,
         "memory_matches": memory.get("semantic_matches", []),
         "memory_evidence": memory.get("requirement_evidence", []),
@@ -102,6 +109,7 @@ def collect_blockers(*sections: dict[str, Any]) -> list[dict[str, Any]]:
         "policy_findings",
         "prompt_findings",
         "contract_findings",
+        "slop_findings",
         "memory_findings",
         "coverage_findings",
     ]
@@ -117,6 +125,7 @@ def build_checks(status: str, prior: dict[str, Any]) -> list[dict[str, Any]]:
     policy = prior.get("policy-gate", {}).get("output", {})
     prompt = prior.get("prompt-canary", {}).get("output", {})
     contracts = prior.get("contract-comparator", {}).get("output", {})
+    slop = prior.get("slop-detector", {}).get("output", {})
     memory = prior.get("semantic-evidence-agent", {}).get("output", {})
     test_coverage = prior.get("test-coverage-validator", {}).get("output", {})
     return [
@@ -129,6 +138,7 @@ def build_checks(status: str, prior: dict[str, Any]) -> list[dict[str, Any]]:
         {"name": "MergeGuard / Policy Guardrails", "conclusion": "failure" if any(item["severity"] == "block" for item in policy.get("policy_findings", [])) else "neutral" if policy.get("policy_findings") else "success"},
         {"name": "MergeGuard / Prompt Drift Check", "conclusion": "failure" if prompt.get("prompt_findings") else "success"},
         {"name": "MergeGuard / Runtime Contracts", "conclusion": "neutral" if contracts.get("contract_findings") else "success"},
+        {"name": "MergeGuard / Slop Detector", "conclusion": slop_conclusion(slop)},
     ]
 
 
@@ -149,6 +159,16 @@ def memory_conclusion(memory: dict[str, Any]) -> str:
     if memory.get("related_tests") or memory.get("semantic_matches"):
         return "success"
     return "neutral"
+
+
+def slop_conclusion(slop: dict[str, Any]) -> str:
+    if not slop:
+        return "neutral"
+    if any(item.get("severity") == "block" for item in slop.get("slop_findings", [])):
+        return "failure"
+    if slop.get("slop_findings"):
+        return "neutral"
+    return "success"
 
 
 def render_comment(

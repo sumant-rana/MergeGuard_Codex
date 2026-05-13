@@ -14,6 +14,7 @@ AGENT_SEQUENCE = [
     "intent-extractor",
     "semantic-diff-explainer",
     "concept-classifier",
+    "slop-detector",
     "policy-gate",
     "prompt-canary",
     "contract-comparator",
@@ -47,6 +48,12 @@ AGENT_CATALOG = [
         "label": "Concept Classifier",
         "stage": "Concepts",
         "description": "Tags risky concepts such as PII writes, billing effects, and HTTP calls.",
+    },
+    {
+        "id": "slop-detector",
+        "label": "Slop Detector",
+        "stage": "Review Hygiene",
+        "description": "Flags debug leftovers, placeholders, weak tests, and noisy files for removal or rework.",
     },
     {
         "id": "policy-gate",
@@ -237,6 +244,16 @@ def summary_from_results(prior_results: dict[str, Any], enabled: set[str]) -> di
         "memory_evidence": prior_results.get("semantic-evidence-agent", {})
         .get("output", {})
         .get("requirement_evidence", []),
+        "slop": prior_results.get("slop-detector", {}).get("output", {}),
+        "slop_findings": prior_results.get("slop-detector", {})
+        .get("output", {})
+        .get("slop_findings", []),
+        "remove_candidates": prior_results.get("slop-detector", {})
+        .get("output", {})
+        .get("remove_candidates", []),
+        "rework_candidates": prior_results.get("slop-detector", {})
+        .get("output", {})
+        .get("rework_candidates", []),
         "test_coverage_findings": prior_results.get("test-coverage-validator", {})
         .get("output", {})
         .get("coverage_findings", []),

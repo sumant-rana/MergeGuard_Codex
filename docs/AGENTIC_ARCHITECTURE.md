@@ -51,6 +51,7 @@ make magenta-validate
 | `evidence-mapper` / Verification Evidence | Maps requirements and risky changes to tests/evidence or HITL author-preview questions. | `agents/evidence-mapper` |
 | `semantic-diff-explainer` / Behavior Impact | Produces behavior deltas, divergent examples, blast-radius summaries. | `agents/semantic-diff-explainer` |
 | `concept-classifier` | Tags changed code with concepts such as PII write, billing side effect, external HTTP call. | `agents/concept-classifier` |
+| `slop-detector` | Flags debug leftovers, placeholders, weak tests, generated churn, and unrelated files for removal or rework. | `agents/slop-detector` |
 | `policy-gate` / Policy Guardrails | Evaluates policy pack rules and emits pass/warn/block findings plus override suspend payloads. | `agents/policy-gate` |
 | `prompt-canary` / Prompt Drift Check | Runs deterministic prompt/model/agent workflow drift checks. | `agents/prompt-canary` |
 | `contract-comparator` | Compares shape-only runtime contracts and suggests property-test stubs. | `agents/contract-comparator` |
@@ -66,13 +67,14 @@ The demo orchestration order is:
 2. `intent-extractor`
 3. `semantic-diff-explainer`
 4. `concept-classifier`
-5. `policy-gate`
-6. `prompt-canary`
-7. `contract-comparator`
-8. `semantic-evidence-agent`
-9. `evidence-mapper`
-10. `test-coverage-validator`
-11. `truth-report-synthesizer`
+5. `slop-detector`
+6. `policy-gate`
+7. `prompt-canary`
+8. `contract-comparator`
+9. `semantic-evidence-agent`
+10. `evidence-mapper`
+11. `test-coverage-validator`
+12. `truth-report-synthesizer`
 
 The sequence is implemented in:
 

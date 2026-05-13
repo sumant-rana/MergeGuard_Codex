@@ -41,11 +41,11 @@ data/agentic_mergeguard.json
 
 Expected result:
 
-- 11 agent results.
+- 12 agent results.
 - Risk score `100`.
 - Status `blocked`.
-- 9 synthesized check results.
-- Findings from policy, prompt drift, runtime contracts, missing evidence, behavior impact, and repository memory recall.
+- 10 synthesized check results.
+- Findings from policy, prompt drift, runtime contracts, missing evidence, behavior impact, slop detection, and repository memory recall.
 
 ## Start The Dashboard
 
@@ -164,6 +164,7 @@ Deployed agents accept a JSON message whose content is either the direct agent e
 - CODEOWNERS text
 - prompt drift check suite
 - shape-only runtime contract summaries
+- seeded debug/placeholder slop for reviewer hygiene detection
 - seeded repository memory for local Voyage/vector-search-style recall
 
 That lets the tool exercise every agent without installing a GitHub App.

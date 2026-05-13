@@ -29,6 +29,7 @@ The current implementation is intentionally dependency-light so it can run from 
 - Concept taxonomy and YAML policy pack evaluation.
 - Prompt canary scoring for prompt/model/agent changes.
 - Runtime contract comparison and generated test suggestions.
+- Review slop detection for debug leftovers, placeholders, weak tests, and noisy files that should be removed or reworked.
 - Repository memory retrieval through the `semantic-evidence-agent`, using Magenta memory in deployment and a local deterministic fallback in demo mode.
 - Reviewer override capture, post-merge outcome capture, metrics, and audit export.
 

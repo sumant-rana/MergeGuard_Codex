@@ -11,6 +11,8 @@ agents:
     path: agents/semantic-diff-explainer
   - name: concept-classifier
     path: agents/concept-classifier
+  - name: slop-detector
+    path: agents/slop-detector
   - name: policy-gate
     path: agents/policy-gate
   - name: prompt-canary

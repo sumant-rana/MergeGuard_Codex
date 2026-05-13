@@ -19,15 +19,16 @@ class AgenticPipelineTest(unittest.TestCase):
             run = MergeGuardOrchestrator(repo_root, store).analyze_demo_pr(payload)
             summary = run["summary"]
             self.assertEqual(run["state"], "completed")
-            self.assertEqual(len(run["agent_results"]), 11)
+            self.assertEqual(len(run["agent_results"]), 12)
             self.assertGreaterEqual(summary["risk_score"], 90)
             self.assertEqual(summary["status"], "blocked")
             self.assertTrue(summary["prompt_findings"])
             self.assertTrue(summary["contract_findings"])
             self.assertTrue(summary["policy_findings"])
+            self.assertTrue(summary["slop_findings"])
             self.assertTrue(summary["test_coverage_findings"])
             self.assertTrue(summary["related_tests"])
-            self.assertEqual(len(summary["checks"]), 9)
+            self.assertEqual(len(summary["checks"]), 10)
 
     def test_disabled_agents_are_recorded_as_skipped(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]
@@ -37,6 +38,7 @@ class AgenticPipelineTest(unittest.TestCase):
             "intent-extractor",
             "semantic-diff-explainer",
             "concept-classifier",
+            "slop-detector",
             "policy-gate",
             "semantic-evidence-agent",
             "evidence-mapper",

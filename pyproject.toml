@@ -17,6 +17,7 @@ members = [
   "agents/semantic-diff-explainer",
   "agents/semantic-evidence-agent",
   "agents/concept-classifier",
+  "agents/slop-detector",
   "agents/policy-gate",
   "agents/prompt-canary",
   "agents/contract-comparator",
