@@ -1,0 +1,10 @@
+name: slop-detector
+framework: langgraph
+entrypoint: slop_detector.main:app
+description: Reviewer hygiene agent that detects throwaway, debug, placeholder, generated, or unrelated slop in pull request changes.
+features:
+  memory: false
+  guardrails: true
+config:
+  provider: local
+  model: deterministic-demo
