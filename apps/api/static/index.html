@@ -179,10 +179,555 @@
 
       .shell {
         display: grid;
-        gap: 16px;
+        gap: 18px;
         width: min(1480px, 100%);
         margin: 0 auto;
         padding: 18px;
+      }
+
+      .shell-heading {
+        margin: 0;
+      }
+
+      /*
+       * Two-column workspace: golden ratio (≈ 38.2% / 61.8%) so the
+       * left rail is naturally subordinate to the analysis surface
+       * on the right. Collapses to single column on narrow viewports.
+       */
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(320px, 0.382fr) minmax(0, 0.618fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .workspace-detail {
+        display: grid;
+        gap: 16px;
+        min-width: 0;
+      }
+
+      /*
+       * Empty workspace = first paint for new users. Replaces the prior
+       * "Pick a PR to begin" placeholder with a 2-up layout that teaches
+       * what MergeGuard does (left) and provides a demo trigger (right).
+       * This card absorbs the old top-bar "Run Demo PR" button so the
+       * chrome stays quiet.
+       */
+      .workspace-empty {
+        padding: 32px;
+        min-height: 360px;
+      }
+
+      .workspace-empty[hidden],
+      .workspace-empty.hidden {
+        display: none;
+      }
+
+      .empty-explainer {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(220px, 1fr);
+        gap: 28px;
+        align-items: start;
+        max-width: 820px;
+      }
+
+      .empty-explainer h3 {
+        margin: 6px 0 10px;
+        font-size: 22px;
+        line-height: 1.25;
+      }
+
+      .empty-explainer-list {
+        list-style: none;
+        padding: 0;
+        margin: 14px 0 0;
+        display: grid;
+        gap: 10px;
+        font-size: 13px;
+        line-height: 1.45;
+        color: var(--text-soft);
+      }
+      .empty-explainer-list li {
+        padding-left: 14px;
+        position: relative;
+      }
+      .empty-explainer-list li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 8px;
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(99, 102, 241, 0.65);
+      }
+      .empty-explainer-list strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .empty-explainer-hint {
+        margin-top: 18px;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .empty-explainer-try {
+        padding: 18px;
+        border: 1px solid rgba(99, 102, 241, 0.25);
+        border-radius: 10px;
+        background: rgba(99, 102, 241, 0.06);
+        display: grid;
+        gap: 6px;
+        align-content: start;
+      }
+      .empty-explainer-try h4 {
+        margin: 4px 0 0;
+        font-size: 16px;
+      }
+      .empty-explainer-try .button {
+        margin-top: 10px;
+        justify-self: start;
+      }
+
+      @media (max-width: 980px) {
+        .empty-explainer {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* ───── Lifecycle filter tabs (left rail) ───── */
+      .lifecycle-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 4px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+
+      .lifecycle-tab {
+        flex: 1 1 0;
+        min-width: 60px;
+        padding: 6px 10px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-muted);
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: background 120ms, color 120ms;
+      }
+
+      .lifecycle-tab:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .lifecycle-tab.active {
+        background: rgba(99, 102, 241, 0.16);
+        color: #c7d2fe;
+        box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.35);
+      }
+
+      .lifecycle-tab-count {
+        font-size: 11px;
+        font-weight: 600;
+        opacity: 0.75;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ───── Compact PR cards (left-rail variant) ───── */
+      .pr-list-compact {
+        max-height: calc(100vh - 320px);
+        min-height: 240px;
+        padding: 0;
+        gap: 8px;
+      }
+
+      .pr-row-compact {
+        display: grid;
+        grid-template-columns: 8px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: rgba(12, 18, 28, 0.86);
+        cursor: pointer;
+        transition: border-color 120ms, background 120ms, transform 120ms;
+      }
+
+      .pr-row-compact:hover {
+        border-color: rgba(99, 102, 241, 0.45);
+      }
+
+      .pr-row-compact.selected {
+        border-color: rgba(99, 102, 241, 0.7);
+        background: rgba(34, 40, 70, 0.85);
+        box-shadow: inset 2px 0 0 #818cf8;
+      }
+
+      .pr-row-compact .lifecycle-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+        align-self: start;
+        margin-top: 6px;
+      }
+
+      .pr-row-compact[data-lifecycle="open"] .lifecycle-dot { background: #6366f1; }
+      .pr-row-compact[data-lifecycle="draft"] .lifecycle-dot { background: #64748b; }
+      .pr-row-compact[data-lifecycle="done"] .lifecycle-dot { background: #10b981; }
+      .pr-row-compact[data-lifecycle="closed"] .lifecycle-dot { background: #475569; }
+
+      .pr-row-compact .pr-row-body { min-width: 0; }
+
+      .pr-row-compact .pr-row-title {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        word-break: break-word;
+      }
+
+      .pr-row-compact .pr-row-meta {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .pr-row-compact .pr-row-meta .dot-sep::before {
+        content: "·";
+        margin: 0 4px;
+        color: var(--text-muted);
+      }
+
+      .pr-row-compact .pr-row-score {
+        display: grid;
+        gap: 4px;
+        justify-items: end;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .pr-row-compact .pr-row-score .score-number {
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .pr-row-compact .pr-row-score .score-meta {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      /* ───── Left rail footer ───── */
+      .queue-footer {
+        display: flex;
+        justify-content: center;
+        padding-top: 6px;
+      }
+
+      .link-button {
+        background: transparent;
+        border: 0;
+        color: var(--text-muted);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 6px 10px;
+        border-radius: 6px;
+        transition: color 120ms, background 120ms;
+      }
+
+      .link-button:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      /* ───── Full-list overlay view ───── */
+      .full-list-view {
+        display: grid;
+        gap: 16px;
+      }
+
+      .full-list-view.hidden {
+        display: none;
+      }
+
+      /*
+       * Detail-hero action bar — horizontal row of CTAs that varies by run
+       * state. Replaces the older two-button "Mark as done / Mark as closed"
+       * block (which surfaced only one verb at a time) with a verb-rich
+       * action surface so the page stops reading as a metadata viewer.
+       */
+      .action-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+      }
+      .action-bar .button,
+      .action-bar a.button {
+        min-height: 34px;
+        padding: 0 12px;
+        font-size: 12.5px;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .action-bar-note {
+        flex-basis: 100%;
+        margin: 4px 0 0;
+        font-size: 11px;
+        color: var(--text-muted);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      /* Trailing column: groups score + quick action + chevron together so
+       * the compact card grid stays at three columns no matter how many
+       * trailing affordances we surface. */
+      .pr-row-trailing {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* Compact card chevron — affordance signal for "click to open in right rail" */
+      .pr-row-compact .pr-row-chevron {
+        color: var(--text-muted);
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1;
+        opacity: 0.5;
+        transition: opacity 120ms, transform 120ms;
+      }
+      .pr-row-compact:hover .pr-row-chevron {
+        opacity: 1;
+        transform: translateX(2px);
+      }
+      .pr-row-compact.selected .pr-row-chevron {
+        color: #c7d2fe;
+        opacity: 1;
+      }
+
+      /*
+       * In-place analyzing state — replaces the trailing score block with
+       * a quiet "Analyzing…" label and pulses the card's left edge so the
+       * user can see *on the card they clicked* that the click landed and
+       * is doing work. Pairs with the agent workflow panel on the right.
+       */
+      .pr-row-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: rgba(56, 189, 248, 0.14);
+        color: #bae6fd;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+      }
+      .pr-row-compact.analyzing {
+        border-color: rgba(56, 189, 248, 0.45);
+      }
+      .pr-row-compact.analyzing .lifecycle-dot {
+        animation: prRowDotPulse 1.4s ease-in-out infinite;
+      }
+      @keyframes prRowDotPulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      /* Hover-reveal quick action: "Mark as done" / "Reopen" without leaving
+       * the queue. Defaults to invisible to keep the resting card calm. */
+      .pr-row-quick-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 9px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: rgba(12, 18, 28, 0.6);
+        color: var(--text-muted);
+        font: inherit;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 120ms, border-color 120ms, color 120ms, background 120ms;
+      }
+      .pr-row-compact:hover .pr-row-quick-action,
+      .pr-row-compact:focus-within .pr-row-quick-action {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      /* When a card is selected, the canonical "Mark as done" lives in the
+       * detail-hero action bar on the right. Hide the quick-action shortcut
+       * here so the same verb doesn't appear twice. */
+      .pr-row-compact.selected .pr-row-quick-action {
+        display: none;
+      }
+      .pr-row-quick-action:hover {
+        color: #6ee7b7;
+        border-color: rgba(16, 185, 129, 0.45);
+        background: rgba(16, 185, 129, 0.1);
+      }
+      .pr-row-quick-action.pr-row-quick-action-reopen:hover {
+        color: #c7d2fe;
+        border-color: rgba(99, 102, 241, 0.45);
+        background: rgba(99, 102, 241, 0.1);
+      }
+
+      /* Clickable KPI tiles — turn passive stats into queue-filter shortcuts.
+       * Override the user-agent button defaults so the tile keeps the same
+       * shape as its sibling static .metric tiles. */
+      .metric.metric-clickable {
+        cursor: pointer;
+        text-align: left;
+        font: inherit;
+        color: inherit;
+        width: 100%;
+        transition: border-color 120ms, background 120ms;
+      }
+      .metric.metric-clickable:hover {
+        border-color: rgba(99, 102, 241, 0.45);
+        background: rgba(99, 102, 241, 0.08);
+      }
+      .metric.metric-clickable:disabled {
+        cursor: default;
+        opacity: 0.65;
+      }
+      .metric.metric-clickable:disabled .metric-filter-hint {
+        display: none;
+      }
+      .metric.metric-clickable:focus-visible {
+        outline: 2px solid rgba(56, 189, 248, 0.7);
+        outline-offset: 2px;
+      }
+      .metric-filter-hint {
+        margin-top: 6px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #818cf8;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      /* ───── Lifecycle chip in compact card meta ───── */
+      .lifecycle-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 1px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: lowercase;
+        border: 1px solid transparent;
+      }
+      .lifecycle-chip-open { background: rgba(99, 102, 241, 0.16); color: #c7d2fe; border-color: rgba(99, 102, 241, 0.35); }
+      .lifecycle-chip-draft { background: rgba(100, 116, 139, 0.18); color: #cbd5e1; border-color: rgba(100, 116, 139, 0.35); }
+      .lifecycle-chip-done { background: rgba(16, 185, 129, 0.16); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.35); }
+      .lifecycle-chip-closed { background: rgba(71, 85, 105, 0.22); color: #94a3b8; border-color: rgba(71, 85, 105, 0.45); }
+
+      /* ───── Lifecycle actions inside detail-hero ───── */
+      .lifecycle-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+
+      /* Two-line lifecycle action: bold label + muted helper underneath. */
+      .lifecycle-action-helper {
+        display: grid;
+        gap: 2px;
+        align-items: start;
+        text-align: left;
+        line-height: 1.15;
+      }
+      .lifecycle-action-helper .lifecycle-action-helper-label {
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .lifecycle-action-helper .lifecycle-action-helper-sub {
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        opacity: 0.7;
+      }
+
+      .lifecycle-actions-note {
+        margin: 8px 0 0;
+        font-size: 11px;
+        color: var(--text-muted);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .lifecycle-action {
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        cursor: pointer;
+        transition: background 120ms, border-color 120ms;
+      }
+
+      .lifecycle-action:hover {
+        border-color: rgba(99, 102, 241, 0.45);
+        background: rgba(99, 102, 241, 0.12);
+      }
+
+      .lifecycle-action.lifecycle-action-done {
+        border-color: rgba(16, 185, 129, 0.35);
+      }
+      .lifecycle-action.lifecycle-action-done:hover {
+        background: rgba(16, 185, 129, 0.14);
+      }
+      .lifecycle-action.lifecycle-action-closed {
+        border-color: rgba(148, 163, 184, 0.35);
+      }
+      .lifecycle-action.lifecycle-action-closed:hover {
+        background: rgba(71, 85, 105, 0.18);
+      }
+
+      @media (max-width: 960px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+        .pr-list-compact {
+          max-height: none;
+        }
       }
 
       .hero {
@@ -882,7 +1427,7 @@
         min-width: min(340px, 100%);
         color: var(--text-soft);
         font-size: 12px;
-        font-weight: 800;
+        font-weight: 500;
       }
 
       .delay-control input {
@@ -899,14 +1444,10 @@
         position: relative;
         min-height: 0;
         overflow-x: auto;
-        padding: 18px;
-        border: 1px dashed rgba(148, 163, 184, 0.22);
+        padding: 16px;
+        border: 1px solid var(--border);
         border-radius: 8px;
-        background:
-          linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(5, 10, 18, 0.92)),
-          radial-gradient(circle, rgba(148, 163, 184, 0.16) 1px, transparent 1px),
-          rgba(5, 10, 18, 0.46);
-        background-size: 100% 100%, 24px 24px, 100% 100%;
+        background: rgba(12, 18, 28, 0.5);
       }
 
       .pipeline-header {
@@ -914,20 +1455,20 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 16px;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
       }
 
       .pipeline-eyebrow {
         margin: 0;
         color: var(--muted);
-        font-size: 12px;
-        font-weight: 950;
-        letter-spacing: 0.16em;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
       }
 
       .pipeline-note {
-        margin: 5px 0 0;
+        margin: 4px 0 0;
         color: var(--text-soft);
         font-size: 12px;
         line-height: 1.4;
@@ -937,42 +1478,23 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: flex-end;
-        gap: 8px;
+        gap: 6px;
       }
 
       .pipeline-stat {
         display: inline-flex;
         align-items: center;
-        min-height: 28px;
-        padding: 3px 10px;
-        border: 1px solid var(--border);
+        padding: 2px 8px;
         border-radius: 999px;
         background: rgba(148, 163, 184, 0.08);
         color: var(--text-soft);
         font-size: 11px;
-        font-weight: 900;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        white-space: nowrap;
+        font-weight: 600;
       }
 
-      .pipeline-stat.running {
-        border-color: rgba(56, 189, 248, 0.42);
-        background: rgba(56, 189, 248, 0.12);
-        color: #bae6fd;
-      }
-
-      .pipeline-stat.done {
-        border-color: rgba(34, 197, 94, 0.4);
-        background: rgba(34, 197, 94, 0.12);
-        color: #bbf7d0;
-      }
-
-      .pipeline-stat.failed {
-        border-color: rgba(244, 63, 94, 0.42);
-        background: rgba(244, 63, 94, 0.13);
-        color: #fecdd3;
-      }
+      .pipeline-stat.running { background: rgba(56, 189, 248, 0.12); color: #bae6fd; }
+      .pipeline-stat.done    { background: rgba(34, 197, 94, 0.12); color: #bbf7d0; }
+      .pipeline-stat.failed  { background: rgba(244, 63, 94, 0.13); color: #fecdd3; }
 
       .pipeline-board {
         position: relative;
@@ -993,61 +1515,31 @@
 
       .pipeline-link {
         fill: none;
-        stroke: rgba(203, 213, 225, 0.52);
-        stroke-width: 2.8;
+        stroke: rgba(148, 163, 184, 0.3);
+        stroke-width: 1.5;
         stroke-linecap: round;
-        stroke-linejoin: round;
-        stroke-dasharray: 7 9;
-        opacity: 0.92;
         vector-effect: non-scaling-stroke;
       }
 
-      .pipeline-link.completed {
-        stroke: rgba(74, 222, 128, 0.9);
-        stroke-dasharray: 0;
+      .pipeline-link.completed { stroke: rgba(34, 197, 94, 0.55); }
+      .pipeline-link.failed    { stroke: rgba(244, 63, 94, 0.6); }
+      .pipeline-link.active    {
+        stroke: rgba(56, 189, 248, 0.8);
+        stroke-dasharray: 4 6;
+        animation: flowDash 1.2s linear infinite;
       }
-
-      .pipeline-link.failed {
-        stroke: rgba(251, 113, 133, 0.94);
-        stroke-dasharray: 0;
-      }
-
-      .pipeline-link.active {
-        stroke: rgba(125, 211, 252, 0.98);
-        animation: flowDash 0.9s linear infinite;
-      }
-
       .pipeline-link.disabled,
-      .pipeline-link.skipped {
-        stroke: rgba(148, 163, 184, 0.18);
-        opacity: 0.52;
-      }
+      .pipeline-link.skipped   { stroke: rgba(148, 163, 184, 0.12); }
 
-      .pipeline-link-terminal {
-        fill: rgba(148, 163, 184, 0.52);
-      }
-
-      .pipeline-link-terminal.completed {
-        fill: rgba(34, 197, 94, 0.82);
-      }
-
-      .pipeline-link-terminal.failed {
-        fill: rgba(244, 63, 94, 0.88);
-      }
-
-      .pipeline-link-terminal.active {
-        fill: rgba(56, 189, 248, 0.95);
-      }
-
+      .pipeline-link-terminal { fill: rgba(148, 163, 184, 0.4); }
+      .pipeline-link-terminal.completed { fill: rgba(34, 197, 94, 0.7); }
+      .pipeline-link-terminal.failed    { fill: rgba(244, 63, 94, 0.75); }
+      .pipeline-link-terminal.active    { fill: rgba(56, 189, 248, 0.85); }
       .pipeline-link-terminal.disabled,
-      .pipeline-link-terminal.skipped {
-        fill: rgba(148, 163, 184, 0.24);
-      }
+      .pipeline-link-terminal.skipped   { fill: rgba(148, 163, 184, 0.15); }
 
       @keyframes flowDash {
-        to {
-          stroke-dashoffset: -32;
-        }
+        to { stroke-dashoffset: -20; }
       }
 
       .pipeline-stages {
@@ -1082,24 +1574,25 @@
       .pipeline-stage-kicker {
         display: block;
         color: var(--muted);
-        font-size: 9px;
-        font-weight: 950;
-        letter-spacing: 0.14em;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
       }
 
       .pipeline-stage-title {
         display: block;
-        margin-top: 3px;
+        margin-top: 2px;
         color: var(--text);
-        font-size: 12px;
-        font-weight: 950;
+        font-size: 13px;
+        font-weight: 600;
       }
 
       .pipeline-stage-count {
         color: var(--text-soft);
-        font-size: 10px;
-        font-weight: 850;
+        font-size: 11px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
         white-space: nowrap;
       }
 
@@ -1112,15 +1605,6 @@
       .pipeline-stage-intake .pipeline-stage-head,
       .pipeline-stage-intake .pipeline-stage-list {
         width: min(100%, 128px);
-      }
-
-      .pipeline-stage-intake .pipeline-stage-list,
-      .pipeline-stage-guardrails .pipeline-stage-list {
-        gap: 22px;
-      }
-
-      .pipeline-stage-impact .pipeline-stage-list {
-        gap: 14px;
       }
 
       .pipeline-stage-coverage .pipeline-stage-head,
@@ -1138,51 +1622,26 @@
         display: grid;
         gap: 5px;
         min-width: 0;
-        min-height: 58px;
-        padding: 6px;
-        border: 1px solid rgba(148, 163, 184, 0.22);
-        border-left: 3px solid rgba(148, 163, 184, 0.45);
-        border-radius: 8px;
-        background:
-          linear-gradient(135deg, rgba(30, 41, 59, 0.92), rgba(12, 18, 28, 0.95)),
-          rgba(12, 18, 28, 0.98);
-        box-shadow: 0 18px 38px rgba(0, 0, 0, 0.2);
-        transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
+        min-height: 56px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-left: 3px solid rgba(148, 163, 184, 0.35);
+        border-radius: 6px;
+        background: rgba(12, 18, 28, 0.7);
+        transition: border-color 120ms, opacity 120ms;
       }
 
-      .pipeline-card.completed {
-        border-color: rgba(34, 197, 94, 0.44);
-        border-left-color: rgba(34, 197, 94, 0.9);
-        background:
-          linear-gradient(135deg, rgba(21, 128, 61, 0.42), rgba(8, 47, 32, 0.78)),
-          rgba(12, 18, 28, 0.98);
-        box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.12), 0 14px 30px rgba(0, 0, 0, 0.18);
-      }
-
-      .pipeline-card.failed {
-        border-color: rgba(244, 63, 94, 0.48);
-        border-left-color: rgba(244, 63, 94, 0.92);
-        background:
-          linear-gradient(135deg, rgba(190, 18, 60, 0.42), rgba(76, 5, 25, 0.78)),
-          rgba(12, 18, 28, 0.98);
-        box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.13), 0 14px 30px rgba(0, 0, 0, 0.2);
-      }
-
-      .pipeline-card.active {
-        border-color: rgba(56, 189, 248, 0.62);
-        border-left-color: rgba(56, 189, 248, 0.95);
-        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1), 0 20px 44px rgba(8, 47, 73, 0.34);
-        transform: translateY(-2px);
-      }
+      .pipeline-card.completed { border-left-color: rgba(34, 197, 94, 0.7); }
+      .pipeline-card.failed    { border-left-color: rgba(244, 63, 94, 0.75); }
+      .pipeline-card.active    { border-color: rgba(56, 189, 248, 0.45); border-left-color: rgba(56, 189, 248, 0.85); }
 
       .pipeline-card.selected {
-        outline: 2px solid rgba(56, 189, 248, 0.56);
-        outline-offset: 3px;
+        box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.7);
       }
 
       .pipeline-card.disabled,
       .pipeline-card.skipped {
-        opacity: 0.56;
+        opacity: 0.5;
       }
 
       .pipeline-card-main {
@@ -1213,8 +1672,8 @@
 
       .pipeline-card-stage {
         color: var(--muted);
-        font-size: 8px;
-        font-weight: 950;
+        font-size: 9px;
+        font-weight: 600;
         letter-spacing: 0.08em;
         text-transform: uppercase;
       }
@@ -1222,53 +1681,30 @@
       .pipeline-card-title {
         overflow-wrap: anywhere;
         color: var(--text);
-        font-size: 10px;
-        font-weight: 950;
-        line-height: 1.16;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.2;
       }
 
       .pipeline-progress {
         height: 2px;
         overflow: hidden;
         border-radius: 999px;
-        background: rgba(148, 163, 184, 0.16);
+        background: rgba(148, 163, 184, 0.1);
       }
 
       .pipeline-progress span {
         display: block;
-        width: 42%;
+        width: 0;
         height: 100%;
         border-radius: inherit;
-        background: rgba(148, 163, 184, 0.46);
-        transform: translateX(-110%);
+        background: rgba(148, 163, 184, 0.3);
+        transition: width 200ms ease, background 200ms ease;
       }
 
-      .pipeline-card.completed .pipeline-progress span {
-        width: 100%;
-        background: rgba(34, 197, 94, 0.78);
-        transform: translateX(0);
-      }
-
-      .pipeline-card.failed .pipeline-progress span {
-        width: 100%;
-        background: rgba(244, 63, 94, 0.82);
-        transform: translateX(0);
-      }
-
-      .pipeline-card.active .pipeline-progress span {
-        background: rgba(56, 189, 248, 0.9);
-        animation: pipelinePulse 1.2s ease-in-out infinite;
-      }
-
-      @keyframes pipelinePulse {
-        0% {
-          transform: translateX(-105%);
-        }
-
-        100% {
-          transform: translateX(245%);
-        }
-      }
+      .pipeline-card.active .pipeline-progress span    { width: 60%; background: rgba(56, 189, 248, 0.7); }
+      .pipeline-card.completed .pipeline-progress span { width: 100%; background: rgba(34, 197, 94, 0.6); }
+      .pipeline-card.failed .pipeline-progress span    { width: 100%; background: rgba(244, 63, 94, 0.65); }
 
       .pipeline-card-footer {
         display: flex;
@@ -1284,71 +1720,23 @@
         font-size: 8px;
       }
 
+      /*
+       * Single neutral tone for all agent icons. The pipeline card already
+       * encodes status (ready / running / completed / failed) via its left
+       * border accent, progress bar, and the status pill in the footer — a
+       * separate per-agent color zoo was redundant signal.
+       */
       .agent-icon {
         display: grid;
         place-items: center;
-        width: 30px;
-        height: 30px;
-        border-radius: 7px;
-        background: rgba(56, 189, 248, 0.13);
-        color: #bae6fd;
-        font-size: 10px;
-        font-weight: 950;
-      }
-
-      .agent-icon.intent {
-        background: rgba(129, 140, 248, 0.16);
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: rgba(99, 102, 241, 0.14);
         color: #c7d2fe;
-      }
-
-      .agent-icon.behavior {
-        background: rgba(245, 158, 11, 0.16);
-        color: #fde68a;
-      }
-
-      .agent-icon.concepts {
-        background: rgba(167, 139, 250, 0.17);
-        color: #ddd6fe;
-      }
-
-      .agent-icon.slop {
-        background: rgba(249, 115, 22, 0.18);
-        color: #fed7aa;
-      }
-
-      .agent-icon.policy {
-        background: rgba(244, 63, 94, 0.16);
-        color: #fecdd3;
-      }
-
-      .agent-icon.prompt {
-        background: rgba(14, 165, 233, 0.16);
-        color: #bae6fd;
-      }
-
-      .agent-icon.contracts {
-        background: rgba(34, 197, 94, 0.15);
-        color: #bbf7d0;
-      }
-
-      .agent-icon.evidence {
-        background: rgba(20, 184, 166, 0.16);
-        color: #99f6e4;
-      }
-
-      .agent-icon.memory {
-        background: rgba(45, 212, 191, 0.18);
-        color: #ccfbf1;
-      }
-
-      .agent-icon.tests {
-        background: rgba(34, 197, 94, 0.18);
-        color: #bbf7d0;
-      }
-
-      .agent-icon.report {
-        background: rgba(248, 113, 113, 0.16);
-        color: #fecaca;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
       }
 
       .flow-caption {
@@ -1848,20 +2236,84 @@
       </div>
       <div class="topbar-actions">
         <button id="refresh-button" class="button" type="button">Refresh</button>
-        <button id="run-demo" class="button button-primary" type="button">Run Demo PR</button>
       </div>
     </header>
 
-    <main class="shell">
-      <section id="queue-panel" class="panel pr-list-panel" aria-label="Pull request list">
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">Live PR intake</p>
-            <h2>Pull requests</h2>
-            <p class="muted">New PR analyses appear here automatically. Choose a PR, run agents, then open the dashboard.</p>
-          </div>
-          <section id="metrics" class="metrics compact-metrics" aria-label="Metrics"></section>
+    <main class="shell" id="shell">
+      <header class="page-heading shell-heading">
+        <div>
+          <h2>Pull requests</h2>
         </div>
+        <section id="metrics" class="metrics compact-metrics" aria-label="Metrics"></section>
+      </header>
+
+      <div class="workspace" id="workspace">
+        <section id="queue-panel" class="panel pr-list-panel" aria-label="Pull request list">
+          <div class="pr-list-header">
+            <h3 class="panel-title">PR queue</h3>
+            <span id="queue-count" class="pill pill-info">0 PRS</span>
+          </div>
+          <nav id="lifecycle-tabs" class="lifecycle-tabs" role="tablist" aria-label="Filter PRs by lifecycle"></nav>
+          <div id="queue-list" class="queue-list pr-list pr-list-compact"></div>
+          <div class="queue-footer">
+            <button id="view-all-button" type="button" class="link-button">View all PRs <span id="view-all-count" class="muted"></span></button>
+          </div>
+        </section>
+
+        <section id="workspace-detail" class="workspace-detail" aria-label="PR analysis workspace">
+          <section id="agent-workflow-panel" class="panel agent-workflow-panel hidden" aria-label="Agent workflow">
+            <div class="workflow-toolbar">
+              <div>
+                <p class="section-kicker">Agent workflow</p>
+                <h3 id="workflow-title" class="panel-title">Available agents</h3>
+                <p id="workflow-subtitle" class="muted">Toggle agents, then analyze a PR to watch the flow.</p>
+              </div>
+              <label class="delay-control">
+                Execution gap
+                <input id="agent-delay" type="range" min="0" max="2000" step="250" value="750" />
+                <span id="agent-delay-value">750ms</span>
+              </label>
+            </div>
+            <div class="agent-flow-shell">
+              <div id="agent-flow" class="agent-flow-canvas"></div>
+              <aside id="agent-output" class="agent-output"></aside>
+            </div>
+          </section>
+
+          <section id="detail-pane" class="detail-pane hidden" aria-label="Pull request dashboard"></section>
+
+          <section id="workspace-empty" class="workspace-empty panel" aria-hidden="false">
+            <div class="empty-explainer">
+              <div class="empty-explainer-text">
+                <p class="section-kicker">Agentic Command Center</p>
+                <h3>Triage your queue with confidence</h3>
+                <p class="muted">MergeGuard runs an agent pipeline over each pull request to surface:</p>
+                <ul class="empty-explainer-list">
+                  <li><strong>Intent gaps</strong> — what the description promises vs. what the diff actually changes.</li>
+                  <li><strong>Evidence map</strong> — which symbols, files and contracts back each finding.</li>
+                  <li><strong>Policy gates</strong> — concept-level rules that block or allow the merge.</li>
+                </ul>
+                <p class="muted empty-explainer-hint">Pick a PR on the left to start triaging.</p>
+              </div>
+              <aside class="empty-explainer-try">
+                <p class="section-kicker">Try it</p>
+                <h4>Run a demo PR</h4>
+                <p class="muted">Pipe the bundled sample through the full agent pipeline to see the truth report shape.</p>
+                <button id="empty-run-demo" type="button" class="button button-primary">Run demo PR</button>
+              </aside>
+            </div>
+          </section>
+        </section>
+      </div>
+
+      <section id="full-list-view" class="full-list-view hidden" aria-label="All pull requests">
+        <header class="page-heading">
+          <div>
+            <h2>Full queue</h2>
+          </div>
+          <button id="back-to-dashboard" type="button" class="button">← Back to dashboard</button>
+        </header>
+        <nav id="full-lifecycle-tabs" class="lifecycle-tabs" role="tablist" aria-label="Filter PRs by lifecycle"></nav>
         <form id="filters" class="filters">
           <label>
             Repo
@@ -1876,7 +2328,7 @@
             </select>
           </label>
           <label>
-            State
+            Risk state
             <select name="risk_state" id="state-filter">
               <option value="">All states</option>
               <option value="pass">Pass</option>
@@ -1886,36 +2338,46 @@
             </select>
           </label>
         </form>
-        <div class="pr-list-header">
-          <h3 class="panel-title">PR queue</h3>
-          <span id="queue-count" class="pill pill-info">0 PRS</span>
-        </div>
-        <div id="queue-list" class="queue-list pr-list"></div>
+        <div id="full-queue-list" class="queue-list pr-list"></div>
       </section>
-
-      <section id="agent-workflow-panel" class="panel agent-workflow-panel hidden" aria-label="Agent workflow">
-        <div class="workflow-toolbar">
-          <div>
-            <p class="section-kicker">Agent workflow</p>
-            <h3 id="workflow-title" class="panel-title">Available agents</h3>
-            <p id="workflow-subtitle" class="muted">Toggle agents, then analyze a PR to watch the flow.</p>
-          </div>
-          <label class="delay-control">
-            Execution gap
-            <input id="agent-delay" type="range" min="0" max="2000" step="250" value="750" />
-            <span id="agent-delay-value">750ms</span>
-          </label>
-        </div>
-        <div class="agent-flow-shell">
-          <div id="agent-flow" class="agent-flow-canvas"></div>
-          <aside id="agent-output" class="agent-output"></aside>
-        </div>
-      </section>
-
-      <section id="detail-pane" class="detail-pane hidden" aria-label="Pull request dashboard"></section>
     </main>
 
     <script type="module">
+      const LIFECYCLE_STORAGE_KEY = "mergeguard:lifecycle:v1";
+      const LIFECYCLE_FILTER_KEY = "mergeguard:lifecycleFilter:v1";
+      function loadLifecycle() {
+        try {
+          const raw = localStorage.getItem(LIFECYCLE_STORAGE_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      }
+      function saveLifecycle(map) {
+        try {
+          localStorage.setItem(LIFECYCLE_STORAGE_KEY, JSON.stringify(map));
+        } catch {
+          /* ignore */
+        }
+      }
+      function loadLifecycleFilter() {
+        try {
+          const value = localStorage.getItem(LIFECYCLE_FILTER_KEY);
+          // Migrate old "in_review" choices to "open" — they're the same bucket now.
+          if (value === "in_review") return "open";
+          return value || null;
+        } catch {
+          return null;
+        }
+      }
+      function saveLifecycleFilter(value) {
+        try {
+          localStorage.setItem(LIFECYCLE_FILTER_KEY, value);
+        } catch {
+          /* ignore */
+        }
+      }
+
       const state = {
         rows: [],
         selectedRunId: null,
@@ -1930,8 +2392,47 @@
         flowCompletedAgentIds: new Set(),
         flowTimer: null,
         delayMs: 750,
-        filters: { repo: "", owner: "", risk_state: "" }
+        filters: { repo: "", owner: "", risk_state: "" },
+        // Null = "auto-pick on first render based on what's actually in the queue."
+        // Once the user clicks a tab, that choice is stored in localStorage and wins.
+        lifecycleFilter: loadLifecycleFilter(),
+        lifecycleFilterAutoPicked: false,
+        lifecycleOverrides: loadLifecycle(), // { prId: 'open' | 'in_review' | 'draft' | 'done' | 'closed' }
+        view: "dashboard", // 'dashboard' | 'all'
+        topListLimit: 10
       };
+
+      // The fourth tab bucket aggregates both user-set "done" overrides and
+      // user-set "closed" overrides — "Done" is the positive, primary label
+      // for a finished PR and the one most reviewers will read it as. The
+      // internal id stays "closed" so existing localStorage filter values
+      // ("closed") still resolve to this bucket without a migration step.
+      const LIFECYCLE_TABS = [
+        { id: "open", label: "Open" },
+        { id: "draft", label: "Drafts" },
+        { id: "closed", label: "Done" },
+        { id: "all", label: "All" }
+      ];
+
+      // Lifecycle resolution: user-set override wins, else derive from PR
+      // metadata. The "analyzed vs. not analyzed" distinction is a per-card
+      // signal (visible as the risk score / "no run" chip), NOT a separate
+      // lifecycle bucket — a PR is "open" whether agents have run on it yet
+      // or not.
+      function lifecycleOf(row) {
+        const pr = row.pull_request || {};
+        const override = state.lifecycleOverrides[pr.id];
+        if (override) {
+          // Migrate any legacy "in_review" overrides to "open" on read so
+          // existing localStorage keeps working.
+          return override === "in_review" ? "open" : override;
+        }
+        const labels = (pr.labels || []).map((l) => String(l).toLowerCase());
+        if (pr.draft === true || labels.includes("draft") || labels.includes("wip")) {
+          return "draft";
+        }
+        return "open";
+      }
 
       const agentPipelineLayers = [
         {
@@ -2008,13 +2509,25 @@
 
       const metricsEl = document.querySelector("#metrics");
       const queueListEl = document.querySelector("#queue-list");
+      const fullQueueListEl = document.querySelector("#full-queue-list");
       const detailEl = document.querySelector("#detail-pane");
+      const workspaceEmptyEl = document.querySelector("#workspace-empty");
       const repoFilterEl = document.querySelector("#repo-filter");
       const ownerFilterEl = document.querySelector("#owner-filter");
       const stateFilterEl = document.querySelector("#state-filter");
-      const runButton = document.querySelector("#run-demo");
+      // Demo trigger now lives inside the workspace-empty card instead of
+      // the topbar so the chrome stays quiet and the action sits in context.
+      const runButton = document.querySelector("#empty-run-demo");
       const refreshButton = document.querySelector("#refresh-button");
       const queueCountEl = document.querySelector("#queue-count");
+      const lifecycleTabsEl = document.querySelector("#lifecycle-tabs");
+      const fullLifecycleTabsEl = document.querySelector("#full-lifecycle-tabs");
+      const viewAllButton = document.querySelector("#view-all-button");
+      const viewAllCountEl = document.querySelector("#view-all-count");
+      const backToDashboardButton = document.querySelector("#back-to-dashboard");
+      const workspaceEl = document.querySelector("#workspace");
+      const fullListViewEl = document.querySelector("#full-list-view");
+      const shellHeadingEl = document.querySelector(".shell-heading");
       const workflowPanelEl = document.querySelector("#agent-workflow-panel");
       const workflowTitleEl = document.querySelector("#workflow-title");
       const workflowSubtitleEl = document.querySelector("#workflow-subtitle");
@@ -2031,8 +2544,42 @@
       });
       document.querySelector("#filters").addEventListener("change", (event) => {
         state.filters[event.target.name] = event.target.value;
-        loadQueue();
+        renderQueue();
       });
+      viewAllButton.addEventListener("click", () => setView("all"));
+      backToDashboardButton.addEventListener("click", () => setView("dashboard"));
+      function onLifecycleTabClick(event) {
+        const btn = event.target.closest("[data-lifecycle]");
+        if (!btn) return;
+        state.lifecycleFilter = btn.dataset.lifecycle;
+        state.lifecycleFilterAutoPicked = true; // user took ownership
+        saveLifecycleFilter(state.lifecycleFilter);
+        renderQueue();
+      }
+      lifecycleTabsEl.addEventListener("click", onLifecycleTabClick);
+      fullLifecycleTabsEl.addEventListener("click", onLifecycleTabClick);
+
+      function setView(next) {
+        state.view = next;
+        const isAll = next === "all";
+        workspaceEl.classList.toggle("hidden", isAll);
+        fullListViewEl.classList.toggle("hidden", !isAll);
+        shellHeadingEl.classList.toggle("hidden", isAll);
+        renderQueue();
+      }
+
+      function setLifecycle(prId, lifecycle) {
+        if (!prId) return;
+        if (lifecycle === "open") {
+          // Clearing back to derived state.
+          delete state.lifecycleOverrides[prId];
+        } else {
+          state.lifecycleOverrides[prId] = lifecycle;
+        }
+        saveLifecycle(state.lifecycleOverrides);
+        renderQueue();
+        if (state.currentRun) renderDetail(state.currentRun);
+      }
 
       await loadAgents();
       await loadQueue();
@@ -2128,12 +2675,38 @@
         const high = metrics.high_risk || 0;
         const execs = metrics.agent_executions || 0;
         metricsEl.innerHTML = [
-          metric("Open PRs", open, `${blocked} blocked`),
+          // The two queue-actionable counts become filter shortcuts;
+          // the other two stay static (they aren't queue axes).
+          metricButton("Open PRs", open, `${blocked} blocked`, "open", "Show open →"),
           metric("Analysis runs", runs, `${metrics.completed_runs || 0} completed`),
-          metric("High risk", high, "risk >= 65"),
+          metricButton("High risk", high, "risk >= 65", "high-risk", "Show high-risk →"),
           metric("Agent execs", execs, "independent runs")
         ].join("");
       }
+
+      // Delegate clicks on the KPI strip to the queue filters.
+      function onMetricFilterClick(event) {
+        const btn = event.target.closest("[data-metric-filter]");
+        if (!btn || btn.disabled) return;
+        const id = btn.dataset.metricFilter;
+        if (id === "open") {
+          state.lifecycleFilter = "open";
+          state.lifecycleFilterAutoPicked = true;
+          saveLifecycleFilter("open");
+          if (state.view !== "dashboard") setView("dashboard");
+          else renderQueue();
+        } else if (id === "high-risk") {
+          state.lifecycleFilter = "all";
+          state.lifecycleFilterAutoPicked = true;
+          saveLifecycleFilter("all");
+          state.filters.risk_state = "blocked";
+          if (state.view !== "all") setView("all");
+          else renderQueue();
+          // Sync the select element so users can see why the list changed.
+          if (stateFilterEl) stateFilterEl.value = "blocked";
+        }
+      }
+      metricsEl.addEventListener("click", onMetricFilterClick);
 
       function renderFilters() {
         const repos = unique(state.rows.map((row) => row.pull_request?.repository?.full_name).filter(Boolean));
@@ -2153,20 +2726,158 @@
         stateFilterEl.value = state.filters.risk_state || "";
       }
 
-      function renderQueue() {
-        const rows = filteredRows();
-        queueCountEl.textContent = `${rows.length} PR${rows.length === 1 ? "" : "S"}`;
-        if (!rows.length) {
-          queueListEl.innerHTML = `<div class="empty-state">No analyzed pull requests match this scope.</div>`;
+      function renderLifecycleTabs() {
+        const counts = lifecycleCounts();
+        const html = LIFECYCLE_TABS.map((tab) => {
+          const active = state.lifecycleFilter === tab.id ? " active" : "";
+          const count = counts[tab.id] ?? 0;
+          return `<button type="button" class="lifecycle-tab${active}" data-lifecycle="${escAttr(tab.id)}" role="tab" aria-selected="${active ? "true" : "false"}">
+            <span>${esc(tab.label)}</span>
+            <span class="lifecycle-tab-count">${count}</span>
+          </button>`;
+        }).join("");
+        // Render to both the dashboard rail and the full-list view so the
+        // filter stays visible and editable wherever the list is showing.
+        lifecycleTabsEl.innerHTML = html;
+        if (fullLifecycleTabsEl) fullLifecycleTabsEl.innerHTML = html;
+      }
+
+      function lifecycleCounts() {
+        const counts = { open: 0, draft: 0, closed: 0, all: state.rows.length };
+        for (const row of state.rows) {
+          const lc = lifecycleOf(row);
+          // "closed" tab aggregates both done + closed
+          const bucket = lc === "done" ? "closed" : lc;
+          counts[bucket] = (counts[bucket] || 0) + 1;
+        }
+        return counts;
+      }
+
+      function autoPickLifecycleIfNeeded() {
+        // Only auto-pick once, on first render, when the user hasn't chosen yet.
+        if (state.lifecycleFilter && state.lifecycleFilterAutoPicked) return;
+        if (state.lifecycleFilter) {
+          // Restored from localStorage — treat as a user choice.
+          state.lifecycleFilterAutoPicked = true;
           return;
         }
-        queueListEl.innerHTML = rows.map(queueCard).join("");
-        for (const button of queueListEl.querySelectorAll("[data-action='analyze']")) {
-          button.addEventListener("click", () => analyzePr(button.dataset.prId));
+        if (!state.rows.length) {
+          // Queue not loaded yet — fall back to "open" so the UI isn't blank;
+          // we'll re-evaluate on the next call once rows arrive.
+          state.lifecycleFilter = "open";
+          return;
         }
-        for (const button of queueListEl.querySelectorAll("[data-action='details']")) {
-          button.addEventListener("click", () => showDetails(button.dataset.runId));
+        const counts = lifecycleCounts();
+        const preferred = ["open", "draft", "closed", "all"];
+        state.lifecycleFilter = preferred.find((id) => (counts[id] || 0) > 0) || "all";
+        state.lifecycleFilterAutoPicked = true;
+      }
+
+      function renderQueue() {
+        autoPickLifecycleIfNeeded();
+        renderLifecycleTabs();
+        const rows = filteredRows();
+        const isAll = state.view === "all";
+        const visible = isAll ? rows : rows.slice(0, state.topListLimit);
+        queueCountEl.textContent = `${rows.length} PR${rows.length === 1 ? "" : "S"}`;
+
+        if (!isAll) {
+          if (!visible.length) {
+            queueListEl.innerHTML = `<div class="empty-state">No pull requests match this filter.</div>`;
+          } else {
+            queueListEl.innerHTML = visible.map(queueCardCompact).join("");
+            for (const card of queueListEl.querySelectorAll(".pr-row-compact")) {
+              card.addEventListener("click", () => selectPr(card.dataset.prId));
+            }
+            for (const btn of queueListEl.querySelectorAll("[data-quick-action]")) {
+              btn.addEventListener("click", (event) => {
+                event.stopPropagation();
+                setLifecycle(btn.dataset.prId, btn.dataset.quickAction);
+              });
+            }
+          }
+          if (rows.length > state.topListLimit) {
+            viewAllCountEl.textContent = `(${rows.length})`;
+            viewAllButton.classList.remove("hidden");
+          } else {
+            viewAllCountEl.textContent = "";
+          }
+          renderWorkspaceEmpty();
+        } else {
+          // Full list view: render the full table with the existing rich queueCard.
+          if (!rows.length) {
+            fullQueueListEl.innerHTML = `<div class="empty-state">No analyzed pull requests match this scope.</div>`;
+          } else {
+            fullQueueListEl.innerHTML = rows.map(queueCard).join("");
+            for (const button of fullQueueListEl.querySelectorAll("[data-action='analyze']")) {
+              button.addEventListener("click", () => analyzePr(button.dataset.prId));
+            }
+            for (const button of fullQueueListEl.querySelectorAll("[data-action='details']")) {
+              button.addEventListener("click", () => showDetails(button.dataset.runId));
+            }
+          }
         }
+      }
+
+      function renderWorkspaceEmpty() {
+        if (!workspaceEmptyEl) return;
+        const showEmpty = !state.selectedPrId && !state.selectedRunId;
+        const detailVisible = !detailEl.classList.contains("hidden");
+        const workflowVisible = !workflowPanelEl.classList.contains("hidden");
+        workspaceEmptyEl.classList.toggle("hidden", !(showEmpty && !detailVisible && !workflowVisible));
+      }
+
+      async function selectPr(prId) {
+        if (!prId) return;
+        const row = state.rows.find((r) => r.pull_request?.id === prId);
+        state.selectedPrId = prId;
+        // Click = "I want to review this PR". When there's already a completed
+        // run, jump straight to the truth report. Otherwise auto-kick off the
+        // agent pipeline so the user lands in the analysis without an extra
+        // click — unless analysis is already in flight for this PR.
+        if (row?.latest_run?.id && row.latest_run.state === "completed") {
+          await showDetails(row.latest_run.id);
+        } else if (state.activeAnalysisPrId === prId) {
+          // Already analyzing; let the workflow panel keep running.
+          renderQueue();
+        } else {
+          await analyzePr(prId);
+        }
+      }
+
+      function renderUnanalyzed(row) {
+        if (!row) {
+          detailEl.classList.add("hidden");
+          renderWorkspaceEmpty();
+          return;
+        }
+        const pr = row.pull_request || {};
+        const lc = lifecycleOf(row);
+        const analyzing = state.activeAnalysisPrId === pr.id;
+        detailEl.classList.remove("hidden");
+        detailEl.innerHTML = `
+          <section class="panel detail-hero">
+            <div>
+              <p class="section-kicker">Selected PR</p>
+              <h2>#${esc(pr.number || "")} ${esc(pr.title || "Untitled pull request")}</h2>
+              <div class="detail-meta">
+                ${pill(`Lifecycle: ${lifecycleLabel(lc)}`, "info")}
+              </div>
+              <div class="summary-strip">
+                ${summaryItem("Repository", pr.repository?.full_name || "unknown")}
+                ${summaryItem("Author", pr.author || "unknown")}
+                ${summaryItem("Status", "No analysis run yet")}
+              </div>
+              <p class="muted" style="margin: 14px 0 0; font-size: 13px;">
+                Run the agent pipeline against this PR to generate the truth report, intent
+                gaps, evidence map, and policy gates.
+              </p>
+              ${detailActionBar({ prId: pr.id, currentLc: lc, prUrl: pr.url, hasRun: false, isAnalyzing: analyzing })}
+            </div>
+          </section>
+        `;
+        bindDetailActionBar(detailEl);
+        renderWorkspaceEmpty();
       }
 
       async function analyzePr(prId) {
@@ -2185,6 +2896,7 @@
         );
         startFlowAnimation();
         renderQueue();
+        renderWorkspaceEmpty();
         try {
           const response = await fetch(`/api/prs/${encodeURIComponent(prId)}/analyze`, {
             method: "POST",
@@ -2214,12 +2926,13 @@
         if (!runId) return;
         const payload = await fetchJson(`/api/runs/${encodeURIComponent(runId)}`);
         state.selectedRunId = runId;
-        state.selectedPrId = payload.run?.pull_request_id || null;
+        state.selectedPrId = payload.run?.pull_request_id || state.selectedPrId;
         state.selectedDetailTab = "overview";
         workflowPanelEl.classList.add("hidden");
         detailEl.classList.remove("hidden");
         renderDetail(payload.run);
-        detailEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        renderWorkspaceEmpty();
+        renderQueue();
       }
 
       function renderAgentWorkflow(run = state.currentRun) {
@@ -2518,7 +3231,16 @@
       }
 
       function filteredRows() {
-        return state.rows.filter((row) => {
+        const lc = state.lifecycleFilter;
+        const matchLifecycle = (row) => {
+          if (lc === "all") return true;
+          const got = lifecycleOf(row);
+          if (lc === "closed") return got === "closed" || got === "done";
+          return got === lc;
+        };
+        // Sort most-recent first (uses PR.updated_at then latest_run.created_at as a tiebreaker).
+        const rows = state.rows.filter((row) => {
+          if (!matchLifecycle(row)) return false;
           const pr = row.pull_request || {};
           const summary = row.latest_run?.summary || {};
           const repo = pr.repository?.full_name || "";
@@ -2533,6 +3255,78 @@
           if (state.filters.risk_state && summary.status !== state.filters.risk_state) return false;
           return true;
         });
+        rows.sort((a, b) => {
+          const ts = (row) =>
+            new Date(
+              row.pull_request?.updated_at ||
+                row.latest_run?.created_at ||
+                row.pull_request?.created_at ||
+                0
+            ).getTime();
+          return ts(b) - ts(a);
+        });
+        return rows;
+      }
+
+      function queueCardCompact(row) {
+        const pr = row.pull_request || {};
+        const run = row.latest_run || {};
+        const summary = run.summary || {};
+        const lc = lifecycleOf(row);
+        const agentCount = Object.keys(run.agent_results || {}).length;
+        const isSelected = state.selectedPrId === pr.id;
+        const isAnalyzing = state.activeAnalysisPrId === pr.id;
+        const repoText = pr.repository?.full_name || "";
+        const authorText = pr.author || "unknown";
+        const numText = pr.number ? `#${pr.number}` : "";
+        const showScore = Number.isFinite(summary.risk_score);
+        // Lifecycle chip lives next to the lifecycle dot in the meta row so
+        // the state is readable in words, not just color. Title= on the dot
+        // adds a hover affordance for keyboard / screen-reader users too.
+        const lcLabel = lifecycleLabel(lc);
+        // While analyzing, swap the trailing score for a "Analyzing…" pulse
+        // so the clicked card visually confirms the click landed.
+        const trailing = isAnalyzing
+          ? `<span class="pr-row-status">Analyzing…</span><span class="pr-row-chevron" aria-hidden="true">›</span>`
+          : `<div class="pr-row-score">
+              ${showScore ? `<span class="score-number">${scoreLabel(summary.risk_score)}</span><span class="score-meta">risk</span>` : `<span class="score-meta">no run</span>`}
+            </div>
+            ${quickActionFor(pr.id, lc)}
+            <span class="pr-row-chevron" aria-hidden="true">›</span>`;
+        return `<article class="pr-row-compact${isSelected ? " selected" : ""}${isAnalyzing ? " analyzing" : ""}" data-pr-id="${escAttr(pr.id || "")}" data-lifecycle="${escAttr(lc)}" tabindex="0" role="button" aria-label="${escAttr(`${numText} ${pr.title || "Pull request"} — ${lcLabel}`)}">
+          <span class="lifecycle-dot" aria-hidden="true" title="${escAttr(lcLabel)}"></span>
+          <div class="pr-row-body">
+            <h3 class="pr-row-title">${esc(numText ? `${numText} ` : "")}${esc(pr.title || "Untitled PR")}</h3>
+            <div class="pr-row-meta">
+              <span class="lifecycle-chip lifecycle-chip-${escAttr(lc)}">${esc(lcLabel)}</span>
+              <span>${esc(repoText)}</span>
+              ${repoText && authorText ? `<span class="dot-sep">${esc(authorText)}</span>` : authorText ? `<span>${esc(authorText)}</span>` : ""}
+              ${agentCount ? `<span class="dot-sep">${agentCount} agent${agentCount === 1 ? "" : "s"}</span>` : ""}
+            </div>
+          </div>
+          <div class="pr-row-trailing">
+            ${trailing}
+          </div>
+        </article>`;
+      }
+
+      function quickActionFor(prId, lc) {
+        if (!prId) return "";
+        const isClosed = lc === "done" || lc === "closed";
+        if (isClosed) {
+          return `<button type="button" class="pr-row-quick-action pr-row-quick-action-reopen" data-quick-action="open" data-pr-id="${escAttr(prId)}" aria-label="Reopen for review" title="Reopen for review">↺ Reopen</button>`;
+        }
+        return `<button type="button" class="pr-row-quick-action" data-quick-action="done" data-pr-id="${escAttr(prId)}" aria-label="Mark as done" title="Mark as done">✓ Done</button>`;
+      }
+
+      function lifecycleLabel(lc) {
+        switch (lc) {
+          case "open": return "open";
+          case "draft": return "draft";
+          case "done": return "done";
+          case "closed": return "closed";
+          default: return lc;
+        }
       }
 
       function queueCard(row) {
@@ -2582,6 +3376,8 @@
         const selectedTab = tabs.find((tab) => tab.id === state.selectedDetailTab) || tabs[0];
         state.selectedDetailTab = selectedTab.id;
 
+        const heroRow = state.rows.find((r) => r.pull_request?.id === pr.id);
+        const heroLc = heroRow ? lifecycleOf(heroRow) : "in_review";
         detailEl.innerHTML = `
           <section class="panel detail-hero">
             <div>
@@ -2591,6 +3387,7 @@
                 ${pill(status)}
                 ${pill(`${agentNames.length} agents`, "info")}
                 ${pill(run.state || "unknown", run.state || "unknown")}
+                ${pill(`Lifecycle: ${lifecycleLabel(heroLc)}`, "info")}
                 ${pr.url ? `<a class="chip" href="${escAttr(pr.url)}" target="_blank" rel="noreferrer">Open PR</a>` : ""}
               </div>
               <div class="summary-strip">
@@ -2598,6 +3395,7 @@
                 ${summaryItem("Top blocker", summary.top_blocker || "None")}
                 ${summaryItem("Next action", summary.next_action || "Analysis pending")}
               </div>
+              ${detailActionBar({ prId: pr.id, currentLc: heroLc, prUrl: pr.url, hasRun: true, isAnalyzing: state.activeAnalysisPrId === pr.id })}
             </div>
             ${riskDial(score)}
           </section>
@@ -2615,6 +3413,47 @@
             state.selectedDetailTab = button.dataset.detailTab;
             renderDetail(state.currentRun);
           });
+        }
+        bindDetailActionBar(detailEl);
+      }
+
+      // Detail-hero action bar — one row that varies by run state. Adds
+      // five verbs to the page where the old design surfaced just one.
+      function detailActionBar({ prId, currentLc, prUrl, hasRun, isAnalyzing }) {
+        if (!prId) return "";
+        const isClosed = currentLc === "done" || currentLc === "closed";
+        const buttons = [];
+        const analyzeLabel = isAnalyzing
+          ? (hasRun ? "Re-analyzing…" : "Analyzing…")
+          : (hasRun ? "Re-analyze" : "Analyze this PR");
+        const analyzePrimary = !isClosed;
+        const analyzeClass = analyzePrimary ? "button button-primary" : "button";
+
+        if (isClosed) {
+          buttons.push(`<button type="button" class="button button-primary" data-action="lifecycle" data-value="open" data-pr-id="${escAttr(prId)}">Reopen for review</button>`);
+          buttons.push(`<button type="button" class="${analyzeClass}" data-action="analyze" data-pr-id="${escAttr(prId)}" ${isAnalyzing ? "disabled" : ""}>${esc(analyzeLabel)}</button>`);
+        } else {
+          buttons.push(`<button type="button" class="${analyzeClass}" data-action="analyze" data-pr-id="${escAttr(prId)}" ${isAnalyzing ? "disabled" : ""}>${esc(analyzeLabel)}</button>`);
+          buttons.push(`<button type="button" class="button" data-action="lifecycle" data-value="done" data-pr-id="${escAttr(prId)}">Mark as done</button>`);
+          buttons.push(`<button type="button" class="button" data-action="lifecycle" data-value="closed" data-pr-id="${escAttr(prId)}">${hasRun ? "Mark as closed" : "Skip without analysis"}</button>`);
+        }
+
+        if (prUrl) {
+          buttons.push(`<a class="button" href="${escAttr(prUrl)}" target="_blank" rel="noreferrer">Open on GitHub ↗</a>`);
+        }
+
+        return `<div class="action-bar">
+          ${buttons.join("")}
+          <p class="action-bar-note">Lifecycle saved on this device</p>
+        </div>`;
+      }
+
+      function bindDetailActionBar(rootEl) {
+        for (const btn of rootEl.querySelectorAll("[data-action='lifecycle']")) {
+          btn.addEventListener("click", () => setLifecycle(btn.dataset.prId, btn.dataset.value));
+        }
+        for (const btn of rootEl.querySelectorAll("[data-action='analyze']")) {
+          btn.addEventListener("click", () => analyzePr(btn.dataset.prId));
         }
       }
 
@@ -2813,6 +3652,18 @@
 
       function metric(label, value, hint) {
         return `<div class="metric"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(hint || "")}</small></div>`;
+      }
+
+      // Clickable KPI tile — same shape, but renders as a button and signals
+      // that it shortcuts a queue filter. Click is delegated on metricsEl.
+      function metricButton(label, value, hint, filterId, hintActive) {
+        const disabled = !filterId || Number(value) === 0;
+        return `<button type="button" class="metric metric-clickable" data-metric-filter="${escAttr(filterId)}" ${disabled ? "disabled" : ""}>
+          <span>${esc(label)}</span>
+          <strong>${esc(value)}</strong>
+          <small>${esc(hint || "")}</small>
+          ${disabled ? "" : `<span class="metric-filter-hint">${esc(hintActive || "Tap to filter →")}</span>`}
+        </button>`;
       }
 
       function summaryItem(label, value) {
