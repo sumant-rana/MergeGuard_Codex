@@ -38,6 +38,9 @@ class LocalMergeGuardStore:
 
     def upsert_pull_request(self, pr: dict[str, Any]) -> dict[str, Any]:
         repo = pr["repository"]["full_name"]
+        # Strip incoming "id" — GitHub webhooks include a numeric id that would
+        # clobber our stable string ``pr_<uuid>`` and break dashboard lookups.
+        pr = {k: v for k, v in pr.items() if k != "id"}
         existing = next(
             (
                 item
@@ -51,7 +54,7 @@ class LocalMergeGuardStore:
             existing["updated_at"] = utc_now()
             self.save()
             return existing
-        record = {"id": new_id("pr"), **pr, "created_at": utc_now(), "updated_at": utc_now()}
+        record = {**pr, "id": new_id("pr"), "created_at": utc_now(), "updated_at": utc_now()}
         self.state["pull_requests"].append(record)
         self.save()
         return record
