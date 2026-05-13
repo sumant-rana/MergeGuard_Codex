@@ -17,6 +17,7 @@ from packages.agent_runtime import (  # noqa: E402
     create_app,
     llm_available,
     make_agent_result,
+    register_default_llm,
     register_entrypoint,
 )
 
@@ -39,6 +40,7 @@ CONCEPT_PATTERNS = {
 }
 
 app = create_app(AGENT_ID, "Classify changed functions and files into review concepts.")
+register_default_llm(app)
 
 
 @app.tool()
@@ -187,6 +189,7 @@ def _augment_via_llm(
         f"```json\n{json.dumps({'files': files_payload}, indent=2)}\n```"
     )
     result = call_llm_json(
+        app=app,
         system=_CONCEPT_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,

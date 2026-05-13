@@ -162,6 +162,17 @@ class CloudOEClient:
         else:
             _run_stream()
 
+        # The Magenta tenant edge can emit an ``error`` chunk and still close
+        # the stream cleanly (no HTTP error). Detect that here and raise so
+        # the retry layer in platform_factory treats it as transient.
+        for event in events:
+            if event.get("chunk_type") == "error":
+                err_msg = str(event.get("error") or event.get("content") or "stream error")
+                raise OEError(
+                    f"cloud /invokeWorkspaceStream (workspace={self._creds.workspace_id}) "
+                    f"emitted chunk_type=error: {err_msg}"
+                )
+
         # Pick the best representation of the agent's output:
         #   1. ``chunk_type: "done"`` terminal → use its ``content`` verbatim.
         #   2. Other final-shaped event with a result/output payload.

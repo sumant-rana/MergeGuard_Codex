@@ -17,6 +17,7 @@ from packages.agent_runtime import (  # noqa: E402
     create_app,
     llm_available,
     make_agent_result,
+    register_default_llm,
     register_entrypoint,
 )
 from packages.core.analysis_utils import risk_hits  # noqa: E402
@@ -24,6 +25,7 @@ from packages.core.analysis_utils import risk_hits  # noqa: E402
 AGENT_ID = "semantic-diff-explainer"
 
 app = create_app(AGENT_ID, "Explain changed behavior and blast radius.")
+register_default_llm(app)
 
 
 @app.tool(is_local=False)
@@ -164,6 +166,7 @@ def _analyze_via_llm(
     )
 
     result = call_llm_json(
+        app=app,
         system=_SEMANTIC_DIFF_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,

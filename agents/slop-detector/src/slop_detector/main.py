@@ -18,6 +18,7 @@ from packages.agent_runtime import (  # noqa: E402
     create_app,
     llm_available,
     make_agent_result,
+    register_default_llm,
     register_entrypoint,
 )
 from packages.core.analysis_utils import (  # noqa: E402
@@ -33,6 +34,7 @@ app = create_app(
     AGENT_ID,
     "Detect review slop such as debug leftovers, placeholders, noisy files, and weak tests.",
 )
+register_default_llm(app)
 
 
 SLOP_PATH_TOKENS = {
@@ -501,6 +503,7 @@ def _apply_llm_disambiguation(
     )
 
     result = call_llm_json(
+        app=app,
         system=_SLOP_DISAMBIGUATOR_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,

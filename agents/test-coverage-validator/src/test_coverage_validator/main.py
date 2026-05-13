@@ -18,6 +18,7 @@ from packages.agent_runtime import (  # noqa: E402
     create_app,
     llm_available,
     make_agent_result,
+    register_default_llm,
     register_entrypoint,
 )
 from packages.core.analysis_utils import important_terms, is_test, normalize_path  # noqa: E402
@@ -28,6 +29,7 @@ app = create_app(
     AGENT_ID,
     "Validate whether changed tests cover changed functionality, PR intent, and behavior deltas.",
 )
+register_default_llm(app)
 
 
 @app.tool()
@@ -129,10 +131,15 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
             "recommended_test_updates": memory.get("recommended_test_updates", []),
         },
     }
+    # NOTE: a 'blocked' coverage verdict is a DOMAIN finding (the PR's tests
+    # don't cover the changes well enough to merge), not an agent crash.
+    # Keep agent.status = 'completed' and let the orchestrator's blocker
+    # aggregation respond to coverage_findings / coverage_status. Reporting
+    # 'failed' here made the dashboard misrender this as an execution error.
     return make_agent_result(
         AGENT_ID,
         output,
-        status="failed" if status == "blocked" else "completed",
+        status="completed",
         confidence=output_confidence,
         messages=[f"test coverage {score}% with {len(findings)} gaps"],
         trace=[
@@ -586,6 +593,7 @@ def _assess_coverage_via_llm(
     )
 
     result = call_llm_json(
+        app=app,
         system=_TEST_COVERAGE_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,

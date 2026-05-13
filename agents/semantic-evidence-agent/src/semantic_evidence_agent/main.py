@@ -19,6 +19,7 @@ from packages.agent_runtime import (  # noqa: E402
     create_app,
     llm_available,
     make_agent_result,
+    register_default_llm,
     register_entrypoint,
 )
 from packages.core.analysis_utils import important_terms, is_docs, is_test, normalize_path  # noqa: E402
@@ -29,6 +30,7 @@ app = create_app(
     AGENT_ID,
     "Index and retrieve repository evidence using Magenta memory, Voyage embeddings, and vector search.",
 )
+register_default_llm(app)
 
 
 @app.tool(is_local=False)
@@ -601,6 +603,7 @@ def _rerank_via_llm(
     )
 
     result = call_llm_json(
+        app=app,
         system=_RERANK_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,

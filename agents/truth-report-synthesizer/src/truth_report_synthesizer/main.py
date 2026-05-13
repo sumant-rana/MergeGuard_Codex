@@ -17,12 +17,17 @@ from packages.agent_runtime import (  # noqa: E402
     create_app,
     llm_available,
     make_agent_result,
+    register_default_llm,
     register_entrypoint,
 )
 
 AGENT_ID = "truth-report-synthesizer"
 
 app = create_app(AGENT_ID, "Synthesize analyzer outputs into merge readiness and dashboard view.")
+# Register a Grove-pointed LangChain LLM with the Magenta runtime so calls
+# show up as traces in the playground. No-op when langchain isn't
+# available (in-process shim mode on the host).
+register_default_llm(app)
 
 
 def run(payload: dict[str, Any]) -> dict[str, Any]:
@@ -297,6 +302,7 @@ def _render_comment_via_llm(
         f"```json\n{json.dumps(structured, indent=2)}\n```"
     )
     result = call_llm_json(
+        app=app,
         system=_TRUTH_REPORT_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,

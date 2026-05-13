@@ -17,6 +17,7 @@ from packages.agent_runtime import (  # noqa: E402
     create_app,
     llm_available,
     make_agent_result,
+    register_default_llm,
     register_entrypoint,
 )
 from packages.core.analysis_utils import important_terms  # noqa: E402
@@ -24,6 +25,7 @@ from packages.core.analysis_utils import important_terms  # noqa: E402
 AGENT_ID = "evidence-mapper"
 
 app = create_app(AGENT_ID, "Map intent and findings to tests, canaries, contracts, traces, or HITL questions.")
+register_default_llm(app)
 
 
 @app.tool()
@@ -202,6 +204,7 @@ def _map_via_llm(
         f"```json\n{json.dumps({'intents': intent_summaries, 'changed_files': file_summaries}, indent=2)}\n```"
     )
     result = call_llm_json(
+        app=app,
         system=_EVIDENCE_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,

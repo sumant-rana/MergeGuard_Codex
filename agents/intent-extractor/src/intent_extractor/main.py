@@ -18,6 +18,7 @@ from packages.agent_runtime import (  # noqa: E402
     create_app,
     llm_available,
     make_agent_result,
+    register_default_llm,
     register_entrypoint,
 )
 from packages.core.analysis_utils import important_terms  # noqa: E402
@@ -25,6 +26,7 @@ from packages.core.analysis_utils import important_terms  # noqa: E402
 AGENT_ID = "intent-extractor"
 
 app = create_app(AGENT_ID, "Extract review intent from PR text and linked work items.")
+register_default_llm(app)
 
 
 @app.tool()
@@ -151,6 +153,7 @@ def _extract_via_llm(pr: dict[str, Any], text: str) -> list[dict[str, Any]] | No
     )
 
     result = call_llm_json(
+        app=app,
         system=_INTENT_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,

@@ -17,12 +17,14 @@ from packages.agent_runtime import (  # noqa: E402
     create_app,
     llm_available,
     make_agent_result,
+    register_default_llm,
     register_entrypoint,
 )
 
 AGENT_ID = "prompt-canary"
 
 app = create_app(AGENT_ID, "Evaluate prompt/model/agent workflow drift.")
+register_default_llm(app)
 
 
 @app.tool()
@@ -126,6 +128,7 @@ def _judge_prompt_via_llm(
         f"```json\n{json.dumps({'path': file['path'], 'suite': suite, 'patch_excerpt': patch}, indent=2)}\n```"
     )
     result = call_llm_json(
+        app=app,
         system=_PROMPT_JUDGE_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,

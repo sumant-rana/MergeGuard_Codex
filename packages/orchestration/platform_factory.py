@@ -66,6 +66,14 @@ _TRANSIENT_PATTERNS = (
     "timeout",
     "timed out",
     "peer closed connection",
+    # Magenta cloud's tenant edge occasionally drops mid-stream with a gRPC
+    # error event. CloudOEClient now raises on chunk_type=error containing
+    # this message — treat it as retryable.
+    "rst_stream",
+    "internal_error",
+    "rpc error",
+    "chunk_type=error",
+    "stream terminated",
 )
 
 
