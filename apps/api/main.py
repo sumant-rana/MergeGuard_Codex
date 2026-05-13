@@ -1,14 +1,44 @@
 from __future__ import annotations
 
 import json
+import logging
+import os
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
+logging.basicConfig(
+    level=os.environ.get("MERGEGUARD_LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s %(levelname)-7s [%(name)s] %(message)s",
+    datefmt="%H:%M:%S",
+)
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
+
+def _load_dotenv(path: Path) -> None:
+    """Minimal .env loader: ``KEY=VALUE`` lines, no overwrite of existing env."""
+    if not path.exists():
+        return
+    for raw_line in path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        if not key or key in os.environ:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+_load_dotenv(REPO_ROOT / ".env")
+
+from apps.api.webhook_handler import handle_github_webhook
 from packages.mongo import LocalMergeGuardStore
 from packages.orchestration.engine import AGENT_CATALOG, AGENT_SEQUENCE, MergeGuardOrchestrator
 from packages.github_pr import normalize_github_pr_payload
@@ -44,6 +74,9 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
+        if path == "/webhooks/github":
+            self.handle_github_webhook_request()
+            return
         if path == "/api/demo/analyze":
             body = self.read_json(default={})
             fixture = body.get("fixture", "fixtures/agentic/demo_pr.json")
@@ -108,6 +141,20 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
             self.send_json({"override": item}, status=201)
         else:
             self.send_json({"error": "not found"}, status=404)
+
+    def handle_github_webhook_request(self) -> None:
+        length = int(self.headers.get("content-length", "0") or 0)
+        body_bytes = self.rfile.read(length) if length else b""
+        request_headers = {
+            key.lower(): value for key, value in self.headers.items()
+        }
+        response = handle_github_webhook(
+            repo_root=REPO_ROOT,
+            body_bytes=body_bytes,
+            headers=request_headers,
+            store_path=STORE_PATH,
+        )
+        self.send_json(response.body, status=response.status)
 
     def store(self) -> LocalMergeGuardStore:
         store = LocalMergeGuardStore(STORE_PATH)
