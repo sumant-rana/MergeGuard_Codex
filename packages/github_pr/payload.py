@@ -151,7 +151,9 @@ def _issue_refs_from_body(body: str, *, existing: set[int]) -> list[dict[str, An
     return refs
 
 
-def _normalize_commit_history(commits: list[Any]) -> list[dict[str, Any]]:
+def _normalize_commit_history(commits: Any) -> list[dict[str, Any]]:
+    if not isinstance(commits, list):
+        return []
     normalized: list[dict[str, Any]] = []
     for commit in commits[:50]:
         if isinstance(commit, str):
