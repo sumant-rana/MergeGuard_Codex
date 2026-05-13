@@ -2309,6 +2309,1713 @@
         white-space: pre-wrap;
       }
 
+      .slop-remover {
+        display: grid;
+        gap: 9px;
+      }
+
+      .slop-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        padding: 11px;
+        border: 1px solid color-mix(in oklab, var(--amber) 34%, var(--border));
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 0 0, color-mix(in oklab, var(--amber) 15%, transparent), transparent 42%),
+          var(--surface-muted);
+      }
+
+      .slop-hero h4 {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.1;
+      }
+
+      .slop-hero p {
+        max-width: 760px;
+        margin: 5px 0 0;
+        color: var(--text-soft);
+        font-size: 10px;
+        line-height: 1.35;
+      }
+
+      .slop-score-dial {
+        display: grid;
+        place-items: center;
+        width: 64px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background:
+          conic-gradient(var(--slop-tone, var(--amber)) calc(var(--slop-score, 0) * 1%), color-mix(in oklab, var(--muted) 16%, transparent) 0),
+          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%);
+        color: var(--text);
+        text-align: center;
+      }
+
+      .slop-score-dial strong {
+        display: block;
+        font-size: 17px;
+        font-weight: 950;
+        line-height: 1;
+      }
+
+      .slop-score-dial span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 950;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .slop-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 7px;
+      }
+
+      .slop-stat {
+        min-height: 48px;
+        padding: 7px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface-muted);
+      }
+
+      .slop-stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .slop-stat strong {
+        display: block;
+        margin-top: 5px;
+        color: var(--text);
+        font-size: 12px;
+        line-height: 1.15;
+      }
+
+      .slop-lanes {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .slop-lane {
+        display: grid;
+        align-content: start;
+        gap: 7px;
+        min-height: 220px;
+        padding: 9px;
+        border: 1px solid var(--border);
+        border-top: 3px solid var(--lane-color, var(--muted));
+        border-radius: 8px;
+        background: var(--surface-muted);
+      }
+
+      .slop-lane-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .slop-lane-head h4 {
+        margin: 0;
+        font-size: 11px;
+      }
+
+      .slop-lane-head p {
+        margin: 3px 0 0;
+        color: var(--text-soft);
+        font-size: 8.8px;
+        line-height: 1.25;
+      }
+
+      .slop-lane.remove {
+        --lane-color: var(--red);
+      }
+
+      .slop-lane.rework {
+        --lane-color: var(--amber);
+      }
+
+      .slop-lane.skim {
+        --lane-color: var(--green);
+      }
+
+      .slop-card {
+        display: grid;
+        gap: 6px;
+        padding: 8px;
+        border: 1px solid color-mix(in oklab, var(--lane-color, var(--muted)) 34%, var(--border));
+        border-radius: 7px;
+        background:
+          linear-gradient(90deg, color-mix(in oklab, var(--lane-color, var(--muted)) 12%, transparent), transparent 58%),
+          var(--surface-raised);
+      }
+
+      .slop-card-top {
+        display: block;
+      }
+
+      .slop-card h5 {
+        margin: 0;
+        overflow-wrap: anywhere;
+        font-size: 9.5px;
+        line-height: 1.2;
+      }
+
+      .slop-card p {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 8.8px;
+        line-height: 1.3;
+      }
+
+      .slop-signal-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .slop-signal {
+        max-width: 100%;
+        padding: 2px 5px;
+        border: 1px solid color-mix(in oklab, var(--lane-color, var(--muted)) 32%, transparent);
+        border-radius: 999px;
+        color: var(--text-soft);
+        font-size: 7.5px;
+        font-weight: 850;
+        line-height: 1.2;
+      }
+
+      .slop-action {
+        padding-top: 6px;
+        border-top: 1px solid color-mix(in oklab, var(--muted) 16%, transparent);
+      }
+
+      .slop-action span {
+        display: block;
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .slop-action strong {
+        display: block;
+        margin-top: 3px;
+        color: var(--text);
+        font-size: 8.8px;
+        line-height: 1.25;
+      }
+
+      .slop-empty {
+        display: grid;
+        min-height: 88px;
+        place-items: center;
+        padding: 12px;
+        border: 1px dashed color-mix(in oklab, var(--muted) 28%, transparent);
+        border-radius: 7px;
+        color: var(--text-soft);
+        font-size: 9px;
+        text-align: center;
+      }
+
+      .slop-insights {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+        gap: 8px;
+      }
+
+      .slop-insight-card {
+        display: grid;
+        align-content: start;
+        gap: 7px;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface-muted);
+      }
+
+      .slop-insight-card pre {
+        max-height: 130px;
+        margin: 0;
+        overflow: auto;
+        padding: 8px;
+        border: 1px solid color-mix(in oklab, var(--muted) 18%, transparent);
+        border-radius: 7px;
+        background: var(--code-bg);
+        color: var(--text-soft);
+        font-size: 8.8px;
+        white-space: pre-wrap;
+      }
+
+      .evidence-proof {
+        display: grid;
+        gap: 9px;
+      }
+
+      .evidence-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        padding: 11px;
+        border: 1px solid color-mix(in oklab, var(--primary) 34%, var(--border));
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 0 0, color-mix(in oklab, var(--primary) 16%, transparent), transparent 42%),
+          var(--surface-muted);
+      }
+
+      .evidence-hero h4 {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.1;
+      }
+
+      .evidence-hero p {
+        max-width: 760px;
+        margin: 5px 0 0;
+        color: var(--text-soft);
+        font-size: 10px;
+        line-height: 1.35;
+      }
+
+      .evidence-score-dial {
+        display: grid;
+        place-items: center;
+        width: 64px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background:
+          conic-gradient(var(--evidence-tone, var(--primary)) calc(var(--evidence-score, 0) * 1%), color-mix(in oklab, var(--muted) 16%, transparent) 0),
+          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%);
+        color: var(--text);
+        text-align: center;
+      }
+
+      .evidence-score-dial strong {
+        display: block;
+        font-size: 17px;
+        font-weight: 950;
+        line-height: 1;
+      }
+
+      .evidence-score-dial span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 950;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .evidence-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 7px;
+      }
+
+      .evidence-stat {
+        min-height: 48px;
+        padding: 7px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface-muted);
+      }
+
+      .evidence-stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .evidence-stat strong {
+        display: block;
+        margin-top: 5px;
+        color: var(--text);
+        font-size: 12px;
+        line-height: 1.15;
+      }
+
+      .evidence-lanes {
+        display: grid;
+        grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.08fr) minmax(0, 0.96fr);
+        gap: 8px;
+      }
+
+      .evidence-lane {
+        display: grid;
+        align-content: start;
+        gap: 7px;
+        min-height: 230px;
+        padding: 9px;
+        border: 1px solid var(--border);
+        border-top: 3px solid var(--lane-color, var(--muted));
+        border-radius: 8px;
+        background: var(--surface-muted);
+      }
+
+      .evidence-lane.missing {
+        --lane-color: var(--red);
+      }
+
+      .evidence-lane.partial {
+        --lane-color: var(--amber);
+      }
+
+      .evidence-lane.verified {
+        --lane-color: var(--green);
+      }
+
+      .evidence-lane-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .evidence-lane-head h4 {
+        margin: 0;
+        font-size: 11px;
+      }
+
+      .evidence-lane-head p {
+        margin: 3px 0 0;
+        color: var(--text-soft);
+        font-size: 8.8px;
+        line-height: 1.25;
+      }
+
+      .evidence-card {
+        display: grid;
+        gap: 7px;
+        padding: 8px;
+        border: 1px solid color-mix(in oklab, var(--lane-color, var(--muted)) 34%, var(--border));
+        border-radius: 7px;
+        background:
+          linear-gradient(90deg, color-mix(in oklab, var(--lane-color, var(--muted)) 12%, transparent), transparent 58%),
+          var(--surface-raised);
+      }
+
+      .evidence-card h5 {
+        margin: 0;
+        font-size: 10px;
+        line-height: 1.25;
+      }
+
+      .evidence-card p {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 8.8px;
+        line-height: 1.3;
+      }
+
+      .proof-chain {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 5px;
+        align-items: stretch;
+      }
+
+      .proof-node {
+        position: relative;
+        min-height: 38px;
+        padding: 6px;
+        border: 1px solid color-mix(in oklab, var(--lane-color, var(--primary)) 28%, transparent);
+        border-radius: 7px;
+        background: color-mix(in oklab, var(--surface-inset) 74%, transparent);
+      }
+
+      .proof-node:not(:last-child)::after {
+        position: absolute;
+        top: 50%;
+        right: -6px;
+        width: 6px;
+        height: 2px;
+        background: var(--lane-color, var(--primary));
+        content: "";
+      }
+
+      .proof-node span {
+        display: block;
+        color: var(--muted);
+        font-size: 6.8px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .proof-node strong {
+        display: block;
+        margin-top: 3px;
+        color: var(--text);
+        font-size: 8.5px;
+        line-height: 1.15;
+      }
+
+      .evidence-path-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .evidence-path {
+        max-width: 100%;
+        padding: 2px 5px;
+        border: 1px solid color-mix(in oklab, var(--lane-color, var(--primary)) 32%, transparent);
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--surface-inset) 62%, transparent);
+        color: var(--text-soft);
+        font-size: 7.5px;
+        font-weight: 850;
+        line-height: 1.2;
+        text-align: left;
+      }
+
+      button.evidence-path {
+        cursor: pointer;
+      }
+
+      button.evidence-path:hover,
+      button.evidence-path:focus-visible {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .evidence-action {
+        padding-top: 6px;
+        border-top: 1px solid color-mix(in oklab, var(--muted) 16%, transparent);
+      }
+
+      .evidence-action span {
+        display: block;
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .evidence-action strong {
+        display: block;
+        margin-top: 3px;
+        color: var(--text);
+        font-size: 8.8px;
+        line-height: 1.25;
+      }
+
+      .evidence-graph {
+        display: grid;
+        min-height: 510px;
+      }
+
+      .proof-graph-stage {
+        position: relative;
+        min-height: 510px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 18% 24%, color-mix(in oklab, var(--red) 10%, transparent), transparent 24%),
+          radial-gradient(circle at 45% 48%, color-mix(in oklab, var(--amber) 12%, transparent), transparent 30%),
+          radial-gradient(circle at 67% 66%, color-mix(in oklab, var(--green) 10%, transparent), transparent 24%),
+          var(--surface-muted);
+      }
+
+      .proof-graph-stage::before {
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(circle, color-mix(in oklab, var(--primary) 18%, transparent) 1px, transparent 1.2px);
+        background-size: 22px 22px;
+        opacity: 0.22;
+        content: "";
+      }
+
+      .proof-graph-lines {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .proof-graph-lines path {
+        fill: none;
+        stroke: var(--edge-color, var(--primary));
+        stroke-linecap: round;
+        stroke-width: 2;
+        opacity: 0.78;
+        filter: drop-shadow(0 0 6px color-mix(in oklab, var(--edge-color, var(--primary)) 28%, transparent));
+      }
+
+      .proof-graph-labels {
+        position: absolute;
+        left: 4%;
+        right: 34%;
+        top: 10px;
+        z-index: 3;
+        display: grid;
+        grid-template-columns: 1.1fr 0.78fr 0.88fr 0.78fr;
+        gap: 12px;
+        pointer-events: none;
+      }
+
+      .proof-graph-labels span {
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .proof-graph-node {
+        --node-tone: var(--primary);
+        position: absolute;
+        left: var(--x);
+        top: var(--y);
+        z-index: 3;
+        display: grid;
+        gap: 4px;
+        min-width: var(--node-w, 74px);
+        max-width: var(--node-w, 128px);
+        min-height: var(--node-h, 44px);
+        transform: translate(-50%, -50%);
+        padding: 7px;
+        border: 1px solid color-mix(in oklab, var(--node-tone) 54%, transparent);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 20% 0, color-mix(in oklab, var(--node-tone) 20%, transparent), transparent 52%),
+          var(--surface-raised);
+        color: var(--text);
+        text-align: left;
+        cursor: pointer;
+        box-shadow: 0 0 22px color-mix(in oklab, var(--node-tone) 12%, transparent);
+      }
+
+      .proof-graph-node:hover,
+      .proof-graph-node:focus-visible,
+      .proof-graph-node.active {
+        border-color: var(--node-tone);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--node-tone) 16%, transparent), 0 0 34px color-mix(in oklab, var(--node-tone) 22%, transparent);
+      }
+
+      .proof-graph-node.missing {
+        --node-tone: var(--red);
+      }
+
+      .proof-graph-node.partial {
+        --node-tone: var(--amber);
+      }
+
+      .proof-graph-node.verified {
+        --node-tone: var(--green);
+      }
+
+      .proof-graph-node strong {
+        display: block;
+        overflow-wrap: anywhere;
+        font-size: 8.8px;
+        line-height: 1.15;
+      }
+
+      .proof-graph-node span {
+        color: var(--muted);
+        font-size: 7px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        line-height: 1.1;
+        text-transform: uppercase;
+      }
+
+      .proof-graph-node.claim {
+        --node-w: 122px;
+        --node-h: 52px;
+      }
+
+      .proof-graph-node.verdict {
+        text-align: center;
+      }
+
+      .proof-graph-empty {
+        position: absolute;
+        left: 34%;
+        top: 50%;
+        z-index: 3;
+        width: min(340px, 74%);
+        transform: translate(-50%, -50%);
+        padding: 12px;
+        border: 1px dashed color-mix(in oklab, var(--muted) 28%, transparent);
+        border-radius: 8px;
+        color: var(--text-soft);
+        text-align: center;
+      }
+
+      .proof-graph-detail {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        bottom: 10px;
+        z-index: 5;
+        display: grid;
+        align-content: start;
+        gap: 8px;
+        width: min(292px, 34%);
+        min-width: 232px;
+        overflow: auto;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--surface) 92%, transparent);
+        box-shadow: 0 18px 44px color-mix(in oklab, #000 24%, transparent);
+      }
+
+      .proof-graph-detail h4 {
+        margin: 0;
+        color: var(--text);
+        font-size: 12px;
+        line-height: 1.2;
+      }
+
+      .proof-graph-detail p {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 8.8px;
+        line-height: 1.35;
+      }
+
+      .memory-radar {
+        display: grid;
+        min-height: 510px;
+      }
+
+      .memory-stage {
+        --memory-center-x: 35%;
+        position: relative;
+        min-height: 510px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at var(--memory-center-x) 50%, color-mix(in oklab, var(--primary) 14%, transparent), transparent 34%),
+          radial-gradient(circle at 78% 22%, color-mix(in oklab, var(--violet) 9%, transparent), transparent 28%),
+          var(--surface-muted);
+      }
+
+      .memory-stage::before {
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(circle, color-mix(in oklab, var(--primary) 18%, transparent) 1px, transparent 1.2px);
+        background-size: 22px 22px;
+        opacity: 0.22;
+        content: "";
+      }
+
+      .memory-orbit {
+        position: absolute;
+        left: var(--memory-center-x);
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border: 1px dashed color-mix(in oklab, var(--primary) 24%, transparent);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .memory-orbit.one {
+        width: 168px;
+        height: 168px;
+      }
+
+      .memory-orbit.two {
+        width: 250px;
+        height: 250px;
+      }
+
+      .memory-orbit.three {
+        width: 322px;
+        height: 322px;
+      }
+
+      .memory-center {
+        position: absolute;
+        left: var(--memory-center-x);
+        top: 50%;
+        z-index: 2;
+        display: grid;
+        place-items: center;
+        width: 112px;
+        aspect-ratio: 1;
+        transform: translate(-50%, -50%);
+        border: 1px solid color-mix(in oklab, var(--primary) 54%, transparent);
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 35% 25%, color-mix(in oklab, var(--primary) 36%, transparent), transparent 40%),
+          var(--surface-inset);
+        box-shadow: 0 0 36px color-mix(in oklab, var(--primary) 14%, transparent);
+        text-align: center;
+      }
+
+      .memory-center strong {
+        display: block;
+        color: var(--text);
+        font-size: 13px;
+        line-height: 1.05;
+      }
+
+      .memory-center span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 7px;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .memory-node {
+        --node-color: var(--primary);
+        position: absolute;
+        left: calc(var(--memory-center-x) + var(--x));
+        top: calc(50% + var(--y));
+        z-index: 3;
+        display: grid;
+        place-items: center;
+        width: var(--size);
+        aspect-ratio: 1;
+        transform: translate(-50%, -50%);
+        border: 1px solid color-mix(in oklab, var(--node-color) 66%, transparent);
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 35% 24%, color-mix(in oklab, var(--node-color) 42%, transparent), transparent 42%),
+          var(--surface-raised);
+        color: var(--text);
+        cursor: pointer;
+        box-shadow: 0 0 24px color-mix(in oklab, var(--node-color) 12%, transparent);
+      }
+
+      .memory-node:hover,
+      .memory-node:focus-visible,
+      .memory-node.active {
+        border-color: var(--node-color);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--node-color) 18%, transparent), 0 0 34px color-mix(in oklab, var(--node-color) 24%, transparent);
+      }
+
+      .memory-node.kind-test {
+        --node-color: var(--green);
+      }
+
+      .memory-node.kind-doc {
+        --node-color: var(--blue);
+      }
+
+      .memory-node.kind-policy {
+        --node-color: var(--amber);
+      }
+
+      .memory-node.kind-prior_pr {
+        --node-color: var(--violet);
+      }
+
+      .memory-node-icon {
+        display: grid;
+        place-items: center;
+        width: 44%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: color-mix(in oklab, var(--node-color) 20%, transparent);
+        color: var(--node-color);
+        font-size: 8px;
+        font-weight: 950;
+      }
+
+      .memory-node-label {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 50%;
+        width: 104px;
+        transform: translateX(-50%);
+        color: var(--text-soft);
+        font-size: 7.5px;
+        font-weight: 850;
+        line-height: 1.15;
+        text-align: center;
+        text-shadow: 0 1px 8px var(--bg);
+      }
+
+      .memory-radar-stats {
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        z-index: 4;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(76px, 1fr));
+        gap: 5px;
+        max-width: 230px;
+      }
+
+      .memory-radar-stat {
+        padding: 6px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: color-mix(in oklab, var(--surface) 88%, transparent);
+      }
+
+      .memory-radar-stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .memory-radar-stat strong {
+        display: block;
+        margin-top: 3px;
+        color: var(--text);
+        font-size: 9.5px;
+        line-height: 1.15;
+      }
+
+      .memory-detail-panel {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        bottom: 10px;
+        z-index: 5;
+        display: grid;
+        align-content: start;
+        gap: 8px;
+        width: min(280px, 34%);
+        min-width: 220px;
+        overflow: auto;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--surface) 92%, transparent);
+        box-shadow: 0 18px 44px color-mix(in oklab, #000 24%, transparent);
+      }
+
+      .memory-detail-panel h4 {
+        margin: 0;
+        color: var(--text);
+        font-size: 12px;
+        line-height: 1.2;
+      }
+
+      .memory-detail-panel p {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 8.8px;
+        line-height: 1.35;
+      }
+
+      .memory-empty {
+        position: absolute;
+        left: var(--memory-center-x);
+        top: 50%;
+        z-index: 3;
+        width: min(280px, 70%);
+        transform: translate(-50%, -50%);
+        padding: 12px;
+        border: 1px dashed color-mix(in oklab, var(--muted) 28%, transparent);
+        border-radius: 8px;
+        color: var(--text-soft);
+        text-align: center;
+      }
+
+      .agent-decision-mesh {
+        display: grid;
+        gap: 9px;
+      }
+
+      .agent-mesh-hero {
+        display: grid;
+        grid-template-columns: minmax(180px, 0.34fr) minmax(0, 1fr);
+        gap: 9px;
+        align-items: stretch;
+      }
+
+      .agent-mesh-core,
+      .agent-stage-chain,
+      .agent-command-stage {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 0 0, color-mix(in oklab, var(--primary) 14%, transparent), transparent 44%),
+          var(--surface-muted);
+      }
+
+      .agent-mesh-core {
+        display: grid;
+        align-content: center;
+        justify-items: start;
+        gap: 8px;
+        min-height: 126px;
+        padding: 12px;
+      }
+
+      .agent-mesh-core h4 {
+        margin: 0;
+        color: var(--text);
+        font-size: 13px;
+        line-height: 1.12;
+      }
+
+      .agent-mesh-core p {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 9px;
+        line-height: 1.35;
+      }
+
+      .agent-mesh-orb {
+        display: grid;
+        place-items: center;
+        width: 62px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background:
+          conic-gradient(var(--primary) calc(var(--mesh-score, 0) * 1%), color-mix(in oklab, var(--muted) 18%, transparent) 0),
+          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%);
+        color: var(--text);
+        font-size: 17px;
+        font-weight: 950;
+      }
+
+      .agent-stage-chain {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 6px;
+        padding: 9px;
+      }
+
+      .agent-stage-link {
+        position: relative;
+        min-height: 78px;
+        padding: 8px;
+        border: 1px solid color-mix(in oklab, var(--stage-color, var(--primary)) 28%, transparent);
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--stage-color, var(--primary)) 8%, var(--surface-raised));
+      }
+
+      .agent-stage-link:not(:last-child)::after {
+        position: absolute;
+        top: 50%;
+        right: -8px;
+        z-index: 2;
+        width: 10px;
+        height: 2px;
+        background: color-mix(in oklab, var(--stage-color, var(--primary)) 62%, var(--muted));
+        content: "";
+      }
+
+      .agent-stage-link span {
+        display: block;
+        color: var(--muted);
+        font-size: 7px;
+        font-weight: 950;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .agent-stage-link strong {
+        display: block;
+        margin-top: 4px;
+        color: var(--text);
+        font-size: 10.5px;
+        line-height: 1.12;
+      }
+
+      .agent-stage-link small {
+        display: block;
+        margin-top: 5px;
+        color: var(--text-soft);
+        font-size: 8px;
+        font-weight: 850;
+      }
+
+      .agent-command-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 9px;
+      }
+
+      .agent-command-stage {
+        display: grid;
+        align-content: start;
+        gap: 7px;
+        min-height: 190px;
+        padding: 9px;
+      }
+
+      .agent-command-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .agent-command-head h4 {
+        margin: 0;
+        color: var(--text);
+        font-size: 11px;
+      }
+
+      .agent-command-node {
+        --agent-color: var(--green);
+        display: grid;
+        width: 100%;
+        gap: 7px;
+        padding: 8px;
+        border: 1px solid color-mix(in oklab, var(--agent-color) 34%, var(--border));
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, color-mix(in oklab, var(--agent-color) 10%, transparent), transparent 60%),
+          var(--surface-raised);
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .agent-command-node.block,
+      .agent-command-node.failed,
+      .agent-command-node.failure {
+        --agent-color: var(--red);
+      }
+
+      .agent-command-node.review,
+      .agent-command-node.neutral,
+      .agent-command-node.unknown {
+        --agent-color: var(--amber);
+      }
+
+      .agent-command-node:hover,
+      .agent-command-node:focus-visible {
+        border-color: var(--agent-color);
+        box-shadow: 0 0 0 2px color-mix(in oklab, var(--agent-color) 18%, transparent);
+      }
+
+      .agent-node-top {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 7px;
+        align-items: center;
+      }
+
+      .agent-confidence-ring {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background:
+          conic-gradient(var(--agent-color) calc(var(--agent-score, 0) * 1%), color-mix(in oklab, var(--muted) 16%, transparent) 0),
+          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%);
+        color: var(--text);
+        font-size: 8px;
+        font-weight: 950;
+      }
+
+      .agent-command-node h5 {
+        margin: 0;
+        color: var(--text);
+        font-size: 9.5px;
+        line-height: 1.15;
+      }
+
+      .agent-command-node p {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 8.3px;
+        line-height: 1.28;
+      }
+
+      .agent-output-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .agent-output-tag {
+        max-width: 100%;
+        padding: 2px 5px;
+        border: 1px solid color-mix(in oklab, var(--agent-color) 30%, transparent);
+        border-radius: 999px;
+        color: var(--text-soft);
+        font-size: 7.2px;
+        font-weight: 850;
+        line-height: 1.1;
+      }
+
+      .test-cockpit,
+      .behavior-lens,
+      .gate-firewall,
+      .contract-xray {
+        display: grid;
+        gap: 9px;
+      }
+
+      .test-stage,
+      .behavior-stage,
+      .gate-stage,
+      .contract-stage {
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 10% 0, color-mix(in oklab, var(--stage-accent, var(--primary)) 14%, transparent), transparent 38%),
+          var(--surface-muted);
+      }
+
+      .test-stage {
+        display: grid;
+        grid-template-columns: minmax(170px, 0.36fr) minmax(0, 1fr);
+        min-height: 286px;
+      }
+
+      .test-score-panel {
+        display: grid;
+        align-content: start;
+        gap: 10px;
+        padding: 12px;
+        border-right: 1px solid var(--border);
+      }
+
+      .test-score-dial {
+        display: grid;
+        place-items: center;
+        width: 96px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background:
+          conic-gradient(var(--coverage-color, var(--red)) calc(var(--coverage-score, 0) * 1%), color-mix(in oklab, var(--muted) 16%, transparent) 0),
+          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%);
+        color: var(--text);
+        text-align: center;
+      }
+
+      .test-score-dial strong {
+        display: block;
+        font-size: 24px;
+        font-weight: 950;
+        line-height: 1;
+      }
+
+      .test-score-dial span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 950;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .test-score-panel h4,
+      .gate-packet h4,
+      .contract-rail h4 {
+        margin: 0;
+        color: var(--text);
+        font-size: 12px;
+        line-height: 1.15;
+      }
+
+      .test-score-panel p,
+      .gate-packet p,
+      .contract-rail p {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 9px;
+        line-height: 1.35;
+      }
+
+      .test-stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .test-target-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        align-content: start;
+        padding: 12px;
+      }
+
+      .test-target {
+        --target-color: var(--amber);
+        display: grid;
+        gap: 7px;
+        min-height: 122px;
+        padding: 8px;
+        border: 1px solid color-mix(in oklab, var(--target-color) 34%, var(--border));
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, color-mix(in oklab, var(--target-color) 11%, transparent), transparent 64%),
+          var(--surface-raised);
+      }
+
+      .test-target.missing,
+      .test-target.blocked {
+        --target-color: var(--red);
+      }
+
+      .test-target.covered,
+      .test-target.pass {
+        --target-color: var(--green);
+      }
+
+      .test-target.partial,
+      .test-target.review {
+        --target-color: var(--amber);
+      }
+
+      .test-target-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 7px;
+        align-items: start;
+      }
+
+      .test-target h5,
+      .behavior-cell h5,
+      .gate-card h5,
+      .contract-finding h5 {
+        margin: 0;
+        color: var(--text);
+        font-size: 10px;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+      }
+
+      .test-target p,
+      .behavior-cell p,
+      .gate-card p,
+      .contract-finding p {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 8.8px;
+        line-height: 1.3;
+      }
+
+      .test-target-meter {
+        height: 6px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--muted) 16%, transparent);
+      }
+
+      .test-target-meter span {
+        display: block;
+        width: calc(var(--target-score, 0) * 1%);
+        height: 100%;
+        border-radius: inherit;
+        background: var(--target-color);
+      }
+
+      .test-rec-rail {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .test-rec-card {
+        display: grid;
+        align-content: start;
+        gap: 7px;
+        padding: 9px;
+        border: 1px dashed color-mix(in oklab, var(--primary) 34%, var(--border));
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--primary) 8%, var(--surface-muted));
+      }
+
+      .behavior-stage {
+        display: grid;
+        gap: 8px;
+        min-height: 280px;
+        padding: 12px;
+      }
+
+      .behavior-lanes {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) 42px minmax(0, 0.95fr) 42px minmax(0, 1.05fr);
+        gap: 7px;
+        align-items: stretch;
+      }
+
+      .behavior-row {
+        display: contents;
+      }
+
+      .behavior-cell {
+        --cell-color: var(--primary);
+        display: grid;
+        align-content: start;
+        gap: 6px;
+        min-height: 90px;
+        padding: 9px;
+        border: 1px solid color-mix(in oklab, var(--cell-color) 30%, var(--border));
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, color-mix(in oklab, var(--cell-color) 9%, transparent), transparent 62%),
+          var(--surface-raised);
+      }
+
+      .behavior-cell.before {
+        --cell-color: var(--muted);
+      }
+
+      .behavior-cell.trigger {
+        --cell-color: var(--amber);
+      }
+
+      .behavior-cell.after {
+        --cell-color: var(--red);
+      }
+
+      .behavior-cell.review_required,
+      .behavior-cell.block {
+        --cell-color: var(--red);
+      }
+
+      .behavior-cell.review,
+      .behavior-cell.partial,
+      .behavior-cell.neutral {
+        --cell-color: var(--amber);
+      }
+
+      .behavior-cell.pass,
+      .behavior-cell.success {
+        --cell-color: var(--green);
+      }
+
+      .behavior-arrow {
+        position: relative;
+        display: grid;
+        place-items: center;
+        min-height: 90px;
+      }
+
+      .behavior-arrow::before {
+        width: 100%;
+        height: 2px;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--primary) 58%, var(--muted));
+        content: "";
+      }
+
+      .behavior-arrow::after {
+        position: absolute;
+        right: 0;
+        width: 8px;
+        height: 8px;
+        border-top: 2px solid color-mix(in oklab, var(--primary) 72%, var(--muted));
+        border-right: 2px solid color-mix(in oklab, var(--primary) 72%, var(--muted));
+        transform: rotate(45deg);
+        content: "";
+      }
+
+      .behavior-impact-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .gate-stage {
+        --stage-accent: var(--red);
+        display: grid;
+        grid-template-columns: minmax(170px, 0.3fr) minmax(0, 1fr);
+        min-height: 300px;
+      }
+
+      .gate-packet {
+        display: grid;
+        align-content: center;
+        gap: 9px;
+        padding: 12px;
+        border-right: 1px solid var(--border);
+      }
+
+      .gate-packet-icon {
+        display: grid;
+        place-items: center;
+        width: 86px;
+        aspect-ratio: 1;
+        border: 2px solid color-mix(in oklab, var(--primary) 44%, transparent);
+        border-radius: 24px;
+        background:
+          linear-gradient(135deg, color-mix(in oklab, var(--primary) 16%, transparent), color-mix(in oklab, var(--green) 12%, transparent)),
+          var(--surface-inset);
+        color: var(--primary);
+        font-size: 24px;
+        font-weight: 950;
+      }
+
+      .gate-wall {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        align-content: start;
+        padding: 12px;
+      }
+
+      .gate-card {
+        --gate-color: var(--green);
+        display: grid;
+        align-content: start;
+        gap: 7px;
+        min-height: 126px;
+        padding: 9px;
+        border: 1px solid color-mix(in oklab, var(--gate-color) 38%, var(--border));
+        border-top: 3px solid var(--gate-color);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 0 0, color-mix(in oklab, var(--gate-color) 14%, transparent), transparent 48%),
+          var(--surface-raised);
+      }
+
+      .gate-card.block,
+      .gate-card.fail,
+      .gate-card.failed,
+      .gate-card.failure {
+        --gate-color: var(--red);
+      }
+
+      .gate-card.warn,
+      .gate-card.review,
+      .gate-card.review_required,
+      .gate-card.neutral {
+        --gate-color: var(--amber);
+      }
+
+      .prompt-metrics {
+        display: grid;
+        gap: 5px;
+      }
+
+      .prompt-bar {
+        display: grid;
+        grid-template-columns: 74px minmax(0, 1fr) 30px;
+        gap: 6px;
+        align-items: center;
+        color: var(--text-soft);
+        font-size: 7.8px;
+        font-weight: 850;
+      }
+
+      .prompt-bar span:nth-child(2) {
+        height: 5px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--muted) 16%, transparent);
+      }
+
+      .prompt-bar span:nth-child(2)::before {
+        display: block;
+        width: calc(var(--bar-value, 0) * 1%);
+        height: 100%;
+        border-radius: inherit;
+        background: var(--gate-color);
+        content: "";
+      }
+
+      .gate-check-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+
+      .gate-check-dot {
+        --check-color: var(--green);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        max-width: 100%;
+        padding: 2px 5px;
+        border: 1px solid color-mix(in oklab, var(--check-color) 38%, transparent);
+        border-radius: 999px;
+        color: var(--text-soft);
+        font-size: 7.4px;
+        font-weight: 850;
+      }
+
+      .gate-check-dot::before {
+        flex: 0 0 auto;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--check-color);
+        content: "";
+      }
+
+      .gate-check-dot.fail,
+      .gate-check-dot.failure,
+      .gate-check-dot.blocked,
+      .gate-check-dot.block {
+        --check-color: var(--red);
+      }
+
+      .gate-check-dot.neutral,
+      .gate-check-dot.review,
+      .gate-check-dot.review_required,
+      .gate-check-dot.warn {
+        --check-color: var(--amber);
+      }
+
+      .contract-stage {
+        --stage-accent: var(--violet);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(210px, 0.34fr);
+        min-height: 300px;
+      }
+
+      .contract-finding-list {
+        display: grid;
+        gap: 9px;
+        padding: 12px;
+        border-right: 1px solid var(--border);
+      }
+
+      .contract-finding {
+        display: grid;
+        gap: 8px;
+        padding: 9px;
+        border: 1px solid color-mix(in oklab, var(--red) 26%, var(--border));
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, color-mix(in oklab, var(--red) 10%, transparent), transparent 58%),
+          var(--surface-raised);
+      }
+
+      .contract-xray-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+        gap: 6px;
+        align-items: stretch;
+      }
+
+      .contract-shape {
+        display: grid;
+        align-content: start;
+        gap: 5px;
+        min-height: 116px;
+        padding: 8px;
+        border: 1px solid color-mix(in oklab, var(--muted) 18%, transparent);
+        border-radius: 7px;
+        background: color-mix(in oklab, var(--surface-inset) 74%, transparent);
+      }
+
+      .contract-shape h6 {
+        margin: 0 0 2px;
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 950;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .contract-field {
+        --field-color: var(--green);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 6px;
+        align-items: center;
+        padding: 4px 5px;
+        border: 1px solid color-mix(in oklab, var(--field-color) 30%, transparent);
+        border-radius: 6px;
+        color: var(--text-soft);
+        font-size: 8px;
+        line-height: 1.15;
+      }
+
+      .contract-field.removed {
+        --field-color: var(--red);
+        color: var(--red);
+      }
+
+      .contract-field.added {
+        --field-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .contract-field.changed {
+        --field-color: var(--amber);
+        color: var(--amber);
+      }
+
+      .contract-arrow {
+        position: relative;
+        display: grid;
+        place-items: center;
+      }
+
+      .contract-arrow::before {
+        width: 100%;
+        height: 2px;
+        background: color-mix(in oklab, var(--violet) 58%, var(--muted));
+        content: "";
+      }
+
+      .contract-arrow::after {
+        position: absolute;
+        right: 0;
+        width: 8px;
+        height: 8px;
+        border-top: 2px solid color-mix(in oklab, var(--violet) 68%, var(--muted));
+        border-right: 2px solid color-mix(in oklab, var(--violet) 68%, var(--muted));
+        transform: rotate(45deg);
+        content: "";
+      }
+
+      .contract-rail {
+        display: grid;
+        align-content: start;
+        gap: 8px;
+        padding: 12px;
+      }
+
+      .contract-test-card {
+        display: grid;
+        gap: 6px;
+        padding: 8px;
+        border: 1px dashed color-mix(in oklab, var(--green) 34%, var(--border));
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--green) 8%, var(--surface-raised));
+      }
+
+      .contract-test-card h5 {
+        margin: 0;
+        color: var(--text);
+        font-size: 9.5px;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+      }
+
+      .contract-test-card p {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 8.4px;
+        line-height: 1.28;
+      }
+
       .review-card h4 {
         margin: 0;
         overflow-wrap: anywhere;
@@ -2368,6 +4075,8 @@
 
       .pill-blocked,
       .pill-block,
+      .pill-remove,
+      .pill-missing,
       .pill-failure,
       .pill-fail,
       .pill-analysis_failed,
@@ -2380,6 +4089,8 @@
       .pill-review,
       .pill-review_required,
       .pill-warn,
+      .pill-rework,
+      .pill-partial,
       .pill-neutral {
         border-color: color-mix(in oklab, var(--amber) 42%, transparent);
         background: color-mix(in oklab, var(--amber) 13%, transparent);
@@ -2388,6 +4099,10 @@
 
       .pill-pass,
       .pill-completed,
+      .pill-skim,
+      .pill-verified,
+      .pill-covered,
+      .pill-found,
       .pill-success {
         border-color: color-mix(in oklab, var(--green) 40%, transparent);
         background: color-mix(in oklab, var(--green) 12%, transparent);
@@ -2481,6 +4196,54 @@
           grid-template-columns: 1fr;
         }
 
+        .slop-insights {
+          grid-template-columns: 1fr;
+        }
+
+        .test-stage,
+        .gate-stage,
+        .contract-stage,
+        .agent-mesh-hero {
+          grid-template-columns: 1fr;
+        }
+
+        .agent-stage-chain {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .agent-command-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .test-score-panel,
+        .gate-packet,
+        .contract-finding-list {
+          border-right: 0;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .gate-wall {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .contract-stage {
+          min-height: 0;
+        }
+
+        .memory-stage {
+          --memory-center-x: 42%;
+        }
+
+        .memory-detail-panel {
+          width: min(250px, 36%);
+          min-width: 210px;
+        }
+
+        .proof-graph-detail {
+          width: min(258px, 36%);
+          min-width: 212px;
+        }
+
         .queue-pane {
           position: static;
         }
@@ -2508,6 +4271,75 @@
 
         .topbar-actions .theme-toggle {
           flex: 0 0 60px;
+        }
+
+        .slop-lanes,
+        .evidence-lanes,
+        .test-target-grid,
+        .test-rec-rail,
+        .gate-wall,
+        .behavior-impact-grid,
+        .agent-stage-chain,
+        .agent-command-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .agent-stage-link:not(:last-child)::after {
+          display: none;
+        }
+
+        .behavior-lanes,
+        .contract-xray-row {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+
+        .behavior-arrow,
+        .contract-arrow {
+          min-height: 22px;
+          transform: rotate(90deg);
+        }
+
+        .memory-stage {
+          --memory-center-x: 50%;
+          min-height: 720px;
+          overflow: auto;
+        }
+
+        .memory-radar-stats,
+        .memory-detail-panel,
+        .proof-graph-detail {
+          position: relative;
+          inset: auto;
+          width: auto;
+          min-width: 0;
+          margin: 10px;
+        }
+
+        .memory-radar-stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .memory-center,
+        .memory-orbit,
+        .memory-node,
+        .memory-empty {
+          top: 340px;
+        }
+
+        .proof-graph-stage {
+          min-height: 760px;
+          overflow: auto;
+        }
+
+        .proof-graph-labels {
+          left: 10px;
+          right: 10px;
+          top: 216px;
+        }
+
+        .proof-graph-node {
+          top: calc(var(--mobile-y, 260px) + var(--row-y, 0px));
         }
 
         .shell {
@@ -3057,7 +4889,7 @@
       function openCodeDialog(path) {
         state.selectedCodePath = path;
         const file = findChangedFile(path);
-        const context = reviewFileFocusItems(state.currentRun?.summary || {}).find((item) => item.path === path);
+        const context = fileInspectionContext(path);
         const patch = file?.patch || file?.diff || "";
         codeDialogHeadingEl.textContent = path || "Changed file";
         codeDialogBodyEl.innerHTML = renderCodeDialogBody(path, file, context, patch);
@@ -3070,9 +4902,51 @@
         state.selectedCodePath = null;
       }
 
-      function bindCodeLinks() {
-        for (const button of detailEl.querySelectorAll("[data-code-path]")) {
+      function bindCodeLinks(root = detailEl) {
+        for (const button of root.querySelectorAll("[data-code-path]")) {
+          if (button.dataset.codeBound === "true") continue;
+          button.dataset.codeBound = "true";
           button.addEventListener("click", () => openCodeDialog(button.dataset.codePath || ""));
+        }
+      }
+
+      function bindMemoryNodes() {
+        const detailBody = detailEl.querySelector("#memory-node-detail");
+        if (!detailBody) return;
+        for (const button of detailEl.querySelectorAll("[data-memory-node]")) {
+          button.addEventListener("click", () => {
+            for (const node of detailEl.querySelectorAll("[data-memory-node]")) {
+              node.classList.toggle("active", node === button);
+            }
+            const payload = decodeMemoryNode(button.dataset.memoryPayload || "");
+            detailBody.innerHTML = memoryNodeDetail(payload);
+            bindCodeLinks(detailBody);
+          });
+        }
+      }
+
+      function bindEvidenceGraph() {
+        const detailBody = detailEl.querySelector("#evidence-graph-detail");
+        if (!detailBody) return;
+        for (const button of detailEl.querySelectorAll("[data-evidence-node]")) {
+          button.addEventListener("click", () => {
+            for (const node of detailEl.querySelectorAll("[data-evidence-node]")) {
+              node.classList.toggle("active", node.dataset.evidenceNode === button.dataset.evidenceNode);
+            }
+            const payload = decodeEvidenceNode(button.dataset.evidencePayload || "");
+            detailBody.innerHTML = evidenceGraphDetail(payload);
+            bindCodeLinks(detailBody);
+          });
+        }
+      }
+
+      function bindAgentDecisionMesh() {
+        for (const button of detailEl.querySelectorAll("[data-agent-detail-id]")) {
+          button.addEventListener("click", () => {
+            state.selectedAgentId = button.dataset.agentDetailId;
+            renderAgentOutput(state.currentRun);
+            openAgentOutput();
+          });
         }
       }
 
@@ -3696,6 +5570,10 @@
           });
         }
         bindCodeLinks();
+        bindMemoryNodes();
+        bindEvidenceGraph();
+        bindAgentDecisionMesh();
+        detailEl.querySelector(".dashboard-tab-body")?.scrollTo({ top: 0 });
       }
 
       function detailTabs(run, summary, pr, agentNames) {
@@ -3721,12 +5599,10 @@
             id: "agents",
             label: "Agents",
             kicker: "Execution mesh",
-            title: "Independent agent outputs",
-            description: "Status and confidence from each deployed MergeGuard agent.",
+            title: "Agent Decision Mesh",
+            description: "The completed agent council grouped by pipeline stage, confidence, and reviewer contribution.",
             count: agentNames.length,
-            content: `<div class="agent-grid">${agentNames
-              .map((name) => agentCard(name, run.agent_results[name]))
-              .join("")}</div>`
+            content: agentDecisionMeshContent(run, agentNames)
           },
           {
             id: "review",
@@ -3739,109 +5615,66 @@
           },
           {
             id: "slop",
-            label: "Slop",
-            kicker: "Review hygiene",
-            title: "Files to remove or rework",
-            description: "Debug leftovers, placeholders, noisy churn, weak tests, and unrelated files surfaced for reviewer action.",
-            count:
-              countItems(summary.slop_findings)
-              + countItems(summary.remove_candidates)
-              + countItems(summary.rework_candidates),
-            content: `
-              <div class="summary-strip">
-                ${summaryItem("Slop score", slop.slop_score == null ? "0" : `${slop.slop_score}/100`)}
-                ${summaryItem("Remove", `${countItems(summary.remove_candidates)} candidates`)}
-                ${summaryItem("Rework", `${countItems(summary.rework_candidates)} candidates`)}
-              </div>
-              <div class="tab-section">${cards(summary.remove_candidates, slopCard, "No remove candidates detected.")}</div>
-              <div class="tab-section">${cards(summary.rework_candidates, slopCard, "No rework candidates detected.")}</div>
-              <div class="tab-section">${cards(summary.slop_findings, slopCard, "No review slop detected.")}</div>
-            `
+            label: "Slop Remover",
+            kicker: "Slop hygiene",
+            title: "Slop Remover",
+            description: "Slop is review noise: debug leftovers, placeholders, noisy churn, weak tests, and unrelated files that should be removed, reworked, or skimmed.",
+            count: slopRemoverCount(summary),
+            content: slopRemoverContent(summary)
           },
           {
             id: "evidence",
             label: "Evidence",
             kicker: "Verification evidence",
-            title: "Requirement proof",
-            description: "How PR requirements map to tests, changed files, and missing proof.",
+            title: "Requirement Proof Graph",
+            description: "Claims connected to changed files, proof candidates, repository memory, and final evidence status.",
             count: countItems(summary.evidence_links),
-            content: cards(summary.evidence_links, evidenceCard, "No evidence gaps detected.")
+            content: evidenceProofContent(summary)
           },
           {
             id: "memory",
             label: "Memory",
             kicker: "Vector recall",
-            title: "Repository memory",
-            description: "Related tests, docs, prior PRs, and policy context retrieved through Magenta memory.",
-            count:
-              countItems(summary.memory_evidence)
-              + countItems(summary.related_tests)
-              + countItems(summary.similar_prs)
-              + countItems(summary.memory_matches),
-            content: `
-              <div class="summary-strip">
-                ${summaryItem("Provider", memory.memory_provider || "not configured")}
-                ${summaryItem("Indexed", memory.index?.records_stored == null ? "n/a" : `${memory.index.records_stored} records`)}
-                ${summaryItem("Matches", countItems(summary.memory_matches))}
-              </div>
-              <div class="tab-section">${cards(summary.memory_evidence, memoryEvidenceCard, "No requirement memory evidence found.")}</div>
-              <div class="tab-section">${cards(summary.related_tests, memoryHitCard, "No related repository tests found.")}</div>
-              <div class="tab-section">${cards(summary.similar_prs, memoryHitCard, "No similar prior PRs found.")}</div>
-              <div class="tab-section">${cards(summary.memory_matches, memoryHitCard, "No memory matches returned.")}</div>
-            `
+            title: "Repository Memory Radar",
+            description: "A constellation of tests, docs, policies, and prior PRs retrieved from repository memory.",
+            count: memoryConstellationCount(summary),
+            content: memoryConstellationContent(summary, pr)
           },
           {
             id: "tests",
             label: "Tests",
             kicker: "Functional coverage",
-            title: "Changed-test coverage",
-            description: "How changed tests cover source changes, PR intent, and behavior deltas.",
-            count: countItems(summary.test_coverage_findings) + countItems(summary.test_coverage_matrix),
-            content: `
-              <div class="summary-strip">
-                ${summaryItem("Coverage score", coverage.coverage_score == null ? "n/a" : `${coverage.coverage_score}%`)}
-                ${summaryItem("Coverage status", statusLabel(coverage.coverage_status || "unknown"))}
-                ${summaryItem("Confidence", coverageConfidence)}
-              </div>
-              <div class="tab-section">${cards(summary.test_coverage_findings, testCoverageFindingCard, "No test coverage gaps detected.")}</div>
-              <div class="tab-section">${cards(summary.test_coverage_matrix, testCoverageCard, "No changed source targets required tests.")}</div>
-            `
+            title: "Coverage Cockpit",
+            description: "A reviewer-first map of source targets, coverage gaps, and the tests that should be added or extended.",
+            count: testCockpitCount(summary),
+            content: testCockpitContent(summary)
           },
           {
             id: "behavior",
             label: "Behavior",
             kicker: "Runtime behavior",
-            title: "Behavior impact and blast radius",
-            description: "Detected behavior changes and downstream impact.",
+            title: "Behavior Shift Lens",
+            description: "Before, trigger, and after lanes that explain what changed at runtime and why it matters.",
             count: countItems(summary.behavioral_deltas) + countItems(summary.blast_radius),
-            content: `
-              <div class="tab-section">${cards(summary.behavioral_deltas, behaviorCard, "No behavior deltas detected.")}</div>
-              <div class="tab-section">${cards(summary.blast_radius, blastCard, "No blast-radius items detected.")}</div>
-            `
+            content: behaviorShiftContent(summary)
           },
           {
             id: "gates",
             label: "Gates",
             kicker: "Policy and prompt",
-            title: "Policy guardrails and prompt drift checks",
-            description: "Policy blocks, owner overrides, prompt drift, and model-output checks.",
-            count: countItems(summary.policy_findings) + countItems(summary.prompt_canary_runs),
-            content: `
-              <div class="tab-section">${cards(summary.policy_findings, policyCard, "Policy guardrails pass.")}</div>
-              <div class="tab-section">${cards(summary.prompt_canary_runs, promptCard, "No prompt drift checks required.")}</div>
-            `
+            title: "Guardrail Firewall",
+            description: "Policy, prompt, and check gates rendered as the merge packet crossing the review firewall.",
+            count: guardrailFirewallCount(summary),
+            content: guardrailFirewallContent(summary)
           },
           {
             id: "contracts",
             label: "Contracts",
             kicker: "Runtime assumptions",
-            title: "Contracts and suggested tests",
-            description: "Contract drift and generated test ideas for follow-up validation.",
+            title: "API Contract X-Ray",
+            description: "Side-by-side old/new contract shapes with removed fields, changed assumptions, and generated validation tests.",
             count: countItems(summary.contract_findings) + countItems(summary.suggested_tests),
-            content: `
-              <div class="tab-section">${cards(summary.contract_findings, contractCard, "No runtime contract drift.")}</div>
-              <div class="tab-section">${cards(summary.suggested_tests, suggestedTestCard, "No generated test suggestions.")}</div>
-            `
+            content: contractXrayContent(summary)
           },
           {
             id: "comment",
@@ -4146,6 +5979,72 @@
         </section>`;
       }
 
+      function fileInspectionContext(path) {
+        const summary = state.currentRun?.summary || {};
+        const reviewContext = reviewFileFocusItems(summary).find((item) => item.path === path);
+        const evidenceContext = evidenceFileContext(summary, path);
+        const memoryContext = memoryFileContext(summary, path);
+        const contexts = [memoryContext, evidenceContext, reviewContext].filter(Boolean);
+        if (!contexts.length) return null;
+        if (contexts.length === 1) return contexts[0];
+        return {
+          path,
+          risk: Math.max(...contexts.map((item) => numericScore(item.risk))),
+          reasons: uniqueReviewItems(contexts.flatMap((item) => item.reasons || []), 5),
+          actions: uniqueReviewItems(contexts.flatMap((item) => item.actions || []), 5),
+          owners: uniqueReviewItems(contexts.flatMap((item) => item.owners || []), 2)
+        };
+      }
+
+      function memoryFileContext(summary, path) {
+        const hits = memoryConstellationNodes(summary).filter((item) => item.path === path);
+        if (!hits.length) return null;
+        return {
+          path,
+          risk: Math.max(...hits.map((item) => Math.round(memoryScore(item) * 100))),
+          reasons: uniqueReviewItems(hits.map((item) => `Repository memory: ${item.title || item.path || "memory hit"} matched as ${memoryKindLabel(item.kind)}.`), 4),
+          actions: uniqueReviewItems(hits.map(memoryNodeAction), 4),
+          owners: []
+        };
+      }
+
+      function mergeInspectionContexts(path, reviewContext, evidenceContext) {
+        return {
+          path,
+          risk: Math.max(numericScore(reviewContext.risk), numericScore(evidenceContext.risk)),
+          reasons: uniqueReviewItems([...(reviewContext.reasons || []), ...(evidenceContext.reasons || [])], 4),
+          actions: uniqueReviewItems([...(reviewContext.actions || []), ...(evidenceContext.actions || [])], 4),
+          owners: uniqueReviewItems([...(reviewContext.owners || []), ...(evidenceContext.owners || [])], 2)
+        };
+      }
+
+      function evidenceFileContext(summary, path) {
+        const reasons = [];
+        const actions = [];
+        let risk = 0;
+        for (const item of summary.evidence_links || []) {
+          const paths = [
+            ...(item.mapped_paths || []),
+            ...(item.evidence_paths || []),
+            ...(item.memory_evidence_paths || []),
+            ...(item.memory_test_candidates || [])
+          ];
+          if (!paths.includes(path)) continue;
+          const tone = evidenceTone(item);
+          risk = Math.max(risk, tone === "missing" ? 82 : tone === "partial" ? 58 : 24);
+          reasons.push(`${item.intent_text || "Requirement"} is ${item.evidence_status || tone}.`);
+          actions.push(item.suggested_action || fallbackEvidenceAction(tone));
+        }
+        if (!reasons.length) return null;
+        return {
+          path,
+          risk,
+          reasons: uniqueReviewItems(reasons, 4),
+          actions: uniqueReviewItems(actions, 4),
+          owners: []
+        };
+      }
+
       function findChangedFile(path) {
         const run = state.currentRun || {};
         const candidates = [
@@ -4281,6 +6180,173 @@
           <div class="muted">${esc((item.owners || []).join(", ") || "unassigned")}</div>`;
       }
 
+      function slopRemoverContent(summary) {
+        const slop = summary.slop || {};
+        const remove = uniqueSlopItems(slopLaneItems(summary.remove_candidates || slop.remove_candidates, "remove"));
+        const rework = uniqueSlopItems(slopLaneItems(summary.rework_candidates || slop.rework_candidates, "rework"));
+        const actionKeys = new Set([...remove, ...rework].map(slopItemKey));
+        const allFindings = uniqueSlopItems(slopLaneItems(summary.slop_findings || slop.slop_findings, "skim"));
+        const skim = allFindings.filter((item) => {
+          const disposition = String(item.disposition || "").toLowerCase();
+          return !actionKeys.has(slopItemKey(item)) && !["remove", "rework"].includes(disposition);
+        });
+        const allItems = uniqueSlopItems([...remove, ...rework, ...skim]);
+        const score = numericScore(slop.slop_score ?? Math.max(0, ...allItems.map((item) => numericScore(item.score))));
+        const slopTone = score >= 70 ? "var(--red)" : score >= 35 ? "var(--amber)" : "var(--green)";
+        const status = score >= 70 ? "Cleanup required" : score >= 35 ? "Review hygiene" : "Clean";
+        const loadReduced = remove.length + rework.length;
+        return `<div class="slop-remover">
+          <section class="slop-hero" style="--slop-score:${score};--slop-tone:${slopTone}">
+            <div>
+              <p class="section-kicker">Slop Remover</p>
+              <h4>${esc(status)}</h4>
+              <p>Slop is anything that makes the PR harder to review without improving the change: temporary files, debug hooks, placeholder code, weak tests, or unrelated churn.</p>
+            </div>
+            <div class="slop-score-dial" aria-label="Slop score ${score} out of 100">
+              <div>
+                <strong>${score}</strong>
+                <span>slop</span>
+              </div>
+            </div>
+          </section>
+          <section class="slop-stats" aria-label="Slop Remover summary">
+            ${slopStat("Remove", `${remove.length} ${plural(remove.length, "file")}`)}
+            ${slopStat("Rework", `${rework.length} ${plural(rework.length, "file")}`)}
+            ${slopStat("Can skim", `${skim.length} ${plural(skim.length, "file")}`)}
+            ${slopStat("Load reduced", `${loadReduced} ${plural(loadReduced, "file")}`)}
+          </section>
+          <section class="slop-lanes" aria-label="Slop Remover action lanes">
+            ${slopLane("Remove", "remove", remove, "Debug, scratch, generated, or unrelated changes that should leave the PR.", "No removal candidates.")}
+            ${slopLane("Rework", "rework", rework, "Placeholder or weak implementation that should be fixed before approval.", "No rework candidates.")}
+            ${slopLane("Can skim", "skim", skim, "Low-risk review noise that should not consume reviewer attention.", "No low-priority slop.")}
+          </section>
+          <section class="slop-insights">
+            ${slopSignalBoard(allItems)}
+            ${slopCleanupComment(allItems)}
+          </section>
+        </div>`;
+      }
+
+      function slopRemoverCount(summary) {
+        const slop = summary.slop || {};
+        return uniqueSlopItems([
+          ...slopLaneItems(summary.remove_candidates || slop.remove_candidates, "remove"),
+          ...slopLaneItems(summary.rework_candidates || slop.rework_candidates, "rework"),
+          ...slopLaneItems(summary.slop_findings || slop.slop_findings, "skim")
+        ]).length;
+      }
+
+      function slopLaneItems(items, fallbackDisposition) {
+        return (items || []).map((item) => ({
+          ...item,
+          disposition: item.disposition || fallbackDisposition
+        }));
+      }
+
+      function uniqueSlopItems(items) {
+        const seen = new Set();
+        return (items || []).filter((item) => {
+          const key = slopItemKey(item);
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      function slopItemKey(item) {
+        return `${item.path || "unknown"}::${item.disposition || ""}::${item.message || item.suggested_action || ""}`;
+      }
+
+      function slopStat(label, value) {
+        return `<div class="slop-stat"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
+      }
+
+      function slopLane(title, tone, items, description, emptyText) {
+        return `<section class="slop-lane ${escAttr(tone)}">
+          <div class="slop-lane-head">
+            <div>
+              <span class="review-list-label">${esc(tone)}</span>
+              <h4>${esc(title)}</h4>
+              <p>${esc(description)}</p>
+            </div>
+            ${pill(`${items.length}`, tone)}
+          </div>
+          ${items.length ? items.map((item) => slopRemoverCard(item, tone)).join("") : `<div class="slop-empty">${esc(emptyText)}</div>`}
+        </section>`;
+      }
+
+      function slopRemoverCard(item, tone) {
+        const path = item.path || "changed file";
+        const signals = uniqueReviewItems(item.signals || item.categories || [item.category], 5);
+        const confidence = item.confidence == null ? "" : pill(`${Math.round(item.confidence * 100)}% confidence`, "info");
+        return `<article class="slop-card ${escAttr(tone)}">
+          <div class="slop-card-top">
+            <h5>
+              <button class="code-link" type="button" data-code-path="${escAttr(path)}" aria-label="Open ${escAttr(path)} changed code">
+                <code>${esc(path)}</code>
+              </button>
+            </h5>
+          </div>
+          <p>${esc(item.message || item.suggested_action || "Review hygiene finding.")}</p>
+          <div class="chip-row">
+            ${scoreChip(item.score)}
+            ${pill(item.category || "slop", item.severity || tone)}
+            ${confidence}
+          </div>
+          <div class="slop-signal-cloud">
+            ${signals.length ? signals.map((signal) => `<span class="slop-signal">${esc(signal)}</span>`).join("") : `<span class="slop-signal">review hygiene</span>`}
+          </div>
+          <div class="slop-action">
+            <span>Reviewer action</span>
+            <strong>${esc(item.suggested_action || fallbackSlopAction(tone))}</strong>
+          </div>
+        </article>`;
+      }
+
+      function slopSignalBoard(items) {
+        const counts = new Map();
+        for (const item of items) {
+          for (const signal of item.signals || item.categories || [item.category].filter(Boolean)) {
+            const key = String(signal || "").trim();
+            if (!key) continue;
+            counts.set(key, (counts.get(key) || 0) + 1);
+          }
+        }
+        const signals = [...counts.entries()]
+          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+          .slice(0, 10);
+        return `<section class="slop-insight-card">
+          <span class="review-list-label">Signal fingerprint</span>
+          <div class="slop-signal-cloud">
+            ${signals.length ? signals.map(([signal, count]) => `<span class="slop-signal">${esc(signal)}${count > 1 ? ` x${count}` : ""}</span>`).join("") : `<span class="slop-signal">No Slop signals</span>`}
+          </div>
+          <p class="muted">Use these signals to understand why Slop Remover grouped the files into cleanup lanes.</p>
+        </section>`;
+      }
+
+      function slopCleanupComment(items) {
+        const lines = items.length
+          ? [
+              "Slop Remover found review hygiene items:",
+              ...items.slice(0, 5).map((item) => `* ${String(item.disposition || "review").toUpperCase()} ${item.path || "changed file"}: ${item.suggested_action || item.message || "Inspect before merge."}`)
+            ]
+          : ["Slop Remover found no review hygiene cleanup items."];
+        return `<section class="slop-insight-card">
+          <span class="review-list-label">Reviewer cleanup note</span>
+          <pre>${esc(lines.join("\n"))}</pre>
+        </section>`;
+      }
+
+      function fallbackSlopAction(tone) {
+        if (tone === "remove") return "Remove this change or add a reviewer-visible justification.";
+        if (tone === "rework") return "Rework this change before approval.";
+        return "Skim after higher-risk cleanup items are resolved.";
+      }
+
+      function plural(count, noun) {
+        return `${noun}${count === 1 ? "" : "s"}`;
+      }
+
       function slopCard(item) {
         const signals = (item.signals || []).join(", ");
         return `<div class="review-card-top"><h4><code>${esc(item.path || "changed file")}</code></h4>${pill(item.disposition || item.severity || "review")}</div>
@@ -4290,6 +6356,429 @@
             ${item.score == null ? "" : scoreChip(item.score)}
           </div>
           <div class="muted">${esc(signals || item.suggested_action || "Inspect this change before merge.")}</div>`;
+      }
+
+      function evidenceProofContent(summary) {
+        const links = summary.evidence_links || [];
+        const rows = links.map(evidenceGraphRow);
+        const selected = rows[0] || null;
+        return `<div class="evidence-graph">
+          <section class="proof-graph-stage" aria-label="Requirement proof graph">
+            <svg class="proof-graph-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              ${rows.map((row, index) => evidenceGraphLine(row, index, rows.length)).join("")}
+            </svg>
+            <div class="proof-graph-labels" aria-hidden="true">
+              <span>Claim</span>
+              <span>Changed files</span>
+              <span>Proof</span>
+              <span>Verdict</span>
+            </div>
+            ${rows.length ? rows.map((row, index) => evidenceGraphNodes(row, index, rows.length)).join("") : `<div class="proof-graph-empty">No requirement evidence was produced for this PR.</div>`}
+            <aside id="evidence-graph-detail" class="proof-graph-detail" aria-live="polite">
+              ${selected ? evidenceGraphDetail(selected) : `<span class="review-list-label">Selected claim</span><h4>No proof selected</h4><p>No requirement evidence was produced for this PR.</p>`}
+            </aside>
+          </section>
+        </div>`;
+      }
+
+      function evidenceGraphRow(item) {
+        const tone = evidenceTone(item);
+        const changedPaths = cleanEvidencePaths(item.mapped_paths || []);
+        const directPaths = cleanEvidencePaths(item.evidence_paths || []);
+        const memoryPaths = cleanEvidencePaths([...(item.memory_test_candidates || []), ...(item.memory_evidence_paths || [])]);
+        const proofPaths = uniqueReviewItems([...directPaths, ...memoryPaths], 8);
+        return {
+          ...item,
+          tone,
+          changedPaths,
+          proofPaths,
+          memoryCount: Number(item.memory_match_count || 0),
+          graphId: item.intent_id || item.intent_text || item.message || `claim-${tone}`
+        };
+      }
+
+      function cleanEvidencePaths(paths) {
+        return uniqueReviewItems((paths || []).filter((path) => path && path !== "."), 8);
+      }
+
+      function evidenceGraphLine(row, index, total) {
+        const y = evidenceGraphY(index, total);
+        const color = evidenceToneColor(row.tone);
+        return `
+          <path style="--edge-color:${color}" d="M 18 ${y} C 22 ${y}, 25 ${y}, 29 ${y}" />
+          <path style="--edge-color:${color}" d="M 35 ${y} C 39 ${y}, 41 ${y}, 45 ${y}" />
+          <path style="--edge-color:${color}" d="M 51 ${y} C 55 ${y}, 56 ${y}, 60 ${y}" />
+        `;
+      }
+
+      function evidenceGraphNodes(row, index, total) {
+        const y = evidenceGraphY(index, total);
+        const rowY = 60 * index;
+        const payload = escAttr(encodeURIComponent(JSON.stringify(row)));
+        const active = index === 0 ? " active" : "";
+        const id = escAttr(row.graphId);
+        const style = `--y:${y}%;--row-y:${rowY}px`;
+        return `
+          ${evidenceGraphNode(row, id, payload, active, "claim", "Claim", row.intent_text || row.message || "Requirement", "12%", style)}
+          ${evidenceGraphNode(row, id, payload, active, "changed", "Changed", `${row.changedPaths.length}`, "29%", style)}
+          ${evidenceGraphNode(row, id, payload, active, "proof", "Proof", `${row.proofPaths.length} links`, "45%", style)}
+          ${evidenceGraphNode(row, id, payload, active, "verdict", "Verdict", statusLabel(row.evidence_status || row.tone), "60%", style)}
+        `;
+      }
+
+      function evidenceGraphNode(row, id, payload, active, kind, label, value, x, style) {
+        const width = kind === "claim" ? "" : "--node-w:76px;";
+        return `<button
+          class="proof-graph-node ${escAttr(row.tone)} ${escAttr(kind)}${active}"
+          type="button"
+          style="--x:${x};${style};${width}"
+          data-evidence-node="${id}"
+          data-evidence-payload="${payload}"
+          aria-label="Open proof details for ${escAttr(row.intent_text || row.message || "requirement")}">
+          <span>${esc(label)}</span>
+          <strong>${esc(kind === "claim" ? shortLabel(value, 54) : value)}</strong>
+        </button>`;
+      }
+
+      function evidenceGraphY(index, total) {
+        if (total <= 1) return 50;
+        return Math.round((18 + (64 / Math.max(1, total - 1)) * index) * 10) / 10;
+      }
+
+      function evidenceGraphDetail(row) {
+        const confidence = row.confidence == null ? "" : pill(`${Math.round(row.confidence * 100)}% confidence`, "info");
+        return `<span class="review-list-label">Selected claim</span>
+          <h4>${esc(row.intent_text || row.message || "Requirement")}</h4>
+          <div class="chip-row">
+            ${pill(row.evidence_status || row.tone, row.tone)}
+            ${confidence}
+            ${pill(`${row.memoryCount || 0} memory`, row.memoryCount ? "success" : "neutral")}
+          </div>
+          <div class="proof-chain" aria-label="Selected claim proof chain">
+            ${proofNode("Claim", "1")}
+            ${proofNode("Changed", row.changedPaths.length || "0")}
+            ${proofNode("Proof", row.proofPaths.length || "0")}
+            ${proofNode("Verdict", statusLabel(row.evidence_status || row.tone))}
+          </div>
+          ${evidencePathSection("Changed files", row.changedPaths.slice(0, 6), row.tone)}
+          ${evidencePathSection("Proof candidates", row.proofPaths, row.tone)}
+          <div class="evidence-action">
+            <span>Reviewer action</span>
+            <strong>${esc(row.suggested_action || fallbackEvidenceAction(row.tone))}</strong>
+          </div>`;
+      }
+
+      function decodeEvidenceNode(value) {
+        try {
+          return JSON.parse(decodeURIComponent(value));
+        } catch {
+          return {};
+        }
+      }
+
+      function evidenceToneColor(tone) {
+        return tone === "missing" ? "var(--red)" : tone === "verified" ? "var(--green)" : "var(--amber)";
+      }
+
+      function evidenceGroups(links) {
+        return (links || []).reduce((groups, item) => {
+          groups[evidenceTone(item)].push(item);
+          return groups;
+        }, { missing: [], partial: [], verified: [] });
+      }
+
+      function evidenceTone(item) {
+        const status = String(item.evidence_status || item.status || "").toLowerCase();
+        const directEvidence = countItems(item.evidence_paths);
+        if (status.includes("missing") || status.includes("not_found")) return "missing";
+        if (status.includes("verified") || status.includes("success") || status.includes("covered") || status.includes("found") || status.includes("pass")) return "verified";
+        if (directEvidence > 0 && !status.includes("partial")) return "verified";
+        return "partial";
+      }
+
+      function evidenceStat(label, value) {
+        return `<div class="evidence-stat"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
+      }
+
+      function evidenceLane(title, tone, items, description, emptyText) {
+        return `<section class="evidence-lane ${escAttr(tone)}">
+          <div class="evidence-lane-head">
+            <div>
+              <span class="review-list-label">${esc(tone)}</span>
+              <h4>${esc(title)}</h4>
+              <p>${esc(description)}</p>
+            </div>
+            ${pill(`${items.length}`, tone)}
+          </div>
+          ${items.length ? items.map((item) => evidenceProofCard(item, tone)).join("") : `<div class="slop-empty">${esc(emptyText)}</div>`}
+        </section>`;
+      }
+
+      function evidenceProofCard(item, tone) {
+        const changedPaths = item.mapped_paths || [];
+        const directPaths = item.evidence_paths || [];
+        const memoryPaths = uniqueReviewItems([...(item.memory_test_candidates || []), ...(item.memory_evidence_paths || [])], 5);
+        const proofPaths = uniqueReviewItems([...directPaths, ...memoryPaths], 6);
+        const confidence = item.confidence == null ? "" : pill(`${Math.round(item.confidence * 100)}% confidence`, "info");
+        return `<article class="evidence-card">
+          <div class="review-card-top">
+            <h5>${esc(item.intent_text || item.message || "Requirement")}</h5>
+            ${pill(item.evidence_status || tone, tone)}
+          </div>
+          <div class="proof-chain" aria-label="Evidence proof chain">
+            ${proofNode("Claim", "1")}
+            ${proofNode("Changed", changedPaths.length || "0")}
+            ${proofNode("Proof", proofPaths.length || "0")}
+            ${proofNode("Verdict", statusLabel(item.evidence_status || tone))}
+          </div>
+          <div class="chip-row">
+            ${confidence}
+            ${pill(`${item.memory_match_count || 0} memory`, item.memory_match_count ? "success" : "neutral")}
+          </div>
+          ${evidencePathSection("Changed files", changedPaths.slice(0, 5), tone)}
+          ${evidencePathSection("Proof candidates", proofPaths, tone)}
+          <div class="evidence-action">
+            <span>Reviewer action</span>
+            <strong>${esc(item.suggested_action || fallbackEvidenceAction(tone))}</strong>
+          </div>
+        </article>`;
+      }
+
+      function proofNode(label, value) {
+        return `<div class="proof-node"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
+      }
+
+      function evidencePathSection(label, paths, tone) {
+        if (!paths.length) {
+          return `<div><span class="review-list-label">${esc(label)}</span><div class="evidence-path-cloud"><span class="evidence-path">none linked</span></div></div>`;
+        }
+        return `<div>
+          <span class="review-list-label">${esc(label)}</span>
+          <div class="evidence-path-cloud">${paths.map((path) => evidencePathChip(path, tone)).join("")}</div>
+        </div>`;
+      }
+
+      function evidencePathChip(path, tone) {
+        return `<button class="evidence-path ${escAttr(tone)}" type="button" data-code-path="${escAttr(path)}" aria-label="Open ${escAttr(path)} evidence file">${esc(path)}</button>`;
+      }
+
+      function fallbackEvidenceAction(tone) {
+        if (tone === "missing") return "Add or link proof before merge.";
+        if (tone === "partial") return "Extend the related evidence or explain why it is sufficient.";
+        return "Verify the linked proof matches the PR claim.";
+      }
+
+      function memoryConstellationCount(summary) {
+        return memoryConstellationNodes(summary).length;
+      }
+
+      function memoryConstellationContent(summary, pr) {
+        const memory = summary.semantic_memory || {};
+        const nodes = memoryConstellationNodes(summary);
+        const selected = nodes[0] || null;
+        const indexed = memory.index?.records_stored == null ? "n/a" : `${memory.index.records_stored}`;
+        return `<div class="memory-radar">
+          <section class="memory-stage" aria-label="Repository memory constellation">
+            <div class="memory-radar-stats">
+              ${memoryRadarStat("Provider", memory.memory_provider || "not configured")}
+              ${memoryRadarStat("Indexed", indexed)}
+              ${memoryRadarStat("Tests", `${countItems(summary.related_tests || memory.related_tests)}`)}
+              ${memoryRadarStat("Prior PRs", `${countItems(summary.similar_prs || memory.similar_prs)}`)}
+            </div>
+            <div class="memory-orbit one" aria-hidden="true"></div>
+            <div class="memory-orbit two" aria-hidden="true"></div>
+            <div class="memory-orbit three" aria-hidden="true"></div>
+            <div class="memory-center" aria-label="Current pull request">
+              <div>
+                <strong>#${esc(pr.number || "")}</strong>
+                <span>current PR</span>
+              </div>
+            </div>
+            ${nodes.length ? nodes.map((node, index) => memoryNodeButton(node, index, nodes.length)).join("") : `<div class="memory-empty">No repository memory matches were returned for this PR.</div>`}
+            <aside id="memory-node-detail" class="memory-detail-panel" aria-live="polite">
+              ${selected ? memoryNodeDetail(selected) : `<span class="review-list-label">Selected memory</span><h4>No memory selected</h4><p>No repository memory matches were returned.</p>`}
+            </aside>
+          </section>
+        </div>`;
+      }
+
+      function memoryRadarStat(label, value) {
+        return `<div class="memory-radar-stat"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
+      }
+
+      function memoryConstellationNodes(summary) {
+        const memory = summary.semantic_memory || {};
+        const rawItems = [];
+        const collect = (items, origin) => {
+          for (const item of items || []) rawItems.push(memoryNormalizeNode(item, origin));
+        };
+        collect(summary.related_tests || memory.related_tests, "related_tests");
+        collect(summary.similar_prs || memory.similar_prs, "similar_prs");
+        collect(summary.memory_matches || memory.semantic_matches, "semantic_matches");
+        collect(memory.recommended_test_updates, "recommended_test_updates");
+        for (const item of summary.memory_evidence || memory.requirement_evidence || []) {
+          collect(item.matches, "requirement_match");
+          collect(item.test_candidates, "requirement_test");
+          collect(item.doc_candidates, "requirement_doc");
+        }
+
+        const byKey = new Map();
+        for (const item of rawItems.filter(Boolean)) {
+          const key = `${item.kind}:${item.path || item.title}:${item.pr_number || ""}`;
+          const existing = byKey.get(key);
+          if (!existing || memoryScore(item) > memoryScore(existing)) {
+            byKey.set(key, item);
+          }
+        }
+        return [...byKey.values()]
+          .sort((a, b) => memoryScore(b) - memoryScore(a) || memoryKindOrder(a.kind) - memoryKindOrder(b.kind))
+          .slice(0, 12);
+      }
+
+      function memoryNormalizeNode(item, origin) {
+        if (!item) return null;
+        const metadata = item.metadata || {};
+        const kind = String(item.kind || metadata.type || item.framework || "memory").toLowerCase();
+        const path = item.path || metadata.path || "";
+        const title = item.title || metadata.title || item.intent || path || item.label || "Repository memory";
+        return {
+          kind,
+          origin,
+          title,
+          path,
+          pr_number: item.pr_number || metadata.pr_number || "",
+          score: item.score ?? item.memory_score ?? item.confidence ?? 0.5,
+          source: item.source || metadata.source || origin || "repository_memory",
+          text: item.text || item.intent || item.summary || item.title || "",
+          label: item.label || "",
+          url: item.url || "",
+          matched_terms: item.matched_terms || [],
+          risk_terms: item.risk_terms || metadata.risk_terms || [],
+          suggested_action: item.suggested_action || ""
+        };
+      }
+
+      function memoryNodeButton(node, index, total) {
+        const position = memoryNodePosition(node, index, total);
+        const size = 44 + Math.round(memoryScore(node) * 22);
+        const active = index === 0 ? " active" : "";
+        return `<button
+          class="memory-node kind-${escAttr(memoryKindClass(node.kind))}${active}"
+          type="button"
+          style="--x:${position.x}px;--y:${position.y}px;--size:${size}px"
+          data-memory-node="true"
+          data-memory-payload="${escAttr(encodeURIComponent(JSON.stringify(node)))}"
+          aria-label="Open memory hit ${escAttr(node.title)}">
+          <span class="memory-node-icon">${esc(memoryKindIcon(node.kind))}</span>
+          <span class="memory-node-label">${esc(shortLabel(node.title, 32))}</span>
+        </button>`;
+      }
+
+      function memoryNodePosition(node, index, total) {
+        const radius = memoryKindRadius(node.kind);
+        const angle = (total <= 1 ? -90 : -112 + (224 / Math.max(1, total - 1)) * index) * Math.PI / 180;
+        return {
+          x: Math.round(Math.cos(angle) * radius),
+          y: Math.round(Math.sin(angle) * radius)
+        };
+      }
+
+      function memoryNodeDetail(node) {
+        const score = Math.round(memoryScore(node) * 100);
+        const terms = uniqueReviewItems([...(node.matched_terms || []), ...(node.risk_terms || [])], 10);
+        return `<span class="review-list-label">Selected memory</span>
+          <h4>${esc(node.title || "Repository memory")}</h4>
+          <div class="chip-row">
+            ${pill(memoryKindLabel(node.kind), memoryKindTone(node.kind))}
+            ${pill(`${score}% match`, score >= 80 ? "success" : score >= 50 ? "neutral" : "info")}
+          </div>
+          ${node.path || node.pr_number ? `<div class="evidence-path-cloud">${memoryLocationChip(node)}</div>` : ""}
+          <p>${esc(node.text || "Repository memory matched this PR context.")}</p>
+          ${terms.length ? `<div><span class="review-list-label">Matched terms</span><div class="slop-signal-cloud">${terms.map((term) => `<span class="slop-signal">${esc(term)}</span>`).join("")}</div></div>` : ""}
+          <div class="evidence-action">
+            <span>Reviewer action</span>
+            <strong>${esc(memoryNodeAction(node))}</strong>
+          </div>`;
+      }
+
+      function memoryLocationChip(node) {
+        if (node.path && node.path !== ".") {
+          return `<button class="evidence-path ${escAttr(memoryKindTone(node.kind))}" type="button" data-code-path="${escAttr(node.path)}" aria-label="Open ${escAttr(node.path)} memory file">${esc(node.path)}</button>`;
+        }
+        if (node.pr_number) return `<span class="evidence-path">PR #${esc(node.pr_number)}</span>`;
+        return `<span class="evidence-path">${esc(node.source || "repository memory")}</span>`;
+      }
+
+      function decodeMemoryNode(value) {
+        try {
+          return JSON.parse(decodeURIComponent(value));
+        } catch {
+          return {};
+        }
+      }
+
+      function memoryScore(node) {
+        const raw = Number(node?.score ?? 0);
+        if (!Number.isFinite(raw)) return 0;
+        return Math.max(0, Math.min(1, raw > 1 ? raw / 100 : raw));
+      }
+
+      function memoryKindRadius(kind) {
+        const key = memoryKindClass(kind);
+        if (key === "test") return 76;
+        if (key === "doc" || key === "policy") return 108;
+        if (key === "prior_pr") return 134;
+        return 122;
+      }
+
+      function memoryKindOrder(kind) {
+        return { test: 0, policy: 1, doc: 2, prior_pr: 3 }[memoryKindClass(kind)] ?? 9;
+      }
+
+      function memoryKindClass(kind) {
+        const key = String(kind || "memory").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+        if (key.includes("prior")) return "prior_pr";
+        if (key.includes("test")) return "test";
+        if (key.includes("policy")) return "policy";
+        if (key.includes("doc")) return "doc";
+        return key || "memory";
+      }
+
+      function memoryKindIcon(kind) {
+        return { test: "T", doc: "D", policy: "P", prior_pr: "PR" }[memoryKindClass(kind)] || "M";
+      }
+
+      function memoryKindLabel(kind) {
+        return {
+          test: "related test",
+          doc: "doc",
+          policy: "policy",
+          prior_pr: "prior PR"
+        }[memoryKindClass(kind)] || "memory";
+      }
+
+      function memoryKindTone(kind) {
+        return {
+          test: "success",
+          doc: "info",
+          policy: "review",
+          prior_pr: "queued"
+        }[memoryKindClass(kind)] || "info";
+      }
+
+      function memoryNodeAction(node) {
+        if (node.suggested_action) return node.suggested_action;
+        const kind = memoryKindClass(node.kind);
+        if (kind === "test") return "Inspect or extend this related test for the current PR behavior.";
+        if (kind === "policy") return "Use this policy as review context before approving the PR.";
+        if (kind === "doc") return "Compare the PR behavior against this repository documentation.";
+        if (kind === "prior_pr") return "Compare this change with the prior PR decision and required checks.";
+        return "Review this memory hit for useful PR context.";
+      }
+
+      function shortLabel(value, limit) {
+        const text = String(value || "");
+        return text.length > limit ? `${text.slice(0, limit - 1)}...` : text;
       }
 
       function evidenceCard(item) {
@@ -4313,6 +6802,554 @@
         return `<div class="review-card-top"><h4>${item.path ? `<code>${esc(item.path)}</code>` : esc(item.title || item.label || "Memory")}</h4>${pill(`${item.kind || "memory"}${score}`, "info")}</div>
           <p>${esc(item.text || item.title || "")}</p>
           <div class="muted">${esc(item.source || item.label || "repository memory")}</div>`;
+      }
+
+      function agentDecisionMeshContent(run, agentNames) {
+        const agents = agentDecisionAgents(run, agentNames);
+        const stats = agentDecisionStats(agents, run);
+        const confidence = stats.confidence;
+        return `<div class="agent-decision-mesh">
+          <section class="agent-mesh-hero">
+            <div class="agent-mesh-core">
+              <div class="agent-mesh-orb" style="--mesh-score:${confidence}">${confidence}</div>
+              <div>
+                <h4>${esc(stats.failed ? "Agent council found blockers" : "Agent council completed")}</h4>
+                <p>${esc(`${stats.completed}/${stats.total} agents completed. ${stats.failed} failed, ${stats.review} require reviewer attention.`)}</p>
+              </div>
+              <div class="chip-row">
+                ${pill(`${stats.completed} done`, "success")}
+                ${pill(`${stats.failed} failed`, stats.failed ? "block" : "success")}
+                ${pill(`${confidence}% confidence`, confidence >= 70 ? "success" : "review")}
+              </div>
+            </div>
+            <div class="agent-stage-chain" aria-label="Agent pipeline stage summary">
+              ${agentPipelineLayers.map((layer) => agentStageLink(layer, agents, run)).join("")}
+            </div>
+          </section>
+          <section class="agent-command-grid" aria-label="Agent output map">
+            ${agentPipelineLayers.map((layer) => agentDecisionStage(layer, agents, run)).join("")}
+          </section>
+        </div>`;
+      }
+
+      function agentDecisionAgents(run, agentNames) {
+        const byId = new Map();
+        for (const agent of state.agents || []) byId.set(agent.id, agent);
+        for (const name of agentNames || []) {
+          if (!byId.has(name)) byId.set(name, {
+            id: name,
+            label: humanizeAgentId(name),
+            stage: "agent",
+            description: ""
+          });
+        }
+        return [...byId.values()].filter((agent) => run?.agent_results?.[agent.id] || (agentNames || []).includes(agent.id));
+      }
+
+      function agentDecisionStats(agents, run) {
+        const results = run?.agent_results || {};
+        let completed = 0;
+        let failed = 0;
+        let review = 0;
+        let confidenceTotal = 0;
+        let confidenceCount = 0;
+        for (const agent of agents) {
+          const result = results[agent.id] || {};
+          const tone = normalizeTone(result.status || "unknown");
+          if (tone === "success") completed += 1;
+          if (tone === "block") failed += 1;
+          if (tone === "review") review += 1;
+          if (result.confidence != null) {
+            confidenceTotal += percentValue(result.confidence);
+            confidenceCount += 1;
+          }
+        }
+        return {
+          total: agents.length,
+          completed,
+          failed,
+          review,
+          confidence: confidenceCount ? Math.round(confidenceTotal / confidenceCount) : 0
+        };
+      }
+
+      function agentStageLink(layer, agents, run) {
+        const stageAgents = layer.agentIds
+          .map((agentId) => agents.find((agent) => agent.id === agentId))
+          .filter(Boolean);
+        const stats = agentDecisionStats(stageAgents, run);
+        const tone = stats.failed ? "var(--red)" : stats.review ? "var(--amber)" : "var(--green)";
+        return `<div class="agent-stage-link" style="--stage-color:${tone}">
+          <span>${esc(layer.kicker)}</span>
+          <strong>${esc(layer.title)}</strong>
+          <small>${esc(`${stats.completed}/${stageAgents.length} complete`)}</small>
+        </div>`;
+      }
+
+      function agentDecisionStage(layer, agents, run) {
+        const stageAgents = layer.agentIds
+          .map((agentId) => agents.find((agent) => agent.id === agentId))
+          .filter(Boolean);
+        const stats = agentDecisionStats(stageAgents, run);
+        return `<section class="agent-command-stage">
+          <div class="agent-command-head">
+            <div>
+              <span class="review-list-label">${esc(layer.kicker)}</span>
+              <h4>${esc(layer.title)}</h4>
+            </div>
+            ${pill(`${stats.completed}/${stageAgents.length}`, stats.failed ? "block" : "success")}
+          </div>
+          ${stageAgents.length ? stageAgents.map((agent) => agentDecisionNode(agent, run)).join("") : `<div class="slop-empty">No agent output for this stage.</div>`}
+        </section>`;
+      }
+
+      function agentDecisionNode(agent, run) {
+        const result = run?.agent_results?.[agent.id] || {};
+        const tone = normalizeTone(result.status || "unknown");
+        const confidence = percentValue(result.confidence);
+        const visual = agentVisual(agent);
+        return `<button class="agent-command-node ${escAttr(tone)}" type="button" data-agent-detail-id="${escAttr(agent.id)}" style="--agent-score:${confidence}">
+          <span class="agent-node-top">
+            <span class="agent-icon ${escAttr(visual.tone)}">${esc(visual.icon)}</span>
+            <span>
+              <span class="review-list-label">${esc(agent.stage || "agent")}</span>
+              <h5>${esc(agent.label || humanizeAgentId(agent.id))}</h5>
+            </span>
+            <span class="agent-confidence-ring">${confidence}</span>
+          </span>
+          <p>${esc(agentDecisionMessage(result, agent))}</p>
+          <span class="agent-output-tags">
+            ${agentOutputTags(result).map((tag) => `<span class="agent-output-tag">${esc(tag)}</span>`).join("")}
+          </span>
+        </button>`;
+      }
+
+      function agentDecisionMessage(result, agent) {
+        const message = (result.messages || [])[0];
+        if (message) return message;
+        if (result.status) return `${agent.label || humanizeAgentId(agent.id)} returned ${statusLabel(result.status)}.`;
+        return agent.description || "No detailed message was returned by this agent.";
+      }
+
+      function agentOutputTags(result) {
+        const output = result.output || {};
+        const tags = [];
+        for (const [key, value] of Object.entries(output).slice(0, 6)) {
+          if (Array.isArray(value)) tags.push(`${key}: ${value.length}`);
+          else if (value && typeof value === "object") tags.push(`${key}: ${Object.keys(value).length}`);
+          else if (value != null && value !== "") tags.push(`${key}: ${shortLabel(value, 18)}`);
+        }
+        return tags.length ? tags : [statusLabel(result.status || "ready")];
+      }
+
+      function humanizeAgentId(id) {
+        return String(id || "agent")
+          .replace(/[-_]+/g, " ")
+          .replace(/\b\w/g, (char) => char.toUpperCase());
+      }
+
+      function testCockpitCount(summary) {
+        const coverage = summary.test_coverage || {};
+        return countItems(arrayFallback(summary.test_coverage_matrix, coverage.coverage_matrix)) +
+          countItems(arrayFallback(summary.test_coverage_findings, coverage.coverage_findings)) +
+          countItems(uniqueTestRecommendations(coverage.recommendations || [], 99));
+      }
+
+      function testCockpitContent(summary) {
+        const coverage = summary.test_coverage || {};
+        const findings = arrayFallback(summary.test_coverage_findings, coverage.coverage_findings);
+        const matrix = arrayFallback(summary.test_coverage_matrix, coverage.coverage_matrix);
+        const behaviorCoverage = coverage.behavior_coverage || [];
+        const intentCoverage = coverage.intent_coverage || [];
+        const recommendations = uniqueTestRecommendations([
+          ...(coverage.recommendations || []),
+          ...(summary.suggested_tests || [])
+        ], 6);
+        const score = percentValue(coverage.coverage_score);
+        const confidence = percentValue(coverage.confidence);
+        const gapCount = findings.filter((item) => testTargetTone(item) !== "covered").length;
+        const targets = matrix.length ? matrix : [...behaviorCoverage, ...intentCoverage];
+        return `<div class="test-cockpit">
+          <section class="test-stage" style="--stage-accent:${toneColorForScore(score)}">
+            <aside class="test-score-panel">
+              <div class="test-score-dial" style="--coverage-score:${score};--coverage-color:${toneColorForScore(score)}">
+                <div><strong>${score}</strong><span>coverage</span></div>
+              </div>
+              <div>
+                <h4>${esc(statusLabel(coverage.coverage_status || "coverage unknown"))}</h4>
+                <p>${esc(testCockpitSummary(score, gapCount, targets.length))}</p>
+              </div>
+              <div class="test-stats">
+                ${summaryItem("Confidence", `${confidence}%`)}
+                ${summaryItem("Targets", `${targets.length}`)}
+                ${summaryItem("Gaps", `${gapCount}`)}
+                ${summaryItem("Ideas", `${recommendations.length}`)}
+              </div>
+            </aside>
+            <div class="test-target-grid">
+              ${targets.length ? targets.slice(0, 8).map((item) => testTargetCard(item, findings)).join("") : `<div class="slop-empty">No changed source targets required tests.</div>`}
+            </div>
+          </section>
+          <section class="test-rec-rail" aria-label="Recommended test additions">
+            ${recommendations.length ? recommendations.map(testRecommendationCard).join("") : `<div class="slop-empty">No generated test suggestions.</div>`}
+          </section>
+        </div>`;
+      }
+
+      function testCockpitSummary(score, gaps, targets) {
+        if (!targets) return "No changed source targets were reported by the test coverage agent.";
+        if (score >= 80 && gaps === 0) return "Changed behavior has enough direct test evidence for reviewer confidence.";
+        if (gaps > 0) return `${gaps} source target${gaps === 1 ? "" : "s"} still need changed-test proof before merge.`;
+        return "Some coverage exists, but the reviewer should confirm it exercises the changed behavior.";
+      }
+
+      function testTargetCard(item, findings) {
+        const coverage = percentValue(item.coverage);
+        const tone = testTargetTone(item);
+        const path = item.path || item.symbol || "changed behavior";
+        const matchedTests = (item.matched_tests || []).map((test) => test.path || test.title).filter(Boolean);
+        const relatedFindings = relatedFindingsForPath(findings, item.path);
+        const reason = item.reason || relatedFindings[0]?.message || "Coverage target generated from changed behavior.";
+        const action = relatedFindings[0]?.suggested_action || (matchedTests.length ? "Verify the matched tests assert the changed behavior." : "Add or link a changed test for this target.");
+        return `<article class="test-target ${escAttr(tone)}" style="--target-score:${coverage}">
+          <div class="test-target-head">
+            <div>
+              <span class="review-list-label">${esc(item.classification || item.symbol || "source target")}</span>
+              <h5>${path ? codePathButton(path) : "Changed target"}</h5>
+            </div>
+            ${pill(item.status || tone, tone)}
+          </div>
+          <div class="test-target-meter" aria-label="Coverage ${coverage}%"><span></span></div>
+          <p>${esc(reason)}</p>
+          <div class="evidence-path-cloud">
+            ${matchedTests.length ? matchedTests.slice(0, 3).map((test) => evidencePathChip(test, tone)).join("") : `<span class="evidence-path ${escAttr(tone)}">no matched tests</span>`}
+          </div>
+          <div class="evidence-action"><span>Reviewer action</span><strong>${esc(action)}</strong></div>
+        </article>`;
+      }
+
+      function testRecommendationCard(item) {
+        const score = item.memory_score == null ? "" : pill(`${Math.round(memoryScore({ score: item.memory_score }) * 100)}% memory`, "success");
+        return `<article class="test-rec-card">
+          <div class="review-card-top">
+            <h5>${item.path ? codePathButton(item.path) : esc(item.framework || "test idea")}</h5>
+            ${score || pill(item.framework || "repo-default", "info")}
+          </div>
+          <p>${esc(item.intent || "Add a focused test that proves the changed behavior.")}</p>
+        </article>`;
+      }
+
+      function behaviorShiftContent(summary) {
+        const deltas = summary.behavioral_deltas || [];
+        const blast = summary.blast_radius || [];
+        const reviewRequired = deltas.filter((item) => normalizeTone(item.severity) !== "success").length;
+        return `<div class="behavior-lens">
+          <div class="summary-strip">
+            ${summaryItem("Behavior deltas", `${deltas.length}`)}
+            ${summaryItem("Need review", `${reviewRequired}`)}
+            ${summaryItem("Blast items", `${blast.length}`)}
+          </div>
+          <section class="behavior-stage">
+            ${deltas.length ? `<div class="behavior-lanes">${deltas.slice(0, 6).map(behaviorShiftRow).join("")}</div>` : `<div class="slop-empty">No runtime behavior deltas detected.</div>`}
+          </section>
+          ${blast.length ? `<section class="behavior-impact-grid">${blast.slice(0, 6).map(blastImpactCard).join("")}</section>` : ""}
+        </div>`;
+      }
+
+      function behaviorShiftRow(item) {
+        const tone = normalizeTone(item.severity || "review_required");
+        const path = item.path || item.symbol || "changed behavior";
+        return `<div class="behavior-row">
+          <article class="behavior-cell before">
+            <span class="review-list-label">Before</span>
+            <h5>${esc(item.symbol || "Existing behavior")}</h5>
+            <p>${esc(item.old_behavior || "Base behavior followed the previous implementation.")}</p>
+          </article>
+          <span class="behavior-arrow" aria-hidden="true"></span>
+          <article class="behavior-cell trigger">
+            <span class="review-list-label">Trigger input</span>
+            <h5>${path ? codePathButton(path) : "Input"}</h5>
+            <p>${esc(item.divergent_input || "Changed input or state observed by the behavior agent.")}</p>
+          </article>
+          <span class="behavior-arrow" aria-hidden="true"></span>
+          <article class="behavior-cell ${escAttr(tone)}">
+            <div class="review-card-top">
+              <span class="review-list-label">After</span>
+              ${pill(item.severity || "review", tone)}
+            </div>
+            <h5>${esc(item.symbol || "Runtime result")}</h5>
+            <p>${esc(item.new_behavior || item.summary || "Head behavior differs from the base model.")}</p>
+          </article>
+        </div>`;
+      }
+
+      function blastImpactCard(item) {
+        return `<article class="behavior-cell">
+          <div class="review-card-top">
+            <span class="review-list-label">Blast radius</span>
+            ${pill(`${countItems(item.downstream_services)} services`, "info")}
+          </div>
+          <h5>${item.path ? codePathButton(item.path) : "Downstream impact"}</h5>
+          <p>${esc((item.downstream_services || []).join(", ") || "No downstream service listed.")}</p>
+          <div class="muted">Callers: ${esc((item.direct_callers || []).join(", ") || "none")}</div>
+        </article>`;
+      }
+
+      function guardrailFirewallCount(summary) {
+        return countItems(summary.policy_findings) + countItems(summary.prompt_canary_runs) + countItems(summary.checks);
+      }
+
+      function guardrailFirewallContent(summary) {
+        const policy = summary.policy_findings || [];
+        const prompts = summary.prompt_canary_runs || [];
+        const checks = summary.checks || [];
+        const blockers = [
+          ...policy.filter((item) => normalizeTone(item.severity) === "block"),
+          ...prompts.filter((item) => normalizeTone(item.status) === "block"),
+          ...checks.filter((item) => normalizeTone(item.conclusion || item.status) === "block")
+        ];
+        return `<div class="gate-firewall">
+          <section class="gate-stage">
+            <aside class="gate-packet">
+              <div class="gate-packet-icon">PR</div>
+              <div>
+                <h4>${blockers.length ? "Merge packet blocked" : "Merge packet clear"}</h4>
+                <p>${esc(blockers.length ? `${blockers.length} gate${blockers.length === 1 ? "" : "s"} require reviewer action before merge.` : "Policy, prompt, and required checks are not blocking this PR.")}</p>
+              </div>
+              <div class="chip-row">
+                ${pill(`${policy.length} policy`, policy.some((item) => normalizeTone(item.severity) === "block") ? "block" : "success")}
+                ${pill(`${prompts.length} prompt`, prompts.some((item) => normalizeTone(item.status) === "block") ? "block" : "success")}
+                ${pill(`${checks.length} checks`, checks.some((item) => normalizeTone(item.conclusion || item.status) === "block") ? "block" : "success")}
+              </div>
+            </aside>
+            <div class="gate-wall">
+              ${policy.length ? policy.slice(0, 5).map(policyGateCard).join("") : gatePassCard("Policy gate", "No policy guardrail blockers were returned.")}
+              ${prompts.length ? prompts.slice(0, 3).map(promptGateCard).join("") : gatePassCard("Prompt gate", "No prompt drift checks required reviewer action.")}
+              ${checks.length ? checkGateCard(checks) : gatePassCard("Required checks", "No required check details were returned.")}
+            </div>
+          </section>
+        </div>`;
+      }
+
+      function policyGateCard(item) {
+        const tone = normalizeTone(item.severity || "warn");
+        return `<article class="gate-card ${escAttr(tone)}">
+          <div class="review-card-top">
+            <h5>${esc(item.rule_id || item.concept || "Policy gate")}</h5>
+            ${pill(item.severity || "warn", tone)}
+          </div>
+          <p>${esc(item.message || "Policy guardrail needs review.")}</p>
+          ${item.path ? `<div class="evidence-path-cloud">${evidencePathChip(item.path, tone)}</div>` : ""}
+          <div class="evidence-action">
+            <span>${esc(item.owner || "Reviewer action")}</span>
+            <strong>${esc(item.suggested_action || "Resolve policy gate or request an owner override.")}</strong>
+          </div>
+        </article>`;
+      }
+
+      function promptGateCard(item) {
+        const tone = normalizeTone(item.status || "unknown");
+        return `<article class="gate-card ${escAttr(tone)}">
+          <div class="review-card-top">
+            <h5>${esc(displayPromptSuiteName(item.suite || item.prompt_path || "Prompt drift"))}</h5>
+            ${pill(item.status || "unknown", tone)}
+          </div>
+          <p>${esc(item.drift_summary || item.prompt_path || "Prompt output stayed within configured thresholds.")}</p>
+          <div class="prompt-metrics">
+            ${promptMetricBar("correctness", item.correctness)}
+            ${promptMetricBar("format", item.format)}
+            ${promptMetricBar("refusal", item.refusal)}
+            ${promptMetricBar("cost delta", item.cost_delta_pct)}
+          </div>
+        </article>`;
+      }
+
+      function checkGateCard(checks) {
+        return `<article class="gate-card ${checks.some((item) => normalizeTone(item.conclusion || item.status) === "block") ? "block" : "success"}">
+          <div class="review-card-top">
+            <h5>Required checks</h5>
+            ${pill(`${checks.length} checks`, "info")}
+          </div>
+          <p>Reviewer-facing check posture synthesized from all MergeGuard agents.</p>
+          <div class="gate-check-grid">
+            ${checks.slice(0, 14).map((item) => `<span class="gate-check-dot ${escAttr(normalizeTone(item.conclusion || item.status))}">${esc(shortLabel(item.name || item.check || "check", 28))}</span>`).join("")}
+          </div>
+        </article>`;
+      }
+
+      function gatePassCard(title, text) {
+        return `<article class="gate-card success">
+          <div class="review-card-top"><h5>${esc(title)}</h5>${pill("pass", "success")}</div>
+          <p>${esc(text)}</p>
+        </article>`;
+      }
+
+      function promptMetricBar(label, value) {
+        if (value == null || value === "") return "";
+        const pct = percentValue(value);
+        return `<div class="prompt-bar" style="--bar-value:${pct}">
+          <span>${esc(label)}</span>
+          <span aria-label="${escAttr(label)} ${pct}%"></span>
+          <strong>${esc(pct)}%</strong>
+        </div>`;
+      }
+
+      function contractXrayContent(summary) {
+        const findings = summary.contract_findings || [];
+        const tests = uniqueTestRecommendations([
+          ...(summary.suggested_tests || []),
+          ...findings.map((item) => item.suggested_test).filter(Boolean)
+        ], 6);
+        return `<div class="contract-xray">
+          <section class="contract-stage">
+            <div class="contract-finding-list">
+              ${findings.length ? findings.slice(0, 5).map(contractXrayFinding).join("") : `<div class="slop-empty">No runtime contract drift was detected.</div>`}
+            </div>
+            <aside class="contract-rail">
+              <div>
+                <h4>Compatibility tests</h4>
+                <p>Generated tests that prove consumers still receive the contract they expect.</p>
+              </div>
+              ${tests.length ? tests.map(contractTestCard).join("") : `<div class="slop-empty">No generated contract test suggestions.</div>`}
+            </aside>
+          </section>
+        </div>`;
+      }
+
+      function contractXrayFinding(item) {
+        const oldContract = item.old_contract || {};
+        const newContract = item.new_contract || {};
+        const diff = contractDiff(oldContract, newContract);
+        return `<article class="contract-finding">
+          <div class="review-card-top">
+            <div>
+              <span class="review-list-label">${esc(item.symbol || "contract")}</span>
+              <h5>${item.path ? codePathButton(item.path) : esc(item.symbol || "Contract drift")}</h5>
+            </div>
+            ${pill(item.severity || "review", normalizeTone(item.severity))}
+          </div>
+          <div class="contract-xray-row">
+            ${contractShape("Base contract", oldContract, diff.oldStatuses)}
+            <span class="contract-arrow" aria-hidden="true"></span>
+            ${contractShape("Head contract", newContract, diff.newStatuses)}
+          </div>
+          <p>${esc(item.violated_assumption || contractDiffSummary(diff))}</p>
+          <div class="chip-row">
+            ${pill(`${diff.removed.length} removed`, diff.removed.length ? "block" : "success")}
+            ${pill(`${diff.added.length} added`, diff.added.length ? "info" : "success")}
+            ${pill(`${diff.changed.length} changed`, diff.changed.length ? "review" : "success")}
+          </div>
+        </article>`;
+      }
+
+      function contractShape(title, contract, statuses) {
+        const entries = Object.entries(contract || {});
+        return `<div class="contract-shape">
+          <h6>${esc(title)}</h6>
+          ${entries.length ? entries.map(([key, value]) => contractField(key, value, statuses[key] || "unchanged")).join("") : `<span class="contract-field removed">empty</span>`}
+        </div>`;
+      }
+
+      function contractField(key, value, status) {
+        return `<span class="contract-field ${escAttr(status)}">
+          <code>${esc(key)}</code>
+          <small>${esc(contractTypeLabel(value))}</small>
+        </span>`;
+      }
+
+      function contractTestCard(item) {
+        return `<article class="contract-test-card">
+          <div class="review-card-top">
+            <h5>${item.path ? codePathButton(item.path) : esc(item.framework || "contract test")}</h5>
+            ${pill(item.framework || "repo-default", "info")}
+          </div>
+          <p>${esc(item.intent || "Assert backward-compatible runtime contract shape.")}</p>
+        </article>`;
+      }
+
+      function contractDiff(oldContract, newContract) {
+        const oldKeys = Object.keys(oldContract || {});
+        const newKeys = Object.keys(newContract || {});
+        const removed = oldKeys.filter((key) => !newKeys.includes(key));
+        const added = newKeys.filter((key) => !oldKeys.includes(key));
+        const changed = oldKeys.filter((key) => newKeys.includes(key) && contractTypeLabel(oldContract[key]) !== contractTypeLabel(newContract[key]));
+        const oldStatuses = {};
+        const newStatuses = {};
+        for (const key of removed) oldStatuses[key] = "removed";
+        for (const key of added) newStatuses[key] = "added";
+        for (const key of changed) {
+          oldStatuses[key] = "changed";
+          newStatuses[key] = "changed";
+        }
+        return { removed, added, changed, oldStatuses, newStatuses };
+      }
+
+      function contractDiffSummary(diff) {
+        const pieces = [];
+        if (diff.removed.length) pieces.push(`removed fields: ${diff.removed.join(", ")}`);
+        if (diff.added.length) pieces.push(`added fields: ${diff.added.join(", ")}`);
+        if (diff.changed.length) pieces.push(`changed fields: ${diff.changed.join(", ")}`);
+        return pieces.join("; ") || "No field-level shape change was detected.";
+      }
+
+      function contractTypeLabel(value) {
+        if (value == null) return "null";
+        if (Array.isArray(value)) return "array";
+        if (typeof value === "object") return "object";
+        return String(value);
+      }
+
+      function arrayFallback(primary, fallback) {
+        return Array.isArray(primary) && primary.length ? primary : (Array.isArray(fallback) ? fallback : []);
+      }
+
+      function relatedFindingsForPath(findings, path) {
+        if (!path) return [];
+        return (findings || []).filter((item) => item.path === path);
+      }
+
+      function uniqueTestRecommendations(items, limit = 6) {
+        const byKey = new Map();
+        for (const item of items || []) {
+          if (!item) continue;
+          const key = `${item.path || ""}:${item.intent || ""}:${item.framework || ""}`;
+          if (!byKey.has(key)) byKey.set(key, item);
+        }
+        return [...byKey.values()].slice(0, limit);
+      }
+
+      function percentValue(value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return 0;
+        const scaled = numeric <= 1 ? numeric * 100 : numeric;
+        return Math.max(0, Math.min(100, Math.round(scaled)));
+      }
+
+      function toneColorForScore(score) {
+        if (score >= 80) return "var(--green)";
+        if (score >= 45) return "var(--amber)";
+        return "var(--red)";
+      }
+
+      function testTargetTone(item) {
+        const status = String(item.status || item.severity || "").toLowerCase();
+        const coverage = percentValue(item.coverage);
+        if (status.includes("missing") || status.includes("block") || status.includes("fail")) return "missing";
+        if (status.includes("cover") || status.includes("pass") || coverage >= 80) return "covered";
+        if (coverage > 0 || status.includes("partial")) return "partial";
+        return "review";
+      }
+
+      function normalizeTone(value) {
+        const key = String(value || "neutral").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+        if (["block", "blocked", "fail", "failed", "failure", "missing", "error"].some((item) => key.includes(item))) return "block";
+        if (["warn", "review", "partial", "neutral", "unknown"].some((item) => key.includes(item))) return "review";
+        if (["pass", "success", "completed", "covered", "verified", "ok"].some((item) => key.includes(item))) return "success";
+        return key || "review";
+      }
+
+      function codePathButton(path) {
+        return `<button class="code-link" type="button" data-code-path="${escAttr(path)}"><code>${esc(path)}</code></button>`;
       }
 
       function testCoverageFindingCard(item) {
