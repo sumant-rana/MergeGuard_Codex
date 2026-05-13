@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import PurePosixPath, Path
@@ -12,7 +13,13 @@ for _repo_root in [*Path(__file__).resolve().parents, Path("/app")]:
             sys.path.insert(0, _repo_root_str)
         break
 
-from packages.agent_runtime import create_app, make_agent_result, register_entrypoint  # noqa: E402
+from packages.agent_runtime import (  # noqa: E402
+    call_llm_json,
+    create_app,
+    llm_available,
+    make_agent_result,
+    register_entrypoint,
+)
 from packages.core.analysis_utils import (  # noqa: E402
     important_terms,
     is_generated,
@@ -202,6 +209,15 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     findings = sorted(findings, key=lambda item: (-int(item["score"]), item["path"]))
     for index, finding in enumerate(findings, start=1):
         finding["id"] = f"slop-{index}"
+
+    # LLM disambiguator: 'rework' findings are the ambiguous ones (could be
+    # genuine slop, could be intentional). Ask LLM to judge them in-context
+    # and downgrade obvious-not-slop matches. 'remove' findings (clear
+    # debugger/console hits) stay as-is — those are auditable rules wins.
+    if llm_available():
+        ambiguous = [f for f in findings if f.get("disposition") == "rework"]
+        if ambiguous:
+            _apply_llm_disambiguation(ambiguous, raw_by_path)
 
     remove_candidates = [finding for finding in findings if finding["disposition"] == "remove"]
     rework_candidates = [finding for finding in findings if finding["disposition"] == "rework"]
@@ -429,6 +445,94 @@ def dedupe(items: list[str]) -> list[str]:
         seen.add(item)
         output.append(item)
     return output
+
+
+# ── LLM disambiguator ──────────────────────────────────────────────────────
+
+
+_SLOP_DISAMBIGUATOR_SYSTEM_PROMPT = (
+    "You are reviewing potential 'slop' findings in a pull request — debug "
+    "leftovers, placeholders, weak tests, suspicious extras. The rule layer "
+    "has already flagged these as AMBIGUOUS (could be slop, could be "
+    "intentional). Decide whether each is genuinely slop a reviewer should "
+    "remove/rework, or a false positive.\n\n"
+    "Rules:\n"
+    "- Quote a token / phrase from the patch in 'evidence' to justify your call.\n"
+    "- Verdicts: 'slop' (yes, remove/rework), 'intentional' (false positive,\n"
+    "  drop the finding), 'unsure' (low signal — keep as-is).\n"
+    "- 'reasoning': one short sentence.\n"
+    "- 'confidence': 0-1.\n\n"
+    "Output a single JSON object:\n"
+    '{"verdicts": [\n'
+    '  {"finding_id": str, "verdict": "slop"|"intentional"|"unsure",\n'
+    '   "reasoning": str, "evidence": str, "confidence": float}\n'
+    "]}"
+)
+
+
+def _apply_llm_disambiguation(
+    ambiguous: list[dict[str, Any]],
+    raw_by_path: dict[str, dict[str, Any]],
+) -> None:
+    """Mutates `ambiguous` findings in place, adding `llm_verdict` field.
+
+    Findings the LLM marks 'intentional' get their disposition downgraded
+    to 'noted' so they don't drive remove/rework recommendations, but stay
+    visible in the dashboard for transparency.
+    """
+    payload_findings = []
+    for f in ambiguous[:10]:
+        path = f.get("path", "")
+        raw = raw_by_path.get(normalize_path(path), {})
+        payload_findings.append(
+            {
+                "finding_id": f.get("id"),
+                "path": path,
+                "category": f.get("category"),
+                "score": f.get("score"),
+                "rule_matches": f.get("rule_matches", []),
+                "patch_excerpt": (raw.get("patch") or "")[:1200],
+            }
+        )
+
+    user_prompt = (
+        "Judge each ambiguous slop finding. Use the system-prompt schema.\n\n"
+        f"```json\n{json.dumps({'findings': payload_findings}, indent=2)}\n```"
+    )
+
+    result = call_llm_json(
+        system=_SLOP_DISAMBIGUATOR_SYSTEM_PROMPT,
+        user=user_prompt,
+        temperature=0.0,
+        max_tokens=1200,
+    )
+    if not result:
+        return
+    verdicts = result.get("verdicts")
+    if not isinstance(verdicts, list):
+        return
+
+    by_id = {f.get("id"): f for f in ambiguous}
+    valid_verdicts = {"slop", "intentional", "unsure"}
+    for raw in verdicts:
+        if not isinstance(raw, dict):
+            continue
+        fid = raw.get("finding_id")
+        finding = by_id.get(fid)
+        if finding is None:
+            continue
+        verdict = raw.get("verdict")
+        if verdict not in valid_verdicts:
+            continue
+        finding["llm_verdict"] = {
+            "verdict": verdict,
+            "reasoning": str(raw.get("reasoning") or ""),
+            "evidence": str(raw.get("evidence") or ""),
+            "confidence": float(raw.get("confidence") or 0.6),
+        }
+        if verdict == "intentional":
+            # Keep the finding visible but stop it from driving remove/rework.
+            finding["disposition"] = "noted"
 
 
 register_entrypoint(app, run)

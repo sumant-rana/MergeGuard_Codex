@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -11,7 +12,13 @@ for _repo_root in [*Path(__file__).resolve().parents, Path("/app")]:
             sys.path.insert(0, _repo_root_str)
         break
 
-from packages.agent_runtime import create_app, make_agent_result, register_entrypoint  # noqa: E402
+from packages.agent_runtime import (  # noqa: E402
+    call_llm_json,
+    create_app,
+    llm_available,
+    make_agent_result,
+    register_entrypoint,
+)
 from packages.core.analysis_utils import important_terms  # noqa: E402
 
 AGENT_ID = "evidence-mapper"
@@ -77,7 +84,19 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         for item in memory.get("requirement_evidence", [])
         if item.get("intent_id")
     }
-    links = [map_intent(item, files, memory_by_intent.get(item.get("id"))) for item in intent_items]
+    mode = "fallback"
+    links: list[dict[str, Any]] = []
+    if llm_available() and intent_items:
+        llm_links = _map_via_llm(intent_items, files, memory_by_intent)
+        if llm_links is not None:
+            links = llm_links
+            mode = "llm"
+    if not links:
+        links = [
+            map_intent(item, files, memory_by_intent.get(item.get("id")))
+            for item in intent_items
+        ]
+        mode = "fallback" if mode != "llm" else mode
     missing_source_evidence = [
         {
             "type": "missing-test",
@@ -112,10 +131,142 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     return make_agent_result(
         AGENT_ID,
         output,
-        confidence=0.76,
-        messages=[f"mapped evidence for {len(intent_items)} intent items"],
-        trace=[{"step": "map_evidence", "links": len(links), "missing": len(missing_source_evidence)}],
+        confidence=0.86 if mode == "llm" else 0.76,
+        messages=[f"mapped evidence for {len(intent_items)} intent items via {mode}"],
+        trace=[
+            {
+                "step": "map_evidence",
+                "mode": mode,
+                "links": len(links),
+                "missing": len(missing_source_evidence),
+            }
+        ],
     )
+
+
+# ── LLM path ────────────────────────────────────────────────────────────────
+
+
+_EVIDENCE_SYSTEM_PROMPT = (
+    "You are a senior reviewer mapping pull-request INTENT items to the "
+    "CHANGED FILES that prove or fail to prove each intent.\n\n"
+    "For each intent, classify evidence_status as one of:\n"
+    "  - 'proven'  — at least one changed test or implementation file directly\n"
+    "                exercises this intent.\n"
+    "  - 'partial' — relevant code changed but the changed-test evidence is\n"
+    "                weak (no test file, only stub assertions, unrelated paths).\n"
+    "  - 'missing' — no changed file exercises this intent at all.\n\n"
+    "Rules:\n"
+    "- Use file paths from the provided list ONLY. Do not invent paths.\n"
+    "- mapped_paths: changed implementation files that touch the intent's domain.\n"
+    "- evidence_paths: changed *test* files that exercise the intent.\n"
+    "- suggested_action: one concrete next step the author should take.\n"
+    "- confidence: 0-1; lower if the match is loose / inferred.\n\n"
+    "Output a single JSON object:\n"
+    '{"evidence_links": [\n'
+    '  {"intent_id": str, "intent_text": str, "evidence_status": "proven"|"partial"|"missing",\n'
+    '   "mapped_paths": [str], "evidence_paths": [str], "confidence": float,\n'
+    '   "suggested_action": str}\n'
+    "]}"
+)
+
+
+def _map_via_llm(
+    intent_items: list[dict[str, Any]],
+    files: list[dict[str, Any]],
+    memory_by_intent: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]] | None:
+    file_summaries = [
+        {
+            "path": f.get("path"),
+            "classification": f.get("classification"),
+            "risk_score": f.get("risk_score"),
+            "risk_reasons": (f.get("risk_reasons") or [])[:4],
+        }
+        for f in files
+        if isinstance(f, dict) and f.get("path")
+    ]
+    intent_summaries = [
+        {
+            "id": item.get("id"),
+            "text": item.get("text"),
+            "category": item.get("category"),
+            "terms": item.get("terms", [])[:6],
+            "memory_hint": _memory_summary_for(memory_by_intent.get(item.get("id"))),
+        }
+        for item in intent_items
+        if isinstance(item, dict)
+    ]
+    user_prompt = (
+        "Map each intent item to changed-file evidence. Use the system-prompt schema.\n\n"
+        f"```json\n{json.dumps({'intents': intent_summaries, 'changed_files': file_summaries}, indent=2)}\n```"
+    )
+    result = call_llm_json(
+        system=_EVIDENCE_SYSTEM_PROMPT,
+        user=user_prompt,
+        temperature=0.0,
+        max_tokens=1600,
+    )
+    if not result:
+        return None
+    links = result.get("evidence_links")
+    if not isinstance(links, list):
+        return None
+
+    valid_statuses = {"proven", "partial", "missing"}
+    file_paths = {f.get("path") for f in file_summaries}
+    cleaned: list[dict[str, Any]] = []
+    for raw in links:
+        if not isinstance(raw, dict):
+            continue
+        intent_id = raw.get("intent_id")
+        if not intent_id:
+            continue
+        status = raw.get("evidence_status")
+        if status not in valid_statuses:
+            status = "partial"
+        # Keep only paths that actually exist in the changed file list.
+        mapped = [p for p in (raw.get("mapped_paths") or []) if p in file_paths]
+        evidence = [p for p in (raw.get("evidence_paths") or []) if p in file_paths]
+        memory_item = memory_by_intent.get(intent_id) or {}
+        memory_matches = memory_item.get("matches", [])
+        memory_tests = memory_item.get("test_candidates", [])
+        cleaned.append(
+            {
+                "intent_id": intent_id,
+                "intent_text": raw.get("intent_text", ""),
+                "evidence_status": status,
+                "mapped_paths": mapped[:8],
+                "evidence_paths": evidence[:8],
+                "memory_status": memory_item.get("status", "not_found"),
+                "memory_evidence_paths": [
+                    m.get("path") or m.get("title") for m in memory_matches[:6]
+                ],
+                "memory_test_candidates": [
+                    t.get("path") or t.get("title") for t in memory_tests[:6]
+                ],
+                "memory_match_count": len(memory_matches),
+                "confidence": float(raw.get("confidence") or (0.85 if status == "proven" else 0.65)),
+                "suggested_action": str(raw.get("suggested_action") or ""),
+            }
+        )
+    return cleaned
+
+
+def _memory_summary_for(memory_item: dict[str, Any] | None) -> dict[str, Any]:
+    if not memory_item:
+        return {"status": "not_found"}
+    return {
+        "status": memory_item.get("status", "not_found"),
+        "test_candidates": [
+            t.get("path") or t.get("title")
+            for t in (memory_item.get("test_candidates") or [])[:3]
+        ],
+        "matches": [
+            m.get("path") or m.get("title")
+            for m in (memory_item.get("matches") or [])[:3]
+        ],
+    }
 
 
 def suggested_action(

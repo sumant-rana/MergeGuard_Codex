@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -12,7 +13,14 @@ for _repo_root in [*Path(__file__).resolve().parents, Path("/app")]:
             sys.path.insert(0, _repo_root_str)
         break
 
-from packages.agent_runtime import LocalAgentApp, create_app, make_agent_result, register_entrypoint  # noqa: E402
+from packages.agent_runtime import (  # noqa: E402
+    LocalAgentApp,
+    call_llm_json,
+    create_app,
+    llm_available,
+    make_agent_result,
+    register_entrypoint,
+)
 from packages.core.analysis_utils import important_terms, is_docs, is_test, normalize_path  # noqa: E402
 
 AGENT_ID = "semantic-evidence-agent"
@@ -100,6 +108,18 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         all_hits.extend(hits)
 
     semantic_matches = dedupe_hits(all_hits)[:18]
+
+    # LLM rerank: vector search returns embedding-similar hits, but those
+    # aren't always the most useful for THIS PR. Ask an LLM to pick + rank
+    # the most relevant items given the intent and changed files.
+    llm_reranked: list[dict[str, Any]] = []
+    if llm_available() and semantic_matches:
+        llm_reranked = _rerank_via_llm(
+            semantic_matches=semantic_matches,
+            intent_items=intent_items,
+            changed_files=files,
+        )
+
     related_tests = [hit for hit in semantic_matches if hit["kind"] == "test"][:8]
     similar_prs = [hit for hit in semantic_matches if hit["kind"] == "prior_pr"][:6]
     risk_memories = [
@@ -124,6 +144,7 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         },
         "semantic_queries": query_results,
         "semantic_matches": semantic_matches,
+        "llm_reranked_matches": llm_reranked,
         "requirement_evidence": requirement_evidence,
         "related_tests": related_tests,
         "similar_prs": similar_prs,
@@ -525,6 +546,91 @@ def memory_confidence(output: dict[str, Any]) -> float:
 
 def short_hash(value: str) -> str:
     return hashlib.sha1(value.encode("utf-8")).hexdigest()[:12]
+
+
+# ── LLM rerank ─────────────────────────────────────────────────────────────
+
+
+_RERANK_SYSTEM_PROMPT = (
+    "You are reranking REPOSITORY MEMORY hits (prior PRs, tests, docs, "
+    "runbooks, policies) by how useful they are for reviewing the CURRENT pull "
+    "request.\n\n"
+    "Useful = a reviewer would directly benefit from reading the hit because\n"
+    "it matches the intent claims, touches the same code areas, or describes\n"
+    "a relevant prior incident / policy.\n\n"
+    "Rules:\n"
+    "- Pick at most 6 hits.\n"
+    "- Reference hits by their 'label' (provided). Do NOT invent new labels.\n"
+    "- 'relevance_reason' is one short sentence on WHY this hit helps.\n"
+    "- 'relevance_score': 0-1. Use the absolute scale, not a relative one\n"
+    "  (so 0.4 = mildly useful, 0.9 = highly useful).\n\n"
+    "Output a single JSON object:\n"
+    '{"reranked": [{"label": str, "relevance_score": float, "relevance_reason": str}]}'
+)
+
+
+def _rerank_via_llm(
+    *,
+    semantic_matches: list[dict[str, Any]],
+    intent_items: list[dict[str, Any]],
+    changed_files: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    if not semantic_matches:
+        return []
+    hits_summary = [
+        {
+            "label": hit.get("label"),
+            "kind": hit.get("kind"),
+            "text_preview": (hit.get("text") or "")[:240],
+            "vector_score": hit.get("score"),
+        }
+        for hit in semantic_matches[:12]
+    ]
+    intent_summary = [
+        {"text": i.get("text"), "category": i.get("category")}
+        for i in (intent_items or [])[:8]
+        if isinstance(i, dict)
+    ]
+    file_summary = [
+        f.get("path") for f in (changed_files or [])[:12] if isinstance(f, dict)
+    ]
+
+    user_prompt = (
+        "Rerank the hits below for usefulness on this PR. Use the system-prompt schema.\n\n"
+        f"```json\n{json.dumps({'intent_items': intent_summary, 'changed_files': file_summary, 'hits': hits_summary}, indent=2)}\n```"
+    )
+
+    result = call_llm_json(
+        system=_RERANK_SYSTEM_PROMPT,
+        user=user_prompt,
+        temperature=0.0,
+        max_tokens=900,
+    )
+    if not result:
+        return []
+    reranked_raw = result.get("reranked")
+    if not isinstance(reranked_raw, list):
+        return []
+
+    by_label = {h.get("label"): h for h in semantic_matches if h.get("label")}
+    cleaned: list[dict[str, Any]] = []
+    for raw in reranked_raw:
+        if not isinstance(raw, dict):
+            continue
+        label = raw.get("label")
+        original = by_label.get(label)
+        if original is None:
+            continue
+        cleaned.append(
+            {
+                **original,
+                "llm_relevance_score": float(raw.get("relevance_score") or 0.5),
+                "llm_relevance_reason": str(raw.get("relevance_reason") or ""),
+            }
+        )
+        if len(cleaned) >= 6:
+            break
+    return cleaned
 
 
 register_entrypoint(app, run)
