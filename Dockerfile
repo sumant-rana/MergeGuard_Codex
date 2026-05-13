@@ -1,9 +1,8 @@
-# MergeGuard all-in-one container: API + worker, dependency-light.
+# MergeGuard all-in-one container: API + worker.
 #
-# The code is stdlib-only on the runtime path, so we don't need uv / pip;
-# we just COPY the source and run apps/api/main.py. The worker is
-# triggered via the API's /api/demo/analyze endpoint, or one-shot via
-# `python3 apps/worker/main.py` inside the container.
+# The orchestration + LLM paths are stdlib-only. The GitHub webhook
+# integration needs PyJWT[crypto] for signing App JWTs (RS256), so we
+# install that one Python dep — everything else stays stdlib.
 
 FROM python:3.11-slim
 
@@ -14,10 +13,15 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# curl is used by the healthcheck.
+# curl: healthcheck.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
+
+# PyJWT[crypto] is required by packages/github_pr/app_client.py when the
+# webhook handler resolves an installation token for a real GitHub App
+# event. Without it, signed PR events fail with 500 "PyJWT is required".
+RUN pip install --no-cache-dir "PyJWT[crypto]>=2.8"
 
 # Copy only what the runtime needs. Keeping .agentic/, tools/, tests/ out
 # of the image keeps it small and avoids inheriting agent-stack noise.

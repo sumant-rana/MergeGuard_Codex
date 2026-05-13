@@ -47,6 +47,15 @@ services:
       MAGENTA_PROJECT_ID: "${MAGENTA_PROJECT_ID:?MAGENTA_PROJECT_ID must be set for cloud mode}"
       MERGEGUARD_DATA_FILE: /app/data/agentic_mergeguard.json
       MERGEGUARD_ALLOW_FIXTURE_FILES: "true"
+      # GitHub webhook integration. POST /webhooks/github verifies the
+      # X-Hub-Signature-256 header against this secret before accepting.
+      GITHUB_WEBHOOK_SECRET: "${GITHUB_WEBHOOK_SECRET:?GITHUB_WEBHOOK_SECRET must be set for cloud mode}"
+      # Optional GitHub App credentials — used by webhook_handler if it
+      # needs to fetch PR files / post check runs. Skipped silently when
+      # blank (fixture mode covers the demo path).
+      GITHUB_APP_ID: "${GITHUB_APP_ID:-}"
+      GITHUB_APP_PRIVATE_KEY_PATH: "${GITHUB_APP_PRIVATE_KEY_PATH:-/secrets/github-app-private-key.pem}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
       CLOUD_MAX_CONCURRENT_INVOKES: "${CLOUD_MAX_CONCURRENT_INVOKES:-2}"
       # Per-agent workspace IDs. Adapter requires every entry — see
       # packages/orchestration/platform_factory.py:_workspace_env_var.
@@ -65,6 +74,9 @@ services:
     volumes:
       - ./data:/app/data
       - ./fixtures:/app/fixtures:ro
+      # GitHub App private key (optional) — read-only mount; skipped silently
+      # if the file is missing on the host.
+      - ./secrets:/secrets:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
