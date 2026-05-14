@@ -144,6 +144,39 @@ class LocalMergeGuardStore:
     def get_run(self, run_id: str) -> dict[str, Any] | None:
         return next((run for run in self.state["analysis_runs"] if run["id"] == run_id), None)
 
+    def set_github_context(self, run_id: str, context: dict[str, Any]) -> None:
+        """Stash repo / PR / head-sha / installation_id on the run so the
+        manual ``apply-actions`` endpoint can mint a token and post later."""
+        run = self.get_run(run_id)
+        if not run:
+            return
+        run["github_context"] = context
+        run["updated_at"] = utc_now()
+        self.save()
+
+    def record_actions(self, run_id: str, report: dict[str, Any]) -> dict[str, Any] | None:
+        """Persist what was actually pushed to GitHub for a run."""
+        run = self.get_run(run_id)
+        if not run:
+            return None
+        run["github_actions"] = report
+        run["actions_posted_at"] = utc_now()
+        run["updated_at"] = utc_now()
+        self.state["audit_log"].append(
+            {
+                "id": new_id("audit"),
+                "analysis_run_id": run_id,
+                "event": "github.actions.applied",
+                "comment_id": report.get("comment_id"),
+                "check_run_id": report.get("check_run_id"),
+                "review_action": report.get("review_action"),
+                "decision_status": report.get("status"),
+                "created_at": utc_now(),
+            }
+        )
+        self.save()
+        return run
+
     def latest_run_for_pr(self, pr_id: str) -> dict[str, Any] | None:
         runs = [run for run in self.state["analysis_runs"] if run["pull_request_id"] == pr_id]
         return sorted(runs, key=lambda item: item["created_at"], reverse=True)[0] if runs else None

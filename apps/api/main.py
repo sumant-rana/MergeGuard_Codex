@@ -77,6 +77,9 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
         if path == "/webhooks/github":
             self.handle_github_webhook_request()
             return
+        if path.startswith("/api/runs/") and path.endswith("/apply-actions"):
+            self.handle_apply_actions_request(path)
+            return
         if path == "/api/demo/analyze":
             body = self.read_json(default={})
             fixture = body.get("fixture", "fixtures/agentic/demo_pr.json")
@@ -155,6 +158,112 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
             store_path=STORE_PATH,
         )
         self.send_json(response.body, status=response.status)
+
+    def handle_apply_actions_request(self, path: str) -> None:
+        """POST /api/runs/<run_id>/apply-actions — push the analyzed run's
+        comment + check_run to GitHub on reviewer demand.
+
+        Body: {"decision": "auto" | "approve" | "request_changes" | "comment_only"}
+        Default decision is "auto" (use ``summary.status``).
+        """
+        from dataclasses import asdict
+        from packages.github_pr import (
+            GitHubAuthError,
+            apply_tiered_actions,
+            load_app_auth_from_env,
+        )
+
+        parts = path.strip("/").split("/")
+        if len(parts) != 4 or parts[3] != "apply-actions":
+            self.send_json({"error": "expected /api/runs/{id}/apply-actions"}, status=400)
+            return
+        run_id = parts[2]
+
+        body = self.read_json(default={})
+        decision = str(body.get("decision") or "auto").strip().lower()
+        valid_decisions = {"auto", "approve", "request_changes", "comment_only"}
+        if decision not in valid_decisions:
+            self.send_json(
+                {"error": f"invalid decision; pick one of {sorted(valid_decisions)}"},
+                status=400,
+            )
+            return
+
+        store = self.store()
+        run = store.get_run(run_id)
+        if not run:
+            self.send_json({"error": f"run {run_id} not found"}, status=404)
+            return
+        ctx = run.get("github_context") or {}
+        if not ctx.get("repo_full_name") or not ctx.get("head_sha"):
+            self.send_json(
+                {
+                    "error": (
+                        "this run has no GitHub context (webhook-sourced runs only); "
+                        "demo runs can't be applied to GitHub"
+                    ),
+                },
+                status=400,
+            )
+            return
+
+        # Resolve a token — installation token (preferred) or PAT fallback.
+        token = None
+        auth = load_app_auth_from_env()
+        installation_id = ctx.get("installation_id")
+        if auth and installation_id:
+            try:
+                token = auth.get_installation_token(int(installation_id)).token
+            except GitHubAuthError as e:
+                self.send_json({"error": f"github auth failed: {e}"}, status=500)
+                return
+        if not token:
+            token = os.environ.get("GITHUB_TOKEN") or None
+        if not token:
+            self.send_json(
+                {"error": "no GitHub credentials available — set GITHUB_APP_ID + key path or GITHUB_TOKEN"},
+                status=500,
+            )
+            return
+
+        # Pick the effective summary the bundle should use. For overrides we
+        # clone the summary and replace ``status`` so the comment markdown
+        # already in the run still ships, but the check_run / review fall
+        # under the user's chosen verdict.
+        summary = dict(run.get("summary") or {})
+        analysis_status = summary.get("status", "review")
+        if decision == "approve":
+            summary["status"] = "pass"
+        elif decision == "request_changes":
+            summary["status"] = "blocked"
+        elif decision == "comment_only":
+            summary["status"] = "review"  # neutral check, no REQUEST_CHANGES
+
+        report = apply_tiered_actions(
+            ctx["repo_full_name"],
+            int(ctx["pr_number"]),
+            ctx["head_sha"],
+            summary,
+            token,
+            details_url=ctx.get("details_url"),
+        )
+        report_dict = asdict(report)
+        report_dict["decision_input"] = decision
+        report_dict["analysis_status"] = analysis_status
+        report_dict["applied_status"] = summary["status"]
+        store.record_actions(run_id, report_dict)
+
+        self.send_json(
+            {
+                "ok": True,
+                "run_id": run_id,
+                "decision": decision,
+                "analysis_status": analysis_status,
+                "applied_status": summary["status"],
+                "report": report_dict,
+            },
+            status=200,
+        )
 
     def store(self) -> LocalMergeGuardStore:
         store = LocalMergeGuardStore(STORE_PATH)
