@@ -17,57 +17,59 @@
     <style>
       :root {
         color-scheme: dark;
-        --bg: #0b0e12;
-        --bg-soft: #0f141b;
-        --surface: rgba(20, 25, 33, 0.94);
-        --surface-strong: #141921;
-        --surface-soft: #0f141b;
-        --surface-muted: rgba(15, 20, 27, 0.88);
-        --surface-raised: rgba(22, 28, 37, 0.96);
-        --surface-inset: #080b0f;
-        --border: rgba(124, 134, 150, 0.24);
-        --border-strong: rgba(232, 255, 61, 0.34);
-        --text: #eceef2;
+        /* Tungsten Forge — iron base, hot-orange primary, sapphire success.
+           Only color values changed; variable names + structure preserved. */
+        --bg: #0e1014;
+        --bg-soft: #11141b;
+        --surface: rgba(26, 30, 37, 0.94);
+        --surface-strong: #1a1e25;
+        --surface-soft: #14181f;
+        --surface-muted: rgba(20, 24, 31, 0.88);
+        --surface-raised: rgba(35, 41, 52, 0.96);
+        --surface-inset: #0a0d11;
+        --border: rgba(186, 196, 214, 0.22);
+        --border-strong: rgba(255, 133, 52, 0.34);
+        --text: #e5e9f0;
         --text-soft: #c4cbd6;
-        --muted: #7c8696;
-        --primary: #e8ff3d;
-        --primary-fg: #0b0e12;
-        --blue: #8ed9ff;
-        --indigo: #aab0ff;
-        --green: #4be0a8;
-        --amber: #ffa84b;
-        --red: #ff5577;
-        --violet: #c9a4ff;
-        --grid: rgba(232, 255, 61, 0.045);
-        --brand-mark: #e8ff3d;
-        --brand-mark-fg: #0b0e12;
+        --muted: #7b8595;
+        --primary: #ff8534;
+        --primary-fg: #1a0f08;
+        --blue: #6bc4ff;
+        --indigo: #a8a0ff;
+        --green: #4fd1ff;
+        --amber: #f5d547;
+        --red: #e03e5c;
+        --violet: #b891ff;
+        --grid: rgba(255, 133, 52, 0.045);
+        --brand-mark: #ff8534;
+        --brand-mark-fg: #1a0f08;
         --app-bg:
-          linear-gradient(135deg, rgba(232, 255, 61, 0.12), transparent 28%),
-          linear-gradient(315deg, rgba(75, 224, 168, 0.08), transparent 24%),
-          linear-gradient(180deg, #0b0e12 0%, #10151d 48%, #090c10 100%);
-        --topbar-bg: rgba(11, 14, 18, 0.84);
-        --button-bg: rgba(20, 25, 33, 0.92);
-        --button-hover-bg: rgba(28, 35, 45, 0.96);
-        --primary-button-bg: linear-gradient(135deg, #e8ff3d, #4be0a8);
-        --primary-button-shadow: 0 12px 30px rgba(232, 255, 61, 0.14);
-        --card-bg: rgba(15, 20, 27, 0.86);
-        --tab-bg: rgba(9, 12, 16, 0.76);
-        --code-bg: #05070b;
-        --ring-inner-bg: #080b0f;
-        --shadow: 0 18px 60px rgba(0, 0, 0, 0.38);
+          linear-gradient(135deg, rgba(255, 133, 52, 0.10), transparent 28%),
+          linear-gradient(315deg, rgba(79, 209, 255, 0.07), transparent 24%),
+          linear-gradient(180deg, #0e1014 0%, #131720 48%, #0a0d11 100%);
+        --topbar-bg: rgba(14, 16, 20, 0.84);
+        --button-bg: rgba(26, 30, 37, 0.92);
+        --button-hover-bg: rgba(35, 41, 52, 0.96);
+        --primary-button-bg: linear-gradient(135deg, #ff8534, #ffb47a);
+        --primary-button-shadow: 0 12px 30px rgba(255, 133, 52, 0.18);
+        --card-bg: rgba(20, 24, 31, 0.86);
+        --tab-bg: rgba(12, 14, 18, 0.76);
+        --code-bg: #07090c;
+        --ring-inner-bg: #0a0d11;
+        --shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
         --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
         --radius: 8px;
         --topbar-height: 46px;
         --queue-rail-width: clamp(170px, 21vw, 300px);
         /* Pipeline-specific tokens so cards visibly elevate over the canvas. */
-        --mg-pipeline-canvas-bg: #0a0e15;
-        --mg-pipeline-card-bg: #1f3858;
-        --mg-pipeline-card-border: #ffad3d;
-        --mg-pipeline-card-border-left: #e8ff3d;
+        --mg-pipeline-canvas-bg: #11141b;
+        --mg-pipeline-card-bg: #232934;
+        --mg-pipeline-card-border: rgba(186, 196, 214, 0.22);
+        --mg-pipeline-card-border-left: #ff8534;
         --mg-pipeline-card-shadow:
-          0 1px 0 rgba(255, 255, 255, 0.08) inset,
+          0 1px 0 rgba(255, 255, 255, 0.05) inset,
           0 1px 3px rgba(0, 0, 0, 0.55),
-          0 10px 26px rgba(0, 0, 0, 0.38);
+          0 8px 22px rgba(0, 0, 0, 0.32);
         --mg-pipeline-dot: rgba(186, 196, 214, 0.08);
       }
 
