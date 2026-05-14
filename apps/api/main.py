@@ -4,6 +4,8 @@ import json
 import logging
 import os
 import sys
+import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
@@ -60,6 +62,9 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
             self.send_json({"queue": store.queue(), "metrics": store.metrics()})
         elif path == "/api/agents":
             self.send_json({"agents": AGENT_CATALOG, "sequence": AGENT_SEQUENCE})
+        elif path.startswith("/api/runs/") and path.endswith("/events"):
+            run_id = path.rsplit("/", 2)[-2]
+            self._stream_run_events(run_id)
         elif path.startswith("/api/runs/"):
             run_id = path.rsplit("/", 1)[-1]
             run = self.store().get_run(run_id)
@@ -119,12 +124,63 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
                 self.send_json({"error": "pull request not found"}, status=404)
                 return
             payload = store.latest_input_payload_for_pr(pr_id) or fallback_payload_for_pr(pr)
-            run = MergeGuardOrchestrator(REPO_ROOT, store).analyze_pull_request(
-                payload,
-                enabled_agents=body.get("enabled_agents"),
-                agent_delay_ms=int(body.get("agent_delay_ms") or 0),
+
+            run_holder: dict = {}
+            run_ready = threading.Event()
+            enabled_agents = body.get("enabled_agents")
+            agent_delay_ms = int(body.get("agent_delay_ms") or 0)
+
+            def _execute() -> None:
+                # Background thread owns its own store instance so concurrent
+                # save() calls from the SSE reader's per-request store cannot
+                # interleave through a shared in-memory state dict.
+                bg_store = LocalMergeGuardStore(STORE_PATH)
+                bg_store.load()
+
+                def _on_run_created(run_dict: dict) -> None:
+                    run_holder.update(run_dict)
+                    run_ready.set()
+
+                try:
+                    MergeGuardOrchestrator(REPO_ROOT, bg_store).analyze_pull_request(
+                        payload,
+                        enabled_agents=enabled_agents,
+                        agent_delay_ms=agent_delay_ms,
+                        on_run_created=_on_run_created,
+                    )
+                except Exception as exc:  # noqa: BLE001 - ensure run is marked failed
+                    if run_holder.get("id"):
+                        try:
+                            bg_store.fail_run(
+                                run_holder["id"], f"{type(exc).__name__}: {exc}"
+                            )
+                        except Exception:
+                            pass
+                    logging.exception("background analyze failed")
+                finally:
+                    # Make absolutely sure the HTTP request doesn't hang on
+                    # run_ready.wait if create_analysis_run blew up early.
+                    run_ready.set()
+
+            threading.Thread(target=_execute, daemon=True).start()
+            # In cloud mode, orchestrator init (platform client setup) plus the
+            # two pre-loop store saves (upsert_pull_request + create_analysis_run)
+            # against a multi-MB JSON store can easily push past 5s. Give the
+            # background thread a generous head start before we 500 — this is
+            # only the time-to-first-event, not the run itself.
+            if not run_ready.wait(timeout=60) or not run_holder.get("id"):
+                self.send_json(
+                    {"error": "run did not start within 60s"}, status=504
+                )
+                return
+            self.send_json(
+                {
+                    "run_id": run_holder["id"],
+                    "state": "running",
+                    "run": run_holder,
+                },
+                status=202,
             )
-            self.send_json({"run": run}, status=500 if run.get("state") == "failed" else 200)
         elif path.startswith("/api/overrides/"):
             body = self.read_json(default={})
             parts = path.strip("/").split("/")
@@ -284,6 +340,97 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
         self.send_header("content-length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def _stream_run_events(self, run_id: str) -> None:
+        # Server-Sent Events stream for a single analysis run. Polls the JSON
+        # store at 250ms cadence, diffs against the last snapshot, and emits
+        # one `agent-status` event per status transition. Terminates with a
+        # `run-finished` event when the run reaches `completed` or `failed`.
+        try:
+            self.send_response(200)
+            self.send_header("content-type", "text/event-stream; charset=utf-8")
+            self.send_header("cache-control", "no-cache")
+            self.send_header("connection", "keep-alive")
+            self.send_header("x-accel-buffering", "no")
+            self.end_headers()
+        except (BrokenPipeError, ConnectionResetError):
+            return
+
+        last_status: dict[str, str] = {}
+        last_state: str | None = None
+        deadline = time.time() + 600
+
+        try:
+            self._sse_send("hello", {"run_id": run_id})
+        except (BrokenPipeError, ConnectionResetError):
+            return
+
+        while time.time() < deadline:
+            try:
+                store = LocalMergeGuardStore(STORE_PATH)
+                store.load()
+                run = store.get_run(run_id)
+            except Exception:
+                # Half-written JSON or transient I/O; try again on next tick.
+                time.sleep(0.25)
+                continue
+
+            if not run:
+                try:
+                    self._sse_send("error", {"message": "run not found"})
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
+                return
+
+            results = run.get("agent_results") or {}
+            for agent_id, result in results.items():
+                status = str((result or {}).get("status") or "")
+                if not status:
+                    continue
+                if last_status.get(agent_id) == status:
+                    continue
+                last_status[agent_id] = status
+                try:
+                    self._sse_send(
+                        "agent-status",
+                        {
+                            "agent_id": agent_id,
+                            "status": status,
+                            "result": result,
+                        },
+                    )
+                except (BrokenPipeError, ConnectionResetError):
+                    return
+
+            run_state = run.get("state")
+            if run_state != last_state:
+                last_state = run_state
+                try:
+                    self._sse_send("run-state", {"state": run_state})
+                except (BrokenPipeError, ConnectionResetError):
+                    return
+
+            if run_state in ("completed", "failed"):
+                try:
+                    self._sse_send(
+                        "run-finished",
+                        {"state": run_state, "run_id": run_id},
+                    )
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
+                return
+
+            time.sleep(0.25)
+
+        try:
+            self._sse_send("timeout", {"run_id": run_id})
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
+    def _sse_send(self, event: str, data: dict) -> None:
+        chunk = f"event: {event}\ndata: {json.dumps(data)}\n\n".encode("utf-8")
+        self.wfile.write(chunk)
+        self.wfile.flush()
 
     def send_file(self, path: Path, content_type: str) -> None:
         body = path.read_bytes()

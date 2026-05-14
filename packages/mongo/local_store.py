@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -25,16 +28,79 @@ class LocalMergeGuardStore:
         self.state = json.loads(json.dumps(EMPTY_STATE))
 
     def load(self) -> None:
+        # Robust against a concurrent atomic save() that briefly leaves the
+        # file missing (between unlink and rename, or zero-byte from a legacy
+        # writer). Retry briefly on JSONDecodeError or empty payload so that
+        # transient races never propagate a 500 to API consumers.
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        if self.path.exists():
-            loaded = json.loads(self.path.read_text())
-            self.state = {**json.loads(json.dumps(EMPTY_STATE)), **loaded}
-        else:
+        if not self.path.exists():
             self.save()
+            return
+        attempts = 0
+        while True:
+            attempts += 1
+            try:
+                raw = self.path.read_text()
+                if not raw.strip():
+                    raise ValueError("empty store file")
+                loaded = json.loads(raw)
+                self.state = {**json.loads(json.dumps(EMPTY_STATE)), **loaded}
+                return
+            except (json.JSONDecodeError, ValueError, FileNotFoundError):
+                if attempts >= 5:
+                    raise
+                time.sleep(0.02 * attempts)
 
     def save(self) -> None:
+        # Atomic write: serialize to a sibling temp file, then os.replace into
+        # place. POSIX/NT guarantee replace is atomic, so concurrent readers
+        # see either the prior version or the new one, never a half-written or
+        # truncated payload. Critical when the background analyze thread is
+        # rewriting this file dozens of times per run while the SSE/queue
+        # endpoints stream the latest state.
+        #
+        # The temp filename MUST be unique per call. A PID-based suffix is not
+        # enough because multiple threads in the same process (the request
+        # thread, the background analyze thread, and any future workers) can
+        # interleave saves; if they share a temp name, one thread's
+        # ``write_text`` overwrites another's, and the os.replace from the
+        # losing thread fails with FileNotFoundError once the winner renames
+        # it. ``tempfile.mkstemp`` returns a process-unique name and an open
+        # fd, so we get a guaranteed-distinct tmp path even under contention.
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(self.state, indent=2, sort_keys=True) + "\n")
+        payload = json.dumps(self.state, indent=2, sort_keys=True) + "\n"
+        fd, tmp_name = tempfile.mkstemp(
+            prefix=self.path.name + ".tmp.",
+            dir=str(self.path.parent),
+        )
+        tmp = Path(tmp_name)
+        try:
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                    fh.write(payload)
+                    fh.flush()
+                    try:
+                        os.fsync(fh.fileno())
+                    except OSError:
+                        # fsync isn't supported on every FS (e.g. some bind
+                        # mounts); the write still ends up on disk before
+                        # os.replace, just without the extra durability guard.
+                        pass
+            except BaseException:
+                # fdopen succeeded but the write/flush failed: make sure the
+                # fd is closed and the tmp file removed before re-raising.
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+                raise
+            os.replace(tmp, self.path)
+        finally:
+            if tmp.exists():
+                try:
+                    tmp.unlink()
+                except OSError:
+                    pass
 
     def upsert_pull_request(self, pr: dict[str, Any]) -> dict[str, Any]:
         repo = pr["repository"]["full_name"]

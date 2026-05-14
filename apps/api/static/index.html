@@ -1303,21 +1303,6 @@
         flex-wrap: wrap;
       }
 
-      .delay-control {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: min(272px, 100%);
-        color: var(--text-soft);
-        font-size: 9.5px;
-        font-weight: 800;
-      }
-
-      .delay-control input {
-        width: min(176px, 32vw);
-        accent-color: var(--primary);
-      }
-
       .agent-flow-shell {
         display: grid;
         grid-template-rows: minmax(0, 1fr);
@@ -6443,11 +6428,6 @@
               <h3 id="workflow-title" class="panel-title">Available agents</h3>
               <p id="workflow-subtitle" class="muted">Toggle agents, then analyze a PR to watch the flow.</p>
             </div>
-            <label class="delay-control">
-              Execution gap
-              <input id="agent-delay" type="range" min="0" max="2000" step="250" value="750" />
-              <span id="agent-delay-value">750ms</span>
-            </label>
           </div>
           <div class="agent-flow-shell">
             <div id="agent-flow" class="agent-flow-canvas"></div>
@@ -6499,6 +6479,7 @@
         runningAgentId: null,
         flowCompletedAgentIds: new Set(),
         flowTimer: null,
+        flowEventSource: null,
         delayMs: 750,
         isolatedThread: null,
         runStartedAt: null,
@@ -6634,17 +6615,11 @@
       const codeDialogHeadingEl = document.querySelector("#code-dialog-heading");
       const codeDialogBodyEl = document.querySelector("#code-dialog-body");
       const codeDialogCloseEl = document.querySelector("#code-dialog-close");
-      const agentDelayEl = document.querySelector("#agent-delay");
-      const agentDelayValueEl = document.querySelector("#agent-delay-value");
 
       initThemeToggle();
       initQueueRailControls();
       initAgentOutputDialog();
       initCodeDialog();
-      agentDelayEl.addEventListener("input", () => {
-        state.delayMs = Number(agentDelayEl.value);
-        agentDelayValueEl.textContent = `${state.delayMs}ms`;
-      });
       document.querySelector("#filters").addEventListener("change", (event) => {
         state.filters[event.target.name] = event.target.value;
         loadQueue();
@@ -6958,7 +6933,14 @@
         const data = await fetchJson("/api/agents");
         state.agents = data.agents || [];
         state.enabledAgents = new Set(state.agents.map((agent) => agent.id));
-        state.selectedAgentId = state.agents[0]?.id || null;
+        // Leave selectedAgentId null at initial load so the pipeline renders
+        // every card at full opacity. Auto-selecting agents[0] (review-compression)
+        // here was activating the spotlight lineage view, which dims any agent
+        // outside review-compression's ancestor/descendant graph — and intent-extractor
+        // is the one sibling start-node not on that graph, so it (and its outgoing
+        // links) appeared greyed out before the user had clicked anything.
+        // renderAgentOutput falls back to state.agents[0] when selectedAgentId is
+        // null, so the agent output dialog still has a sensible default focus.
         renderAgentWorkflow();
       }
 
@@ -7054,10 +7036,18 @@
         const row = state.rows.find((item) => item.pull_request?.id === prId);
         if (!row) return;
         const pr = row.pull_request;
+        closeFlowStream();
+        if (state.flowTimer) {
+          window.clearInterval(state.flowTimer);
+          state.flowTimer = null;
+        }
         state.activeAnalysisPrId = prId;
         state.selectedPrId = prId;
         state.selectedRunId = null;
         state.currentRun = null;
+        state.runningAgentId = null;
+        state.flowCompletedAgentIds = new Set();
+        state.replayInFlight = false;
         workflowPanelEl.classList.remove("hidden");
         detailEl.classList.add("hidden");
         closeAgentOutput();
@@ -7065,30 +7055,107 @@
           `Analyzing #${pr.number}`,
           `${pr.repository?.full_name || "repository"} / ${pr.title || "Untitled PR"}`
         );
-        startFlowAnimation();
+        renderAgentWorkflow();
         renderQueue();
+        state.runStartedAt = Date.now();
+
+        let runId;
+        let skeletonRun;
         try {
           const response = await fetch(`/api/prs/${encodeURIComponent(prId)}/analyze`, {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
-              enabled_agents: [...state.enabledAgents],
-              agent_delay_ms: state.delayMs
+              enabled_agents: [...state.enabledAgents]
             })
           });
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || "PR analysis failed");
-          state.selectedRunId = data.run.id;
-          state.currentRun = data.run;
-          updateWorkflowHeader("Agent run complete", "Show details is now available in the PR list.");
-          renderAgentWorkflow(data.run);
-          await loadQueue({ preferredRunId: data.run.id });
+          runId = data.run_id || data.run?.id;
+          if (!runId) throw new Error("Server did not return a run_id");
+          skeletonRun = data.run || { id: runId, agent_results: {} };
+          state.selectedRunId = runId;
+          state.currentRun = skeletonRun;
         } catch (error) {
-          showAgentOutputError(error);
-        } finally {
           state.activeAnalysisPrId = null;
-          stopFlowAnimation();
+          state.runStartedAt = null;
+          showAgentOutputError(error);
           renderQueue();
+          return;
+        }
+
+        const es = new EventSource(`/api/runs/${encodeURIComponent(runId)}/events`);
+        state.flowEventSource = es;
+
+        es.addEventListener("agent-status", (ev) => {
+          let payload;
+          try { payload = JSON.parse(ev.data); } catch { return; }
+          const { agent_id, status, result } = payload;
+          if (!agent_id) return;
+          if (!state.currentRun) state.currentRun = { id: runId, agent_results: {} };
+          state.currentRun.agent_results = state.currentRun.agent_results || {};
+          state.currentRun.agent_results[agent_id] = result;
+          if (status === "running") {
+            state.runningAgentId = agent_id;
+          } else {
+            state.flowCompletedAgentIds.add(agent_id);
+            if (state.runningAgentId === agent_id) state.runningAgentId = null;
+          }
+          renderAgentWorkflow(state.currentRun);
+        });
+
+        es.addEventListener("run-finished", async () => {
+          closeFlowStream();
+          state.runningAgentId = null;
+          if (state.runStartedAt) {
+            state.lastRunElapsedMs = Date.now() - state.runStartedAt;
+            state.runStartedAt = null;
+          }
+          try {
+            const full = await fetchJson(`/api/runs/${encodeURIComponent(runId)}`);
+            if (full?.run) state.currentRun = full.run;
+          } catch (error) {
+            console.warn("failed to fetch final run", error);
+          }
+          state.activeAnalysisPrId = null;
+          updateWorkflowHeader("Agent run complete", "Show details is now available in the PR list.");
+          try {
+            await loadQueue({ preferredRunId: runId });
+          } catch (error) {
+            console.warn("loadQueue after run-finished failed", error);
+          }
+          renderAgentWorkflow(state.currentRun);
+          renderQueue();
+        });
+
+        es.addEventListener("error", (ev) => {
+          if (ev?.data) {
+            try {
+              const payload = JSON.parse(ev.data);
+              if (payload?.message) {
+                showAgentOutputError(new Error(payload.message));
+              }
+            } catch {
+              // ignore parse errors on transport-level error events
+            }
+          }
+        });
+
+        es.onerror = () => {
+          if (es.readyState === EventSource.CLOSED) {
+            closeFlowStream();
+            state.activeAnalysisPrId = null;
+            state.runStartedAt = null;
+            renderQueue();
+            showAgentOutputError(new Error("Live event stream disconnected. Click Show details to view the latest state."));
+          }
+        };
+      }
+
+      function closeFlowStream() {
+        if (state.flowEventSource) {
+          try { state.flowEventSource.close(); } catch { /* noop */ }
+          state.flowEventSource = null;
         }
       }
 
@@ -7693,6 +7760,7 @@
         const status = String(result?.status || "").toLowerCase();
         if (["failed", "failure", "error"].includes(status)) return "failed";
         if (status === "skipped") return "skipped";
+        if (["running", "in_progress", "active", "started"].includes(status)) return "active";
         if (status) return "completed";
         if (agent.id === state.runningAgentId) return "active";
         if (state.flowCompletedAgentIds.has(agent.id)) return "completed";

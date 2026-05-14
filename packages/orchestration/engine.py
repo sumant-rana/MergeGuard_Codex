@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import time
-from typing import Any
+from typing import Any, Callable
 
 from packages.core.models import AgentEnvelope, Repository, to_plain
 from packages.mongo import LocalMergeGuardStore
@@ -116,11 +116,13 @@ class MergeGuardOrchestrator:
         *,
         enabled_agents: list[str] | None = None,
         agent_delay_ms: int = 0,
+        on_run_created: Callable[[dict[str, Any]], None] | None = None,
     ) -> dict[str, Any]:
         return self.analyze_pull_request(
             payload,
             enabled_agents=enabled_agents,
             agent_delay_ms=agent_delay_ms,
+            on_run_created=on_run_created,
         )
 
     def analyze_pull_request(
@@ -129,6 +131,7 @@ class MergeGuardOrchestrator:
         *,
         enabled_agents: list[str] | None = None,
         agent_delay_ms: int = 0,
+        on_run_created: Callable[[dict[str, Any]], None] | None = None,
     ) -> dict[str, Any]:
         repository = payload["repository"]
         repository["full_name"] = (
@@ -154,6 +157,11 @@ class MergeGuardOrchestrator:
             pull_request=pr_record,
             input_payload=payload,
         )
+        if on_run_created is not None:
+            try:
+                on_run_created(run)
+            except Exception:
+                pass
         prior_results: dict[str, Any] = {}
         settings = payload.get("settings", {})
         enabled = normalize_enabled_agents(enabled_agents)
@@ -166,6 +174,9 @@ class MergeGuardOrchestrator:
                     prior_results[agent_id] = skipped["result"]
                     continue
 
+                self.store.record_agent_execution(
+                    run["id"], started_agent_execution(agent_id, run["id"])
+                )
                 envelope = AgentEnvelope(
                     analysis_run_id=run["id"],
                     pull_request=pr_record,
@@ -194,6 +205,26 @@ def normalize_enabled_agents(enabled_agents: list[str] | None) -> set[str]:
     known = set(AGENT_SEQUENCE)
     enabled = {agent_id for agent_id in enabled_agents if agent_id in known}
     return enabled or set(AGENT_SEQUENCE)
+
+
+def started_agent_execution(agent_id: str, run_id: str) -> dict[str, Any]:
+    # Coarse-grained "running" sentinel emitted by the orchestrator right before
+    # platform.invoke. Lets the SSE stream report which agent is currently
+    # executing without needing per-step events from the agent platform itself.
+    return {
+        "execution_id": f"local-start-{agent_id}",
+        "thread_id": run_id,
+        "agent_id": agent_id,
+        "status": "running",
+        "result": {
+            "agent_id": agent_id,
+            "status": "running",
+            "confidence": None,
+            "messages": ["agent started"],
+            "output": {},
+            "trace": [{"step": "start"}],
+        },
+    }
 
 
 def skipped_agent_execution(agent_id: str, run_id: str) -> dict[str, Any]:
