@@ -59,6 +59,16 @@
         --radius: 8px;
         --topbar-height: 46px;
         --queue-rail-width: clamp(170px, 21vw, 300px);
+        /* Pipeline-specific tokens so cards visibly elevate over the canvas. */
+        --mg-pipeline-canvas-bg: #0a0e15;
+        --mg-pipeline-card-bg: #1f3858;
+        --mg-pipeline-card-border: #ffad3d;
+        --mg-pipeline-card-border-left: #e8ff3d;
+        --mg-pipeline-card-shadow:
+          0 1px 0 rgba(255, 255, 255, 0.08) inset,
+          0 1px 3px rgba(0, 0, 0, 0.55),
+          0 10px 26px rgba(0, 0, 0, 0.38);
+        --mg-pipeline-dot: rgba(186, 196, 214, 0.08);
       }
 
       :root[data-theme="light"] {
@@ -102,6 +112,16 @@
         --ring-inner-bg: #ffffff;
         --shadow: 0 18px 54px rgba(71, 64, 51, 0.12);
         --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.72) inset;
+        /* Pipeline tokens for light mode: cream canvas, pure-white cards. */
+        --mg-pipeline-canvas-bg: #ece4d2;
+        --mg-pipeline-card-bg: #ffffff;
+        --mg-pipeline-card-border: #6a4528;
+        --mg-pipeline-card-border-left: #1a1f2e;
+        --mg-pipeline-card-shadow:
+          0 1px 2px rgba(33, 39, 60, 0.06),
+          0 4px 12px rgba(33, 39, 60, 0.1),
+          0 14px 30px rgba(33, 39, 60, 0.08);
+        --mg-pipeline-dot: rgba(60, 53, 40, 0.22);
       }
 
       * {
@@ -1311,10 +1331,9 @@
         border: 1px dashed color-mix(in oklab, var(--muted) 28%, transparent);
         border-radius: 8px;
         background:
-          linear-gradient(180deg, color-mix(in oklab, var(--surface-strong) 92%, transparent), color-mix(in oklab, var(--surface-inset) 92%, transparent)),
-          radial-gradient(circle, color-mix(in oklab, var(--muted) 16%, transparent) 1px, transparent 1px),
-          var(--surface-muted);
-        background-size: 100% 100%, 19px 19px, 100% 100%;
+          radial-gradient(circle, var(--mg-pipeline-dot) 1px, transparent 1px),
+          var(--mg-pipeline-canvas-bg);
+        background-size: 19px 19px, 100% 100%;
       }
 
       .pipeline-header {
@@ -1515,7 +1534,7 @@
 
       .pipeline-stage-list {
         display: grid;
-        gap: 10px;
+        gap: 22px;
         width: min(100%, clamp(70px, 6vw, 122px));
       }
 
@@ -1526,11 +1545,11 @@
 
       .pipeline-stage-intake .pipeline-stage-list,
       .pipeline-stage-guardrails .pipeline-stage-list {
-        gap: 12px;
+        gap: 24px;
       }
 
       .pipeline-stage-impact .pipeline-stage-list {
-        gap: 11px;
+        gap: 22px;
       }
 
       .pipeline-stage-coverage .pipeline-stage-head,
@@ -1546,18 +1565,23 @@
         position: relative;
         z-index: 5;
         isolation: isolate;
+        --card-fill: color-mix(in oklab, var(--thread-color, var(--primary)) 42%, var(--mg-pipeline-card-bg));
         display: grid;
         gap: 4px;
         min-width: 0;
         min-height: 42px;
         padding: 4px;
-        border: 1px solid color-mix(in oklab, var(--muted) 24%, transparent);
-        border-left: 2px solid color-mix(in oklab, var(--muted) 45%, transparent);
+        border: 1.5px solid var(--mg-pipeline-card-border);
+        border-left: 4px solid var(--mg-pipeline-card-border-left);
         border-radius: 7px;
         background:
-          linear-gradient(135deg, color-mix(in oklab, var(--surface-strong) 88%, var(--surface-raised)), var(--surface-raised)),
-          var(--surface-strong);
-        box-shadow: var(--shadow);
+          radial-gradient(circle at 18% 10%, color-mix(in oklab, var(--thread-color, var(--primary)) 42%, transparent), transparent 52%),
+          linear-gradient(135deg, color-mix(in oklab, #ffffff 12%, var(--card-fill)), color-mix(in oklab, #02070d 4%, var(--card-fill))),
+          var(--mg-pipeline-card-bg);
+        box-shadow:
+          inset 0 0 0 1px color-mix(in oklab, #ffffff 11%, transparent),
+          0 0 0 1px color-mix(in oklab, var(--mg-pipeline-card-border) 28%, transparent),
+          var(--mg-pipeline-card-shadow);
         transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
       }
 
@@ -1570,28 +1594,55 @@
         content: "";
       }
 
+      .pipeline-card::after {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        border: 2px solid var(--mg-pipeline-card-border);
+        border-left-width: 5px;
+        border-left-color: var(--mg-pipeline-card-border-left);
+        border-radius: inherit;
+        box-shadow:
+          inset 0 0 0 1px color-mix(in oklab, var(--mg-pipeline-card-border) 22%, transparent),
+          0 0 0 1px color-mix(in oklab, var(--mg-pipeline-card-border-left) 28%, transparent);
+        content: "";
+        pointer-events: none;
+      }
+
       .pipeline-card.completed {
-        border-color: color-mix(in oklab, var(--green) 44%, transparent);
-        border-left-color: color-mix(in oklab, var(--green) 90%, transparent);
+        --card-fill: color-mix(in oklab, var(--green) 42%, var(--mg-pipeline-card-bg));
+        border-color: var(--mg-pipeline-card-border);
+        border-left-color: var(--mg-pipeline-card-border-left);
         background:
-          linear-gradient(135deg, color-mix(in oklab, var(--green) 24%, var(--surface-strong)), color-mix(in oklab, var(--green) 9%, var(--surface-raised))),
-          var(--surface-strong);
-        box-shadow: 0 0 0 1px color-mix(in oklab, var(--green) 14%, transparent), var(--shadow);
+          radial-gradient(circle at 18% 10%, color-mix(in oklab, var(--green) 38%, transparent), transparent 52%),
+          linear-gradient(135deg, color-mix(in oklab, #ffffff 10%, var(--card-fill)), color-mix(in oklab, var(--green) 12%, var(--card-fill))),
+          var(--mg-pipeline-card-bg);
+        box-shadow:
+          inset 0 0 0 1px color-mix(in oklab, #ffffff 7%, transparent),
+          0 0 0 1px color-mix(in oklab, var(--mg-pipeline-card-border) 30%, transparent),
+          var(--mg-pipeline-card-shadow);
       }
 
       .pipeline-card.failed {
-        border-color: color-mix(in oklab, var(--red) 48%, transparent);
-        border-left-color: color-mix(in oklab, var(--red) 92%, transparent);
+        --card-fill: color-mix(in oklab, var(--red) 42%, var(--mg-pipeline-card-bg));
+        border-color: var(--mg-pipeline-card-border);
+        border-left-color: var(--mg-pipeline-card-border-left);
         background:
-          linear-gradient(135deg, color-mix(in oklab, var(--red) 24%, var(--surface-strong)), color-mix(in oklab, var(--red) 9%, var(--surface-raised))),
-          var(--surface-strong);
-        box-shadow: 0 0 0 1px color-mix(in oklab, var(--red) 14%, transparent), var(--shadow);
+          radial-gradient(circle at 18% 10%, color-mix(in oklab, var(--red) 38%, transparent), transparent 52%),
+          linear-gradient(135deg, color-mix(in oklab, #ffffff 10%, var(--card-fill)), color-mix(in oklab, var(--red) 12%, var(--card-fill))),
+          var(--mg-pipeline-card-bg);
+        box-shadow:
+          inset 0 0 0 1px color-mix(in oklab, #ffffff 7%, transparent),
+          0 0 0 1px color-mix(in oklab, var(--mg-pipeline-card-border) 30%, transparent),
+          var(--mg-pipeline-card-shadow);
       }
 
       .pipeline-card.active {
-        border-color: color-mix(in oklab, var(--primary) 62%, transparent);
-        border-left-color: color-mix(in oklab, var(--primary) 95%, transparent);
-        box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 10%, transparent), var(--shadow);
+        border-color: var(--mg-pipeline-card-border);
+        border-left-color: var(--mg-pipeline-card-border-left);
+        box-shadow:
+          0 0 0 2px color-mix(in oklab, var(--mg-pipeline-card-border-left) 18%, transparent),
+          var(--mg-pipeline-card-shadow);
         transform: translateY(-1px);
       }
 
@@ -1606,6 +1657,8 @@
       }
 
       .pipeline-card-main {
+        position: relative;
+        z-index: 5;
         display: grid;
         grid-template-columns: 17px minmax(0, 1fr);
         gap: 4px;
@@ -1693,6 +1746,8 @@
       }
 
       .pipeline-card-footer {
+        position: relative;
+        z-index: 5;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -1812,6 +1867,412 @@
         justify-content: center;
         gap: 6px;
         margin-top: 1px;
+      }
+
+      /* ---------- Cinematic + Subway pipeline upgrades ---------- */
+
+      .pipeline-scoreboard {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        margin: 6px 0 10px;
+        padding: 7px 10px;
+        border: 1px solid color-mix(in oklab, var(--muted) 22%, transparent);
+        border-radius: 8px;
+        background:
+          linear-gradient(180deg, color-mix(in oklab, var(--surface-strong) 96%, transparent), color-mix(in oklab, var(--surface-inset) 96%, transparent));
+      }
+
+      .pipeline-scoreboard-track {
+        position: relative;
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        gap: 4px;
+        min-width: 0;
+        height: 22px;
+      }
+
+      .pipeline-score-segment {
+        position: relative;
+        display: grid;
+        grid-template-rows: 1fr auto;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .pipeline-score-bar {
+        position: relative;
+        height: 8px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--muted) 16%, transparent);
+      }
+
+      .pipeline-score-bar::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(90deg,
+          color-mix(in oklab, var(--primary) 92%, transparent),
+          color-mix(in oklab, var(--green) 86%, transparent));
+        transform-origin: left center;
+        transform: scaleX(var(--score, 0));
+        transition: transform 0.4s ease;
+      }
+
+      .pipeline-score-segment.active .pipeline-score-bar::after {
+        background: linear-gradient(90deg,
+          color-mix(in oklab, var(--primary) 92%, transparent),
+          color-mix(in oklab, var(--primary) 60%, var(--blue) 40%));
+        animation: scoreShimmer 1.4s ease-in-out infinite;
+      }
+
+      .pipeline-score-segment.failed .pipeline-score-bar::after {
+        background: linear-gradient(90deg,
+          color-mix(in oklab, var(--red) 88%, transparent),
+          color-mix(in oklab, var(--red) 70%, var(--amber) 30%));
+      }
+
+      @keyframes scoreShimmer {
+        0%, 100% { opacity: 0.78; }
+        50% { opacity: 1; }
+      }
+
+      .pipeline-score-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        color: var(--text-soft);
+        font-size: 8.5px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .pipeline-score-segment.active .pipeline-score-label {
+        color: var(--primary);
+      }
+
+      .pipeline-score-segment.done .pipeline-score-label {
+        color: var(--green);
+      }
+
+      .pipeline-score-count {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 950;
+        letter-spacing: 0.02em;
+      }
+
+      .pipeline-scoreboard-meta {
+        display: grid;
+        justify-items: end;
+        gap: 2px;
+        white-space: nowrap;
+      }
+
+      .pipeline-scoreboard-headline {
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 950;
+        letter-spacing: 0.02em;
+      }
+
+      .pipeline-scoreboard-sub {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .pipeline-replay-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 8px;
+        padding: 4px 9px;
+        border: 1px solid color-mix(in oklab, var(--primary) 46%, transparent);
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--primary) 14%, transparent);
+        color: var(--primary);
+        font-size: 9px;
+        font-weight: 950;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+      }
+
+      .pipeline-replay-button:hover:not([disabled]) {
+        background: color-mix(in oklab, var(--primary) 24%, transparent);
+        transform: translateY(-1px);
+      }
+
+      .pipeline-replay-button[disabled] {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .pipeline-replay-button::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: currentColor;
+        box-shadow: 0 0 8px currentColor;
+      }
+
+      .pipeline-thread-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin: 0 0 8px;
+        padding: 6px 8px;
+        border: 1px dashed color-mix(in oklab, var(--muted) 24%, transparent);
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--surface-inset) 60%, transparent);
+      }
+
+      .pipeline-thread-legend-label {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 950;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        margin-right: 2px;
+      }
+
+      .pipeline-thread-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-height: 18px;
+        padding: 2px 7px 2px 5px;
+        border: 1px solid color-mix(in oklab, var(--muted) 28%, transparent);
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--surface-strong) 80%, transparent);
+        color: var(--text-soft);
+        font-size: 8.5px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease, transform 0.12s ease;
+      }
+
+      .pipeline-thread-chip:hover {
+        transform: translateY(-1px);
+        color: var(--text);
+      }
+
+      .pipeline-thread-chip[aria-pressed="true"] {
+        border-color: color-mix(in oklab, var(--thread-color, var(--primary)) 72%, transparent);
+        background: color-mix(in oklab, var(--thread-color, var(--primary)) 18%, var(--surface-strong));
+        color: var(--text);
+        box-shadow: 0 0 0 1px color-mix(in oklab, var(--thread-color, var(--primary)) 30%, transparent);
+      }
+
+      .pipeline-thread-swatch {
+        position: relative;
+        width: 18px;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--thread-color, var(--primary));
+        box-shadow: 0 0 8px color-mix(in oklab, var(--thread-color, var(--primary)) 55%, transparent);
+      }
+
+      .pipeline-thread-swatch::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: -2px;
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: var(--thread-color, var(--primary));
+        transform: translateY(-50%);
+        box-shadow: 0 0 6px color-mix(in oklab, var(--thread-color, var(--primary)) 65%, transparent);
+      }
+
+      .pipeline-thread-clear {
+        margin-left: auto;
+        padding: 2px 7px;
+        border: 1px solid color-mix(in oklab, var(--muted) 32%, transparent);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .pipeline-thread-clear:hover {
+        color: var(--text);
+        border-color: color-mix(in oklab, var(--muted) 50%, transparent);
+      }
+
+      /* Link recoloring per source tone (Subway threads) */
+      .pipeline-link {
+        stroke: var(--thread-color, color-mix(in oklab, var(--muted) 58%, transparent));
+        opacity: 0.55;
+      }
+
+      .pipeline-link.ready {
+        stroke-dasharray: 5 7;
+        opacity: 0.42;
+      }
+
+      .pipeline-link.completed,
+      .pipeline-link.active {
+        stroke: var(--thread-color, color-mix(in oklab, var(--primary) 90%, transparent));
+        opacity: 0.95;
+        stroke-dasharray: 0;
+        filter: drop-shadow(0 0 4px color-mix(in oklab, var(--thread-color, var(--primary)) 55%, transparent));
+      }
+
+      .pipeline-link.active {
+        animation: flowDash 0.9s linear infinite;
+        stroke-dasharray: 10 6;
+      }
+
+      .pipeline-link.failed {
+        stroke: color-mix(in oklab, var(--red) 92%, transparent);
+        filter: drop-shadow(0 0 6px color-mix(in oklab, var(--red) 60%, transparent));
+      }
+
+      .pipeline-link-terminal {
+        fill: var(--thread-color, color-mix(in oklab, var(--muted) 56%, transparent));
+      }
+
+      .pipeline-link-terminal.completed,
+      .pipeline-link-terminal.active {
+        fill: var(--thread-color, color-mix(in oklab, var(--primary) 90%, transparent));
+        filter: drop-shadow(0 0 4px color-mix(in oklab, var(--thread-color, var(--primary)) 60%, transparent));
+      }
+
+      .pipeline-link-terminal.failed {
+        fill: color-mix(in oklab, var(--red) 92%, transparent);
+      }
+
+      /* Animated data packets traveling along links */
+      .pipeline-link-packet {
+        fill: var(--thread-color, var(--primary));
+        filter: drop-shadow(0 0 6px color-mix(in oklab, var(--thread-color, var(--primary)) 75%, transparent));
+        opacity: 0.95;
+      }
+
+      .pipeline-link-packet-halo {
+        fill: var(--thread-color, var(--primary));
+        opacity: 0.2;
+      }
+
+      /* Spotlight + isolation dimming */
+      .pipeline-stages.is-spotlit .pipeline-card:not(.lit) {
+        opacity: 0.32;
+        filter: saturate(0.4);
+      }
+
+      .pipeline-stages.is-spotlit .pipeline-card.lit {
+        border-color: color-mix(in oklab, var(--thread-color, var(--primary)) 62%, transparent);
+        box-shadow:
+          0 0 0 1px color-mix(in oklab, var(--thread-color, var(--primary)) 30%, transparent),
+          0 6px 18px color-mix(in oklab, var(--thread-color, var(--primary)) 22%, transparent);
+      }
+
+      .pipeline-link.dim,
+      .pipeline-link-terminal.dim,
+      .pipeline-link-packet.dim,
+      .pipeline-link-packet-halo.dim {
+        opacity: 0.08 !important;
+        filter: none !important;
+        animation: none !important;
+      }
+
+      .pipeline-card.lit .pipeline-card-title {
+        color: var(--text);
+      }
+
+      .pipeline-card.active {
+        animation: cardPulse 1.6s ease-in-out infinite;
+      }
+
+      /* Light-mode wire + packet readability:
+         drop-shadow glows are mostly invisible on cream backgrounds, so we
+         swap to higher opacity strokes and a white-bordered packet that pops
+         on any background like a subway train. */
+      [data-theme="light"] .pipeline-link {
+        opacity: 0.78;
+        stroke-width: 2.4;
+      }
+
+      [data-theme="light"] .pipeline-link.ready {
+        opacity: 0.6;
+      }
+
+      [data-theme="light"] .pipeline-link.completed,
+      [data-theme="light"] .pipeline-link.active {
+        opacity: 1;
+        stroke-width: 2.6;
+        filter: none;
+      }
+
+      [data-theme="light"] .pipeline-link.failed {
+        filter: none;
+      }
+
+      [data-theme="light"] .pipeline-link-terminal,
+      [data-theme="light"] .pipeline-link-terminal.completed,
+      [data-theme="light"] .pipeline-link-terminal.active,
+      [data-theme="light"] .pipeline-link-terminal.failed {
+        filter: none;
+        stroke: rgba(255, 255, 255, 0.85);
+        stroke-width: 1;
+      }
+
+      [data-theme="light"] .pipeline-link-packet {
+        stroke: #ffffff;
+        stroke-width: 1.4;
+        paint-order: stroke fill;
+        filter: drop-shadow(0 1px 2px rgba(33, 39, 60, 0.35));
+      }
+
+      [data-theme="light"] .pipeline-link-packet-halo {
+        opacity: 0.42;
+        filter: none;
+      }
+
+      /* Spotlight ring tweaks per theme so the lit card actually stands out. */
+      [data-theme="light"] .pipeline-stages.is-spotlit .pipeline-card:not(.lit) {
+        opacity: 0.42;
+      }
+
+      @keyframes cardPulse {
+        0%, 100% {
+          box-shadow:
+            inset 0 0 0 1px color-mix(in oklab, #ffffff 11%, transparent),
+            0 0 0 1px color-mix(in oklab, var(--mg-pipeline-card-border) 28%, transparent),
+            0 0 0 2px color-mix(in oklab, var(--mg-pipeline-card-border-left) 14%, transparent),
+            var(--mg-pipeline-card-shadow);
+        }
+        50% {
+          box-shadow:
+            inset 0 0 0 1px color-mix(in oklab, #ffffff 12%, transparent),
+            0 0 0 1px color-mix(in oklab, var(--mg-pipeline-card-border) 38%, transparent),
+            0 0 0 3px color-mix(in oklab, var(--mg-pipeline-card-border-left) 28%, transparent),
+            0 0 18px color-mix(in oklab, var(--mg-pipeline-card-border-left) 24%, transparent),
+            var(--mg-pipeline-card-shadow);
+        }
       }
 
       .agent-output {
@@ -5276,6 +5737,10 @@
         flowCompletedAgentIds: new Set(),
         flowTimer: null,
         delayMs: 750,
+        isolatedThread: null,
+        runStartedAt: null,
+        lastRunElapsedMs: null,
+        replayInFlight: false,
         queueTab: "active",
         queueCollapsed: false,
         queueRailWidth: null,
@@ -5354,6 +5819,32 @@
         "test-coverage-validator": { icon: "TC", tone: "tests" },
         "truth-report-synthesizer": { icon: "TR", tone: "report" }
       };
+
+      // Subway-thread color per tone. Reuses theme vars so light/dark both work.
+      // Threads that would collide on plain palette (multiple greens, etc.) are
+      // mixed to distinct hues so each stream reads as its own line on the map.
+      const toneColor = {
+        hotspots: "var(--primary)",
+        intent: "var(--indigo)",
+        behavior: "var(--amber)",
+        concepts: "var(--violet)",
+        slop: "color-mix(in oklab, var(--amber) 65%, var(--primary) 35%)",
+        policy: "var(--red)",
+        prompt: "var(--blue)",
+        contracts: "var(--green)",
+        memory: "color-mix(in oklab, var(--green) 55%, var(--blue) 45%)",
+        evidence: "color-mix(in oklab, var(--green) 70%, var(--primary) 30%)",
+        tests: "color-mix(in oklab, var(--green) 50%, var(--amber) 50%)",
+        report: "color-mix(in oklab, var(--red) 75%, var(--violet) 25%)"
+      };
+
+      function toneOf(agentId) {
+        return (agentVisuals[agentId] && agentVisuals[agentId].tone) || "hotspots";
+      }
+
+      function toneColorFor(agentId) {
+        return toneColor[toneOf(agentId)] || "var(--primary)";
+      }
 
       const metricsEl = document.querySelector("#metrics");
       const appShellEl = document.querySelector("#app-shell");
@@ -5802,11 +6293,13 @@
         }
 
         const stats = pipelineStats(run);
+        const spotlightSet = pipelineSpotlightSet(run);
+        const isSpotlit = Boolean(spotlightSet);
         agentFlowEl.innerHTML = `
           <div class="pipeline-header">
             <div>
               <p class="pipeline-eyebrow">Agents / live pipeline</p>
-              <p class="pipeline-note">Downstream checks only light up after their upstream evidence is available.</p>
+              <p class="pipeline-note">Each stream is a color thread. Click a thread to isolate it, or click an agent to spotlight its lineage.</p>
             </div>
             <div class="pipeline-stats" aria-label="Agent execution state">
               <span class="pipeline-stat running">${stats.running} running</span>
@@ -5815,10 +6308,12 @@
               <span class="pipeline-stat">${stats.disabled} disabled</span>
             </div>
           </div>
+          ${pipelineScoreboard(run, stats)}
+          ${pipelineThreadLegend(run)}
           <div class="pipeline-board">
             <svg class="pipeline-link-layer" aria-hidden="true"></svg>
-            <div class="pipeline-stages">
-              ${agentPipelineLayers.map((layer) => pipelineStage(layer, run)).join("")}
+            <div class="pipeline-stages${isSpotlit ? " is-spotlit" : ""}">
+              ${agentPipelineLayers.map((layer) => pipelineStage(layer, run, spotlightSet)).join("")}
             </div>
           </div>
         `;
@@ -5839,8 +6334,165 @@
             renderAgentWorkflow();
           });
         }
+        for (const chip of agentFlowEl.querySelectorAll("[data-thread-source]")) {
+          chip.addEventListener("click", () => {
+            const sourceId = chip.dataset.threadSource;
+            state.isolatedThread = state.isolatedThread === sourceId ? null : sourceId;
+            renderAgentWorkflow();
+          });
+        }
+        const clearBtn = agentFlowEl.querySelector("[data-thread-clear]");
+        if (clearBtn) {
+          clearBtn.addEventListener("click", () => {
+            state.isolatedThread = null;
+            state.selectedAgentId = null;
+            renderAgentWorkflow();
+          });
+        }
+        const replayBtn = agentFlowEl.querySelector("[data-pipeline-replay]");
+        if (replayBtn) {
+          replayBtn.addEventListener("click", () => replayPipeline());
+        }
         window.requestAnimationFrame(() => renderPipelineLinks(run));
         renderAgentOutput(run);
+      }
+
+      function pipelineScoreboard(run, stats) {
+        const totalEnabled = state.agents.filter((agent) => state.enabledAgents.has(agent.id)).length;
+        const done = stats.done;
+        const failed = stats.failed;
+        const segments = agentPipelineLayers.map((layer) => {
+          const agents = layer.agentIds
+            .map((id) => state.agents.find((a) => a.id === id))
+            .filter(Boolean)
+            .filter((agent) => state.enabledAgents.has(agent.id));
+          const total = agents.length || 1;
+          const states = agents.map((agent) => flowVisualState(agent, run));
+          const completeCount = states.filter((s) => s === "completed").length;
+          const hasFailed = states.includes("failed");
+          const hasActive = states.includes("active");
+          const score = agents.length ? completeCount / total : 0;
+          const cls = hasFailed ? "failed" : hasActive ? "active" : score >= 1 ? "done" : "";
+          return `<div class="pipeline-score-segment ${cls}">
+            <div class="pipeline-score-bar" style="--score: ${score.toFixed(3)};"></div>
+            <div class="pipeline-score-label">
+              <span>${esc(layer.title)}</span>
+              <span class="pipeline-score-count">${completeCount}/${agents.length || 0}</span>
+            </div>
+          </div>`;
+        }).join("");
+        const elapsed = pipelineElapsedLabel(run);
+        const headline = totalEnabled
+          ? `${done}/${totalEnabled} agents${failed ? ` · ${failed} failed` : ""}`
+          : "No agents enabled";
+        const canReplay = run && Object.keys(run.agent_results || {}).length > 0;
+        return `<div class="pipeline-scoreboard">
+          <div class="pipeline-scoreboard-track" role="progressbar" aria-label="Pipeline progress">${segments}</div>
+          <div class="pipeline-scoreboard-meta">
+            <span class="pipeline-scoreboard-headline">${esc(headline)}</span>
+            <span class="pipeline-scoreboard-sub">${esc(elapsed)}</span>
+          </div>
+          ${canReplay ? `<button class="pipeline-replay-button" type="button" data-pipeline-replay${state.replayInFlight ? " disabled" : ""}>${state.replayInFlight ? "Replaying" : "Replay"}</button>` : ""}
+        </div>`;
+      }
+
+      function pipelineElapsedLabel(run) {
+        if (state.runStartedAt) {
+          const ms = Date.now() - state.runStartedAt;
+          return `Elapsed ${(ms / 1000).toFixed(1)}s`;
+        }
+        if (state.lastRunElapsedMs != null) {
+          return `Last run ${(state.lastRunElapsedMs / 1000).toFixed(1)}s`;
+        }
+        if (run?.completed_at && run?.started_at) {
+          const ms = new Date(run.completed_at).getTime() - new Date(run.started_at).getTime();
+          if (Number.isFinite(ms) && ms >= 0) return `Run took ${(ms / 1000).toFixed(1)}s`;
+        }
+        return "Awaiting run";
+      }
+
+      function pipelineThreadLegend(run) {
+        const threads = pipelineThreadDescriptors();
+        if (!threads.length) return "";
+        const chips = threads.map((thread) => {
+          const pressed = state.isolatedThread === thread.sourceId;
+          return `<button type="button"
+              class="pipeline-thread-chip"
+              data-thread-source="${escAttr(thread.sourceId)}"
+              style="--thread-color: ${thread.color};"
+              aria-pressed="${pressed ? "true" : "false"}"
+              title="Isolate ${escAttr(thread.label)} thread">
+            <span class="pipeline-thread-swatch" aria-hidden="true"></span>
+            <span>${esc(thread.label)}</span>
+          </button>`;
+        }).join("");
+        const clear = state.isolatedThread || state.selectedAgentId
+          ? `<button type="button" class="pipeline-thread-clear" data-thread-clear>Clear focus</button>`
+          : "";
+        return `<div class="pipeline-thread-legend" aria-label="Evidence threads">
+          <span class="pipeline-thread-legend-label">Threads</span>
+          ${chips}
+          ${clear}
+        </div>`;
+      }
+
+      function pipelineThreadDescriptors() {
+        const sources = new Set(
+          pipelineLinks().map(({ sourceId }) => sourceId)
+        );
+        return [...sources]
+          .map((sourceId) => {
+            const agent = state.agents.find((a) => a.id === sourceId);
+            if (!agent) return null;
+            return {
+              sourceId,
+              label: agent.label,
+              color: toneColorFor(sourceId),
+              tone: toneOf(sourceId)
+            };
+          })
+          .filter(Boolean)
+          .sort((a, b) => agentLayerIndex(a.sourceId) - agentLayerIndex(b.sourceId));
+      }
+
+      function pipelineSpotlightSet(run) {
+        if (state.isolatedThread) return downstreamLineage(state.isolatedThread);
+        if (state.selectedAgentId) return agentLineage(state.selectedAgentId);
+        return null;
+      }
+
+      function agentDescendants(agentId, acc = new Set()) {
+        for (const [targetId, sources] of Object.entries(agentDependencies)) {
+          if (sources.includes(agentId) && !acc.has(targetId)) {
+            acc.add(targetId);
+            agentDescendants(targetId, acc);
+          }
+        }
+        return acc;
+      }
+
+      function agentAncestors(agentId, acc = new Set()) {
+        const sources = agentDependencies[agentId] || [];
+        for (const sourceId of sources) {
+          if (!acc.has(sourceId)) {
+            acc.add(sourceId);
+            agentAncestors(sourceId, acc);
+          }
+        }
+        return acc;
+      }
+
+      function agentLineage(agentId) {
+        const set = new Set([agentId]);
+        for (const id of agentAncestors(agentId)) set.add(id);
+        for (const id of agentDescendants(agentId)) set.add(id);
+        return set;
+      }
+
+      function downstreamLineage(sourceId) {
+        const set = new Set([sourceId]);
+        for (const id of agentDescendants(sourceId)) set.add(id);
+        return set;
       }
 
       function updateWorkflowHeader(title, subtitle) {
@@ -5848,7 +6500,7 @@
         workflowSubtitleEl.textContent = subtitle;
       }
 
-      function pipelineStage(layer, run) {
+      function pipelineStage(layer, run, spotlightSet) {
         const agents = layer.agentIds
           .map((agentId) => state.agents.find((agent) => agent.id === agentId))
           .filter(Boolean);
@@ -5862,12 +6514,12 @@
             <span class="pipeline-stage-count">${completeCount}/${agents.length}</span>
           </div>
           <div class="pipeline-stage-list">
-            ${agents.map((agent) => pipelineAgentCard(agent, layer, run)).join("")}
+            ${agents.map((agent) => pipelineAgentCard(agent, layer, run, spotlightSet)).join("")}
           </div>
         </section>`;
       }
 
-      function pipelineAgentCard(agent, layer, run) {
+      function pipelineAgentCard(agent, layer, run, spotlightSet) {
         const result = run?.agent_results?.[agent.id];
         const enabled = state.enabledAgents.has(agent.id);
         const selected = agent.id === state.selectedAgentId ? " selected" : "";
@@ -5875,8 +6527,13 @@
         const status = result?.status || (visualState === "active" ? "running" : enabled ? "ready" : "disabled");
         const statusText = pipelineStatusLabel(status);
         const disabled = !enabled ? " disabled" : "";
+        const lit = spotlightSet && spotlightSet.has(agent.id) ? " lit" : "";
         const visual = agentVisual(agent);
-        return `<article class="pipeline-card ${escAttr(visualState)}${selected}${disabled}" data-pipeline-agent-id="${escAttr(agent.id)}">
+        const threadColor = toneColorFor(agent.id);
+        return `<article class="pipeline-card ${escAttr(visualState)}${selected}${disabled}${lit}"
+            data-pipeline-agent-id="${escAttr(agent.id)}"
+            data-tone="${escAttr(visual.tone)}"
+            style="--thread-color: ${threadColor};">
           <button class="flow-node-main pipeline-card-main" type="button" data-agent-id="${escAttr(agent.id)}" title="${escAttr(agent.label)}">
             <span class="agent-icon ${escAttr(visual.tone)}">${esc(visual.icon)}</span>
             <span class="pipeline-card-copy">
@@ -5915,7 +6572,8 @@
         svg.setAttribute("width", String(width));
         svg.setAttribute("height", String(height));
 
-        const paths = [];
+        const spotlightSet = pipelineSpotlightSet(run);
+        const fragments = [];
         for (const [linkIndex, { sourceId, targetId }] of pipelineLinks().entries()) {
           const source = board.querySelector(`[data-pipeline-agent-id="${cssAttrSelectorValue(sourceId)}"]`);
           const target = board.querySelector(`[data-pipeline-agent-id="${cssAttrSelectorValue(targetId)}"]`);
@@ -5935,16 +6593,44 @@
           const exitX = x1 + skipLane.exitOffset + laneOffset / 4;
           const entryX = x2 - skipLane.entryOffset - laneOffset / 4;
           const stateName = pipelineLinkVisualState(sourceId, targetId, run);
-          const path = targetLayer - sourceLayer > 1
+          const pathD = targetLayer - sourceLayer > 1
             ? `M ${x1.toFixed(1)} ${y1.toFixed(1)} H ${exitX.toFixed(1)} V ${skipLane.y.toFixed(1)} H ${entryX.toFixed(1)} V ${y2.toFixed(1)} H ${x2.toFixed(1)}`
             : `M ${x1.toFixed(1)} ${y1.toFixed(1)} H ${elbowX.toFixed(1)} V ${y2.toFixed(1)} H ${x2.toFixed(1)}`;
-          paths.push(`
-            <path class="pipeline-link ${escAttr(stateName)}" d="${path}"></path>
-            <circle class="pipeline-link-terminal ${escAttr(stateName)}" cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="3.2"></circle>
-            <circle class="pipeline-link-terminal ${escAttr(stateName)}" cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="3.6"></circle>
+          const threadColor = toneColorFor(sourceId);
+          const pathId = `mg-link-${linkIndex}`;
+          const dimCls = spotlightSet && !(spotlightSet.has(sourceId) && spotlightSet.has(targetId)) ? " dim" : "";
+          const style = `style="--thread-color: ${threadColor};"`;
+          fragments.push(`
+            <path id="${pathId}" class="pipeline-link ${escAttr(stateName)}${dimCls}" d="${pathD}" ${style}></path>
+            <circle class="pipeline-link-terminal ${escAttr(stateName)}${dimCls}" cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="3.2" ${style}></circle>
+            <circle class="pipeline-link-terminal ${escAttr(stateName)}${dimCls}" cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="3.6" ${style}></circle>
+            ${pipelinePacketMarkup(pathId, stateName, dimCls, threadColor, linkIndex)}
           `);
         }
-        svg.innerHTML = paths.join("");
+        svg.innerHTML = fragments.join("");
+      }
+
+      function pipelinePacketMarkup(pathId, stateName, dimCls, threadColor, linkIndex) {
+        // Packets only animate while the run is in flight. They stop once the
+        // pipeline finishes so the diagram reads as "at rest" when complete.
+        if (stateName !== "active") return "";
+        const dur = 1.05;
+        const haloRadius = 7.5;
+        const coreRadius = 3.2;
+        const begin = `${((linkIndex % 5) * 0.18).toFixed(2)}s`;
+        const style = `style="--thread-color: ${threadColor};"`;
+        return `
+          <circle class="pipeline-link-packet-halo${dimCls}" r="${haloRadius}" ${style}>
+            <animateMotion dur="${dur}s" repeatCount="indefinite" begin="${begin}" rotate="auto">
+              <mpath href="#${pathId}"></mpath>
+            </animateMotion>
+          </circle>
+          <circle class="pipeline-link-packet${dimCls}" r="${coreRadius}" ${style}>
+            <animateMotion dur="${dur}s" repeatCount="indefinite" begin="${begin}" rotate="auto">
+              <mpath href="#${pathId}"></mpath>
+            </animateMotion>
+          </circle>
+        `;
       }
 
       function skipLinkLane(sourceId, targetId, height) {
@@ -6090,6 +6776,7 @@
         let index = 0;
         state.flowCompletedAgentIds = new Set();
         state.runningAgentId = enabled[0].id;
+        state.runStartedAt = Date.now();
         renderAgentWorkflow();
         state.flowTimer = window.setInterval(() => {
           const finishedAgent = enabled[index];
@@ -6108,8 +6795,48 @@
         if (state.flowTimer) window.clearInterval(state.flowTimer);
         state.flowTimer = null;
         state.runningAgentId = null;
+        if (state.runStartedAt) {
+          state.lastRunElapsedMs = Date.now() - state.runStartedAt;
+          state.runStartedAt = null;
+        }
         if (options.clearCompleted) state.flowCompletedAgentIds = new Set();
         if (options.rerender !== false) renderAgentWorkflow();
+      }
+
+      function replayPipeline() {
+        if (!state.currentRun) return;
+        if (state.runningAgentId) return;
+        const enabled = state.agents.filter((agent) => state.enabledAgents.has(agent.id));
+        if (!enabled.length) return;
+        const savedRun = state.currentRun;
+        state.currentRun = null;
+        state.replayInFlight = true;
+        state.flowCompletedAgentIds = new Set();
+        state.runStartedAt = Date.now();
+        state.runningAgentId = enabled[0].id;
+        renderAgentWorkflow();
+        if (state.flowTimer) window.clearInterval(state.flowTimer);
+        let index = 0;
+        state.flowTimer = window.setInterval(() => {
+          const finishedAgent = enabled[index];
+          if (finishedAgent) state.flowCompletedAgentIds.add(finishedAgent.id);
+          index += 1;
+          if (index >= enabled.length) {
+            window.clearInterval(state.flowTimer);
+            state.flowTimer = null;
+            state.runningAgentId = null;
+            if (state.runStartedAt) {
+              state.lastRunElapsedMs = Date.now() - state.runStartedAt;
+              state.runStartedAt = null;
+            }
+            state.replayInFlight = false;
+            state.currentRun = savedRun;
+            renderAgentWorkflow(savedRun);
+            return;
+          }
+          state.runningAgentId = enabled[index].id;
+          renderAgentWorkflow();
+        }, Math.max(250, state.delayMs || 750));
       }
 
       function filteredRows() {
