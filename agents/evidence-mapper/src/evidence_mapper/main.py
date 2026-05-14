@@ -34,32 +34,88 @@ def map_intent(
     files: list[dict[str, Any]],
     memory_item: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Map an intent item to changed files, tests, or HITL questions that cover it."""
-    terms = item.get("terms") or important_terms(item.get("text", ""))
+    """Map an intent item to changed files, tests, or HITL questions that cover it.
+
+    Behavior is **category-aware**:
+
+    - ``should``        → look for changed implementation AND a changed test.
+                          ``proven`` if both, ``partial`` if implementation only,
+                          ``missing`` if neither.
+    - ``must_not``      → check the diff for the prohibited pattern. If the
+                          term doesn't appear in any changed file, the PR is
+                          **compliant** (``proven``). If it does, the PR has
+                          potentially violated the constraint → ``violated``.
+    - ``out_of_scope``  → if the diff touches the named area, flag as
+                          ``in_scope_creep``. Otherwise, ``respected`` — this
+                          is the desired outcome and never a finding.
+    """
+    category = (item.get("category") or "should").lower()
+    terms = [t.lower() for t in (item.get("terms") or important_terms(item.get("text", "")))]
     matched_files = [
         file
         for file in files
-        if any(term in file.get("path", "").lower() or term in " ".join(file.get("risk_reasons", [])).lower() for term in terms)
+        if any(
+            term in file.get("path", "").lower()
+            or term in " ".join(file.get("risk_reasons", [])).lower()
+            for term in terms
+        )
     ]
     tests = [file for file in files if file.get("classification") == "test"]
+    matched_tests = [file for file in matched_files if file.get("classification") == "test"]
     memory_item = memory_item or {}
     memory_tests = memory_item.get("test_candidates", [])
     memory_matches = memory_item.get("matches", [])
-    if matched_files and tests:
-        status = "proven"
-    elif matched_files and memory_tests:
-        status = "partial"
-    elif memory_tests and memory_item.get("status") == "found":
-        status = "partial"
-    elif memory_matches:
-        status = "partial"
-    elif matched_files:
-        status = "partial"
+
+    if category == "must_not":
+        # The intent describes something that must NOT happen. If the diff
+        # doesn't touch terms from the constraint, the PR is compliant.
+        if matched_files:
+            status = "violated"
+            suggested = (
+                f"The diff touches `{matched_files[0]['path']}` which mentions "
+                f"terms ({', '.join(terms[:3])}) the issue says must not change. "
+                "Confirm intent or back the change out."
+            )
+        else:
+            status = "compliant"
+            suggested = "Constraint upheld — no changed file touches this area."
+        confidence = 0.86 if matched_files else 0.78
+    elif category == "out_of_scope":
+        if matched_files:
+            status = "in_scope_creep"
+            suggested = (
+                f"The diff appears to touch `{matched_files[0]['path']}` which the "
+                "issue says is out of scope. Split into a follow-up PR or justify."
+            )
+            confidence = 0.74
+        else:
+            status = "respected"
+            suggested = "Out-of-scope area not touched — no action needed."
+            confidence = 0.86
     else:
-        status = "missing"
+        # category == "should" (or unknown → default to should semantics)
+        if matched_files and matched_tests:
+            status = "proven"
+        elif matched_files and tests:
+            # Changed tests exist, even if not matched directly — give partial.
+            status = "partial"
+        elif matched_files and memory_tests:
+            status = "partial"
+        elif memory_tests and memory_item.get("status") == "found":
+            status = "partial"
+        elif memory_matches:
+            status = "partial"
+        elif matched_files:
+            status = "partial"
+        else:
+            status = "missing"
+        suggested = suggested_action(item, matched_files, tests, memory_item)
+        confidence = 0.84 if status == "proven" else 0.66 if status == "partial" else 0.55
+
     return {
         "intent_id": item["id"],
         "intent_text": item["text"],
+        "intent_category": category,
         "evidence_status": status,
         "mapped_paths": [file["path"] for file in matched_files[:8]],
         "evidence_paths": [file["path"] for file in tests[:8]],
@@ -69,8 +125,8 @@ def map_intent(
             _memory_display_label(item) for item in memory_tests[:6]
         ],
         "memory_match_count": len(memory_matches),
-        "confidence": 0.84 if status == "proven" else 0.66 if status == "partial" else 0.55,
-        "suggested_action": suggested_action(item, matched_files, tests, memory_item),
+        "confidence": confidence,
+        "suggested_action": suggested,
     }
 
 
@@ -111,6 +167,8 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         if file.get("classification") in {"logic", "security-sensitive", "prompt"}
         and not any(test.get("classification") == "test" for test in files)
     ]
+    # Only ``should`` intents that the implementation skipped warrant an
+    # author-preview prompt. ``must_not`` / ``out_of_scope`` shouldn't suspend.
     suspend_payloads = [
         {
             "kind": "author-preview",
@@ -118,7 +176,9 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
             "intent_id": item["id"],
         }
         for item, link in zip(intent_items, links, strict=False)
-        if link["evidence_status"] == "missing" and item.get("confidence", 1) < 0.7
+        if link["evidence_status"] == "missing"
+        and (item.get("category") or "should") == "should"
+        and item.get("confidence", 1) < 0.7
     ]
     output = {
         "evidence_links": links,
@@ -152,21 +212,32 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
 _EVIDENCE_SYSTEM_PROMPT = (
     "You are a senior reviewer mapping pull-request INTENT items to the "
     "CHANGED FILES that prove or fail to prove each intent.\n\n"
-    "For each intent, classify evidence_status as one of:\n"
-    "  - 'proven'  — at least one changed test or implementation file directly\n"
-    "                exercises this intent.\n"
-    "  - 'partial' — relevant code changed but the changed-test evidence is\n"
-    "                weak (no test file, only stub assertions, unrelated paths).\n"
-    "  - 'missing' — no changed file exercises this intent at all.\n\n"
+    "IMPORTANT — the meaning of evidence_status depends on the intent's category:\n\n"
+    "  category == 'should' (something the PR should do):\n"
+    "    - 'proven'   — a changed test or impl file directly exercises this intent.\n"
+    "    - 'partial'  — relevant code changed but test evidence is weak.\n"
+    "    - 'missing'  — no changed file exercises this intent at all.\n\n"
+    "  category == 'must_not' (an explicit prohibition):\n"
+    "    - 'compliant' — NO changed file touches the prohibited area. ✅ DEFAULT.\n"
+    "    - 'violated'  — a changed file appears to touch / modify the prohibited\n"
+    "                    area. Flag the file in mapped_paths.\n"
+    "    Never use 'missing' for must_not intents — absence IS the desired outcome.\n\n"
+    "  category == 'out_of_scope' (explicit non-goal):\n"
+    "    - 'respected'      — no changed file touches the out-of-scope area. ✅ DEFAULT.\n"
+    "    - 'in_scope_creep' — diff touches an out-of-scope area; consider splitting.\n"
+    "    Never use 'missing' for out_of_scope intents — they don't need tests.\n\n"
     "Rules:\n"
     "- Use file paths from the provided list ONLY. Do not invent paths.\n"
     "- mapped_paths: changed implementation files that touch the intent's domain.\n"
-    "- evidence_paths: changed *test* files that exercise the intent.\n"
-    "- suggested_action: one concrete next step the author should take.\n"
+    "- evidence_paths: changed *test* files that exercise the intent (should only).\n"
+    "- suggested_action: one concrete next step the author should take. For\n"
+    "  'compliant' / 'respected' rows, set this to a short reassurance like\n"
+    "  'Constraint upheld — no action needed.'\n"
     "- confidence: 0-1; lower if the match is loose / inferred.\n\n"
     "Output a single JSON object:\n"
     '{"evidence_links": [\n'
-    '  {"intent_id": str, "intent_text": str, "evidence_status": "proven"|"partial"|"missing",\n'
+    '  {"intent_id": str, "intent_text": str, "intent_category": "should"|"must_not"|"out_of_scope",\n'
+    '   "evidence_status": "proven"|"partial"|"missing"|"compliant"|"violated"|"respected"|"in_scope_creep",\n'
     '   "mapped_paths": [str], "evidence_paths": [str], "confidence": float,\n'
     '   "suggested_action": str}\n'
     "]}"
@@ -208,7 +279,11 @@ def _map_via_llm(
         system=_EVIDENCE_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,
-        max_tokens=1600,
+        # Each evidence-link carries intent_text + path lists + memory
+        # summaries, so ~16 links comfortably exceeds the old 1600-token
+        # cap — the JSON gets truncated mid-string and the agent silently
+        # falls back to the rule path. Bumped to 3500 with headroom.
+        max_tokens=3500,
     )
     if not result:
         return None
@@ -216,8 +291,15 @@ def _map_via_llm(
     if not isinstance(links, list):
         return None
 
-    valid_statuses = {"proven", "partial", "missing"}
+    valid_statuses = {
+        "proven", "partial", "missing",
+        "compliant", "violated",
+        "respected", "in_scope_creep",
+    }
     file_paths = {f.get("path") for f in file_summaries}
+    intent_category_by_id = {
+        i.get("id"): (i.get("category") or "should") for i in intent_items
+    }
     cleaned: list[dict[str, Any]] = []
     for raw in links:
         if not isinstance(raw, dict):
@@ -225,9 +307,18 @@ def _map_via_llm(
         intent_id = raw.get("intent_id")
         if not intent_id:
             continue
+        category = intent_category_by_id.get(intent_id, "should")
         status = raw.get("evidence_status")
         if status not in valid_statuses:
-            status = "partial"
+            status = "partial" if category == "should" else "compliant"
+        # Guard against the LLM applying a coverage-style status to a
+        # constraint-style intent (or vice versa).
+        if category == "should" and status in {"compliant", "violated", "respected", "in_scope_creep"}:
+            status = "missing"
+        if category == "must_not" and status in {"proven", "partial", "missing", "respected", "in_scope_creep"}:
+            status = "compliant" if status in {"missing", "respected"} else "violated"
+        if category == "out_of_scope" and status in {"proven", "partial", "missing", "compliant", "violated"}:
+            status = "respected" if status in {"missing", "compliant"} else "in_scope_creep"
         # Keep only paths that actually exist in the changed file list.
         mapped = [p for p in (raw.get("mapped_paths") or []) if p in file_paths]
         evidence = [p for p in (raw.get("evidence_paths") or []) if p in file_paths]
@@ -238,6 +329,7 @@ def _map_via_llm(
             {
                 "intent_id": intent_id,
                 "intent_text": raw.get("intent_text", ""),
+                "intent_category": category,
                 "evidence_status": status,
                 "mapped_paths": mapped[:8],
                 "evidence_paths": evidence[:8],
@@ -249,7 +341,7 @@ def _map_via_llm(
                     _memory_display_label(t) for t in memory_tests[:6]
                 ],
                 "memory_match_count": len(memory_matches),
-                "confidence": float(raw.get("confidence") or (0.85 if status == "proven" else 0.65)),
+                "confidence": float(raw.get("confidence") or (0.85 if status in {"proven", "compliant", "respected"} else 0.65)),
                 "suggested_action": str(raw.get("suggested_action") or ""),
             }
         )

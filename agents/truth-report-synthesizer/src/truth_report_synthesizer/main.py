@@ -35,36 +35,60 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     compression = prior.get("review-compression", {}).get("output", {})
     evidence = prior.get("evidence-mapper", {}).get("output", {})
     semantic = prior.get("semantic-diff-explainer", {}).get("output", {})
-    concept_classifier = prior.get("concept-classifier", {}).get("output", {})
     policy = prior.get("policy-gate", {}).get("output", {})
     prompt = prior.get("prompt-canary", {}).get("output", {})
     contracts = prior.get("contract-comparator", {}).get("output", {})
     slop = prior.get("slop-detector", {}).get("output", {})
     memory = prior.get("semantic-evidence-agent", {}).get("output", {})
     test_coverage = prior.get("test-coverage-validator", {}).get("output", {})
+    concept_classifier = prior.get("concept-classifier", {}).get("output", {})
 
+    intent_items = prior.get("intent-extractor", {}).get("output", {}).get("intent_items", [])
+    evidence_links = evidence.get("evidence_links", [])
+    missing_should_intents = _missing_should_intents(intent_items, evidence_links)
+    violated_intents = _violated_intents(evidence_links)
     concept_findings = concept_classifier.get("concept_findings", [])
     block_concepts = [c for c in concept_findings if c.get("severity") == "block"]
 
+    # Risk score — re-balanced 2026-Q1: a missed acceptance criterion
+    # (`should` intent with status `missing`) is the single most
+    # reviewer-relevant signal, so it carries real weight. Test-coverage
+    # gaps are noise compared to that.
     risk_score = min(
         100,
         compression.get("risk_score", 0)
-        + len(evidence.get("missing_evidence_findings", [])) * 8
+        + len(missing_should_intents) * 18              # missed acceptance criteria
+        + len(violated_intents) * 22                    # must_not violations
+        + len(block_concepts) * 22                      # secret / auth bypass / etc.
         + len(policy.get("policy_findings", [])) * 12
         + len(prompt.get("prompt_findings", [])) * 16
         + len(contracts.get("contract_findings", [])) * 10
         + len(slop.get("slop_findings", [])) * 6
         + len(memory.get("memory_findings", [])) * 4
-        + len(test_coverage.get("coverage_findings", [])) * 9
+        + len(test_coverage.get("coverage_findings", [])) * 6
+        + len(evidence.get("missing_evidence_findings", [])) * 4
         + (10 if test_coverage.get("coverage_status") == "blocked" else 0)
-        + len(block_concepts) * 22   # secret/auth/injection findings dominate scoring
         + len([c for c in concept_findings if c.get("severity") == "review_required"]) * 4,
     )
-    blockers = collect_blockers(
-        evidence, policy, prompt, contracts, slop, memory, test_coverage,
-        {"concept_findings": _concept_findings_as_blockers(concept_findings)},
-    )
-    status = "blocked" if any(item.get("severity") == "block" for item in blockers) else "review" if blockers or risk_score >= 45 else "pass"
+    blockers = collect_blockers(evidence, policy, prompt, contracts, slop, memory, test_coverage)
+    # Strip out generic per-intent "not covered" findings — the Intent vs
+    # Implementation table already shows the same information.
+    blockers = [
+        b for b in blockers
+        if not _is_redundant_intent_finding(b)
+    ]
+    # Promote missed-acceptance-criteria + must_not violations into the
+    # blocker list so they outrank partial-coverage findings.
+    blockers = _promote_intent_gaps(missing_should_intents, violated_intents) + blockers
+
+    has_block_severity = any(item.get("severity") == "block" for item in blockers)
+    if has_block_severity or risk_score >= 80 or violated_intents:
+        status = "blocked"
+    elif blockers or missing_should_intents or risk_score >= 40:
+        status = "review"
+    else:
+        status = "pass"
+
     top_blocker = blockers[0]["message"] if blockers else None
     next_action = blockers[0].get("suggested_action") if blockers else "Proceed with normal review."
     summary = {
@@ -116,6 +140,8 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
             status, risk_score, top_blocker, next_action, compression, blockers,
             behavioral_deltas=semantic.get("behavioral_deltas", []),
             intent_items=prior.get("intent-extractor", {}).get("output", {}).get("intent_items", []),
+            evidence_links=evidence.get("evidence_links", []),
+            missing_evidence_findings=evidence.get("missing_evidence_findings", []),
         ),
     }
     return make_agent_result(
@@ -125,6 +151,95 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         messages=["synthesized truth report"],
         trace=[{"step": "truth_report", "status": status, "risk_score": risk_score}],
     )
+
+
+def _missing_should_intents(
+    intent_items: list[dict[str, Any]],
+    evidence_links: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Intent items the diff DIDN'T cover (status='missing', category='should').
+
+    These are the most reviewer-relevant gaps — a stated acceptance criterion
+    that the implementation skipped.
+    """
+    status_by_id = {
+        link.get("intent_id"): link.get("evidence_status")
+        for link in evidence_links
+    }
+    out: list[dict[str, Any]] = []
+    for item in intent_items:
+        if (item.get("category") or "should") != "should":
+            continue
+        if status_by_id.get(item.get("id")) != "missing":
+            continue
+        out.append(item)
+    return out
+
+
+def _violated_intents(
+    evidence_links: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """must_not constraints the diff appears to have violated."""
+    return [
+        link for link in evidence_links
+        if link.get("evidence_status") == "violated"
+    ]
+
+
+def _is_redundant_intent_finding(blocker: dict[str, Any]) -> bool:
+    """Drop generic 'intent-N not covered by tests' findings — duplicated by the
+    Intent vs Implementation table.
+    """
+    path = str(blocker.get("path") or "")
+    msg = str(blocker.get("message") or "")
+    if path.startswith("intent-"):
+        return True
+    if "not covered by changed tests" in msg.lower():
+        return True
+    return False
+
+
+def _promote_intent_gaps(
+    missing_should: list[dict[str, Any]],
+    violated: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Build first-class blocker entries from the most actionable intent gaps.
+
+    Missed `should` items rank ABOVE violated `must_not` items here because a
+    missed-acceptance-criterion is what most reviewers actually act on first
+    (the must_not violation also gets surfaced via the block-severity path).
+    """
+    promoted: list[dict[str, Any]] = []
+    for item in missing_should[:3]:
+        promoted.append({
+            "severity": "review_required",
+            "source_agent": "intent-extractor",
+            "message": (
+                f"Acceptance criterion is not implemented: "
+                f"\"{_shorten(item.get('text', ''), 110)}\""
+            ),
+            "suggested_action": (
+                f"Implement the missing acceptance criterion or split it into a follow-up "
+                f"and update the linked issue to remove it from this PR's scope."
+            ),
+            "path": item.get("id"),
+        })
+    for link in violated[:3]:
+        promoted.append({
+            "severity": "block",
+            "source_agent": "intent-extractor",
+            "message": (
+                f"Constraint appears violated: \"{_shorten(link.get('intent_text', ''), 110)}\""
+            ),
+            "suggested_action": link.get("suggested_action") or "Confirm intent or back the change out.",
+            "path": (link.get("mapped_paths") or [None])[0],
+        })
+    return promoted
+
+
+def _shorten(text: str, limit: int) -> str:
+    text = (text or "").strip().replace("\n", " ")
+    return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
 def collect_blockers(*sections: dict[str, Any]) -> list[dict[str, Any]]:
@@ -360,6 +475,8 @@ def render_comment(
     *,
     behavioral_deltas: list[dict[str, Any]] | None = None,
     intent_items: list[dict[str, Any]] | None = None,
+    evidence_links: list[dict[str, Any]] | None = None,
+    missing_evidence_findings: list[dict[str, Any]] | None = None,
 ) -> str:
     """Produce the reviewer-facing PR comment.
 
@@ -378,11 +495,185 @@ def render_comment(
             blockers=blockers,
             behavioral_deltas=behavioral_deltas or [],
             intent_items=intent_items or [],
+            evidence_links=evidence_links or [],
+            missing_evidence_findings=missing_evidence_findings or [],
         )
         if llm_text:
             return llm_text
     return _render_comment_template(
-        status, risk_score, top_blocker, next_action, compression, blockers,
+        status,
+        risk_score,
+        top_blocker,
+        next_action,
+        compression,
+        blockers,
+        intent_items or [],
+        evidence_links or [],
+        missing_evidence_findings or [],
+        behavioral_deltas or [],
+    )
+
+
+# ── Status banner helpers ──────────────────────────────────────────────────
+
+_STATUS_BANNER: dict[str, tuple[str, str]] = {
+    "pass":    ("✅", "Ready for merge"),
+    "review":  ("🟡", "Review required"),
+    "blocked": ("⛔", "Blocked"),
+}
+
+
+def _status_banner(status: str, risk_score: int) -> str:
+    icon, label = _STATUS_BANNER.get(status, ("🟡", "Review required"))
+    return f"### {icon} {label} · Risk **{risk_score}/100**"
+
+
+_INTENT_STATUS_EMOJI: dict[str, str] = {
+    # `should` category outcomes
+    "proven":          "✅ Covered",
+    "partial":         "🟡 Partial",
+    "missing":         "❌ Missing",
+    # `must_not` category outcomes
+    "compliant":       "✅ Compliant",
+    "violated":        "🚫 Violated",
+    # `out_of_scope` category outcomes
+    "respected":       "⚪ Respected",
+    "in_scope_creep":  "⚠️ Scope creep",
+}
+
+
+def _intent_status(item: dict[str, Any], evidence_links: list[dict[str, Any]]) -> str:
+    """Map an intent item to a status pill.
+
+    The pill text depends on the intent's category — a ``must_not`` intent
+    that the diff doesn't violate should read "✅ Compliant", not "❌ Missing".
+    """
+    intent_id = item.get("id")
+    link = next(
+        (link for link in evidence_links if link.get("intent_id") == intent_id),
+        None,
+    )
+    if not link:
+        # No evidence-mapper entry yet — fall back to category-aware default.
+        category = (item.get("category") or "should").lower()
+        if category == "must_not":
+            return "✅ Compliant"
+        if category == "out_of_scope":
+            return "⚪ Respected"
+        return "❓ Not evaluated"
+    return _INTENT_STATUS_EMOJI.get(
+        link.get("evidence_status", ""),
+        "❓ Unknown",
+    )
+
+
+def _render_intent_vs_implementation(
+    intent_items: list[dict[str, Any]],
+    evidence_links: list[dict[str, Any]],
+) -> str:
+    """Build the Intent vs Implementation table.
+
+    Surfaces, per intent item:
+      - the original "should / must not / out of scope" claim,
+      - the source (linked-issue body vs PR text),
+      - whether the diff + tests actually cover it.
+
+    Long claims wrap inside the table cell via ``<br>`` rather than being
+    truncated — GitHub renders ``<br>`` in markdown tables fine and the
+    reviewer wants to read the whole sentence.
+    """
+    if not intent_items:
+        return ""
+    rows = []
+    for item in intent_items[:12]:
+        text = _format_table_claim(item.get("text") or "")
+        category = str(item.get("category") or "should").replace("_", " ")
+        source_emoji = (
+            "📋" if item.get("source") == "linked_issue" else "📝"
+        )
+        rows.append(
+            f"| {source_emoji} | {category} | {text} | {_intent_status(item, evidence_links)} |"
+        )
+    return (
+        "### Intent vs Implementation\n\n"
+        "_📋 from linked issue · 📝 from PR text · "
+        "✅ Covered / Compliant · ⚪ Respected · 🟡 Partial · "
+        "❌ Missing · 🚫 Violated · ⚠️ Scope creep_\n\n"
+        "| | Kind | Claim | Evidence |\n"
+        "|---|------|-------|----------|\n"
+        + "\n".join(rows)
+        + "\n"
+    )
+
+
+def _format_table_claim(text: str) -> str:
+    """Escape markdown specials + wrap long claims with ``<br>`` inside a cell.
+
+    Hard cap at 240 chars so an essay-length claim doesn't dominate the
+    table, but otherwise no `…` truncation — break on sentence boundaries.
+    """
+    text = str(text or "").strip().replace("|", "\\|").replace("\n", " ")
+    if len(text) > 240:
+        text = text[:237] + "…"
+    if len(text) <= 90:
+        return text
+    # Wrap to ~90-char lines at the nearest word boundary.
+    words = text.split(" ")
+    lines: list[str] = []
+    current = ""
+    for word in words:
+        if not current:
+            current = word
+        elif len(current) + 1 + len(word) <= 90:
+            current = f"{current} {word}"
+        else:
+            lines.append(current)
+            current = word
+    if current:
+        lines.append(current)
+    return "<br>".join(lines)
+
+
+def _render_findings_block(
+    title: str,
+    items: list[dict[str, Any]],
+    *,
+    emoji: str,
+    limit: int = 8,
+) -> str:
+    if not items:
+        return ""
+    bullets = []
+    for finding in items[:limit]:
+        path = finding.get("path")
+        msg = finding.get("message") or finding.get("reason") or ""
+        bullets.append(
+            f"- {emoji} `{path}` — {msg}" if path else f"- {emoji} {msg}"
+        )
+    more = ""
+    if len(items) > limit:
+        more = f"\n\n_…and {len(items) - limit} more._"
+    return (
+        f"<details open><summary><strong>{title}</strong> ({len(items)})</summary>\n\n"
+        + "\n".join(bullets)
+        + more
+        + "\n\n</details>\n"
+    )
+
+
+def _render_hotspots(compression: dict[str, Any]) -> str:
+    hotspots = compression.get("hotspots", [])[:5]
+    if not hotspots:
+        return ""
+    bullets = "\n".join(
+        f"- `{item['path']}` — risk **{item['risk_score']}**: {item.get('reason') or ''}"
+        for item in hotspots
+    )
+    return (
+        "<details><summary><strong>Hotspots</strong> "
+        f"({len(compression.get('hotspots', []))})</summary>\n\n"
+        + bullets
+        + "\n\n</details>\n"
     )
 
 
@@ -393,38 +684,220 @@ def _render_comment_template(
     next_action: str | None,
     compression: dict[str, Any],
     blockers: list[dict[str, Any]],
+    intent_items: list[dict[str, Any]],
+    evidence_links: list[dict[str, Any]],
+    missing_evidence_findings: list[dict[str, Any]],
+    behavioral_deltas: list[dict[str, Any]],
 ) -> str:
-    hotspots = "\n".join(
-        f"- `{item['path']}` risk {item['risk_score']}: {item['reason']}"
-        for item in compression.get("hotspots", [])[:5]
-    )
-    blockers_text = "\n".join(f"- {item['message']}" for item in blockers[:5]) or "- None"
-    return (
-        "<!-- mergeguard:comment -->\n"
-        "## MergeGuard Truth Report\n\n"
-        f"**Readiness:** {status.upper()} · **Risk:** {risk_score}/100\n\n"
-        f"**Top blocker:** {top_blocker or 'None'}\n\n"
-        f"**Next action:** {next_action or 'Proceed with normal review.'}\n\n"
-        "### Hotspots\n"
-        f"{hotspots or '- No hotspots'}\n\n"
-        "### Blockers And Evidence Gaps\n"
-        f"{blockers_text}\n"
+    block_findings = [b for b in blockers if b.get("severity") == "block"]
+    review_findings = [
+        b for b in blockers
+        if b.get("severity") in {"review_required", "warn"}
+    ]
+    files_changed = len(compression.get("files", []) or [])
+    intent_count = len(intent_items)
+    # Count any "good outcome" — proven for should-items, compliant for
+    # must_not, respected for out_of_scope.
+    _good = {"✅ Covered", "✅ Compliant", "⚪ Respected"}
+    covered_intent = sum(
+        1
+        for item in intent_items
+        if _intent_status(item, evidence_links) in _good
     )
 
+    summary_table = (
+        "| Status | Risk | Blockers | Review items | Files | Intent covered |\n"
+        "|---|---|---|---|---|---|\n"
+        f"| `{status}` | **{risk_score}/100** | {len(block_findings)} | "
+        f"{len(review_findings)} | {files_changed} | {covered_intent}/{intent_count} |"
+    )
 
-_TRUTH_REPORT_SYSTEM_PROMPT = (
-    "You are MergeGuard's senior reviewer assistant. You write concise, "
-    "actionable pull-request review summaries in GitHub-flavored markdown.\n\n"
-    "Rules:\n"
-    "- Lead with merge readiness and the single most important blocker. No fluff.\n"
-    "- Quote specific file paths in backticks when referencing them.\n"
-    "- Do NOT invent issues that aren't in the structured inputs. If a section\n"
-    "  has no items, say so or omit it.\n"
-    "- Keep the whole comment under ~300 words.\n"
-    "- Output a single JSON object: {\"comment_markdown\": \"...\"}.\n"
-    "- Inside comment_markdown, start with `<!-- mergeguard:comment -->`\n"
-    "  followed by `## MergeGuard Truth Report` then your content.\n"
-)
+    sections: list[str] = [
+        "<!-- mergeguard:sticky -->",
+        "<!-- mergeguard:comment -->",
+        "## MergeGuard Truth Report",
+        "",
+        _status_banner(status, risk_score),
+        "",
+        summary_table,
+        "",
+    ]
+
+    if top_blocker:
+        sections += [
+            f"> **Top blocker.** {top_blocker}",
+            "",
+        ]
+
+    intent_block = _render_intent_vs_implementation(intent_items, evidence_links)
+    if intent_block:
+        sections += [intent_block, ""]
+
+    block_block = _render_findings_block(
+        "🚫 Block-severity findings", block_findings, emoji="🚫"
+    )
+    if block_block:
+        sections += [block_block]
+
+    review_block = _render_findings_block(
+        "🟡 Review-required findings", review_findings, emoji="🟡"
+    )
+    if review_block:
+        sections += [review_block]
+
+    if missing_evidence_findings:
+        evidence_block = _render_findings_block(
+            "🔎 Missing test evidence",
+            missing_evidence_findings,
+            emoji="🔎",
+        )
+        if evidence_block:
+            sections += [evidence_block]
+
+    if behavioral_deltas:
+        delta_bullets = []
+        for delta in behavioral_deltas[:5]:
+            path = delta.get("path") or ""
+            symbol = delta.get("symbol") or ""
+            new_behavior = delta.get("new_behavior") or delta.get("summary") or ""
+            line = f"- `{path}` `{symbol}` — {new_behavior}" if symbol else f"- `{path}` — {new_behavior}"
+            delta_bullets.append(line)
+        sections.append(
+            "<details><summary><strong>Behavioral deltas</strong> "
+            f"({len(behavioral_deltas)})</summary>\n\n"
+            + "\n".join(delta_bullets)
+            + "\n\n</details>\n"
+        )
+
+    hotspots_block = _render_hotspots(compression)
+    if hotspots_block:
+        sections += [hotspots_block]
+
+    sections += [
+        "---",
+        f"**Next action.** {next_action or 'Proceed with normal review.'}",
+        "",
+        "_Powered by MergeGuard — agents evaluated this PR against the linked "
+        "issue's acceptance criteria. See the dashboard for the full audit trail._",
+    ]
+    return "\n".join(sections)
+
+
+_TRUTH_REPORT_SYSTEM_PROMPT = """\
+You are MergeGuard's senior-reviewer assistant. You write a structured PR
+review comment in GitHub-flavored markdown.
+
+OUTPUT FORMAT (HARD REQUIREMENTS — output is rejected if any are missing):
+
+Return a single JSON object: {"comment_markdown": "<the entire comment as
+one string with \\n line breaks>"}.
+
+The comment string MUST start with EXACTLY these two lines, in this order,
+nothing before them:
+
+    <!-- mergeguard:sticky -->
+    <!-- mergeguard:comment -->
+
+It MUST then contain the H2 title, EXACTLY:
+
+    ## MergeGuard Truth Report
+
+It MUST contain ALL of the following section headers, in this order, even
+if a section's body would be empty (in which case put a one-line "_None_"
+under the header):
+
+  1. ### {emoji} {label} — Risk **{N}/100**
+     Where emoji is one of  ✅ 🟡 ⛔  matching the status field
+     (pass / review / blocked), and label is the title-cased status.
+
+  2. A markdown summary table with the EXACT header row:
+         | Status | Risk | Blockers | Review | Files | Intent covered |
+     and ONE data row underneath. Intent covered = "X/Y" where X is items
+     with a ✅ / ⚪ evidence status and Y is the total intent item count.
+
+  3. If top_blocker is set, a blockquote line starting with "> **Top blocker.**"
+
+  4. ### Intent vs Implementation
+     Followed by a one-line legend:
+         _📋 from linked issue · 📝 from PR text · ✅ Covered / Compliant ·
+         ⚪ Respected · 🟡 Partial · ❌ Missing · 🚫 Violated · ⚠️ Scope creep_
+     Then a markdown table with this EXACT header row:
+         | | Kind | Claim | Evidence |
+         |---|------|-------|----------|
+     One row PER intent item from `intent_items`. NEVER skip this section.
+     If intent_items is empty, write "_No intent items extracted from the
+     PR or linked issues._" under the legend instead of a table.
+
+     Column rules:
+       • Column 1: 📋 if source == "linked_issue", 📝 otherwise.
+       • Column 2: the intent's `category` with underscores → spaces.
+       • Column 3: the SHORT claim text (≤15 words). If the input
+         `intent_items[i].text` is longer, summarize. Replace any "|"
+         characters with "\\|" so the markdown table doesn't break.
+       • Column 4: pick the evidence pill based on `evidence_status`:
+            should + proven      → ✅ Covered
+            should + partial     → 🟡 Partial
+            should + missing     → ❌ Missing
+            must_not + compliant → ✅ Compliant
+            must_not + violated  → 🚫 Violated
+            out_of_scope + respected     → ⚪ Respected
+            out_of_scope + in_scope_creep → ⚠️ Scope creep
+            unknown / absent     → ❓ Not evaluated
+
+  5. <details open><summary><strong>🚫 Block-severity findings</strong> (N)</summary>
+     Bullet list, one line per finding, like: - 🚫 `path/to/file.ts` — message
+     </details>
+     OMIT this whole <details> block if there are zero block-severity findings.
+
+  6. <details open><summary><strong>🟡 Review-required findings</strong> (N)</summary>
+     ...
+     </details>
+     OMIT if empty.
+
+  7. <details><summary><strong>🔎 Missing test evidence</strong> (N)</summary>
+     ...
+     </details>
+     OMIT if empty.
+
+  8. <details><summary><strong>Behavioral deltas</strong> (N)</summary>
+     ...
+     </details>
+     OMIT if empty.
+
+  9. <details><summary><strong>Hotspots</strong> (N)</summary>
+     ...
+     </details>
+     OMIT if empty.
+
+ 10. A horizontal rule: ---
+
+ 11. A "**Next action.** {next_action}" paragraph.
+
+ 12. A single-line italic footer (italics with underscores) about the
+     dashboard / audit trail.
+
+PROHIBITED:
+- Do NOT add sections that aren't in the list above.
+- Do NOT rename sections (e.g., don't say "Blockers" instead of "🚫
+  Block-severity findings"; don't say "MergeGuard Review" instead of
+  "MergeGuard Truth Report").
+- Do NOT invent findings, intent items, or hotspots not in the input JSON.
+- Do NOT echo raw IDs like `intent-3` in user-visible prose; quote the
+  text instead.
+- Do NOT use HTML other than `<details>`, `<summary>`, `<strong>`, `<br>`.
+
+CONTENT RULES:
+- File paths inside backticks: `src/foo.ts`.
+- When at least one intent item has evidence_status ∈ {missing, violated},
+  the top-blocker blockquote MUST quote that item's claim, not a generic
+  test-coverage message.
+- Keep total length under ~700 words.
+
+JSON ENCODING:
+- The whole response is JSON. Escape all double quotes and newlines INSIDE
+  comment_markdown ("\\"" for quotes, "\\n" for line breaks). Don't end
+  the string before the closing brace.
+"""
 
 
 def _render_comment_via_llm(
@@ -437,12 +910,48 @@ def _render_comment_via_llm(
     blockers: list[dict[str, Any]],
     behavioral_deltas: list[dict[str, Any]],
     intent_items: list[dict[str, Any]],
+    evidence_links: list[dict[str, Any]] | None = None,
+    missing_evidence_findings: list[dict[str, Any]] | None = None,
 ) -> str | None:
+    evidence_links = evidence_links or []
+    missing_evidence_findings = missing_evidence_findings or []
+    intent_with_evidence = []
+    for item in intent_items[:14]:
+        intent_id = item.get("id")
+        link = next(
+            (link for link in evidence_links if link.get("intent_id") == intent_id),
+            None,
+        )
+        intent_with_evidence.append(
+            {
+                "id": intent_id,
+                "text": item.get("text"),
+                "category": item.get("category"),
+                "source": item.get("source"),
+                "evidence_status": (link or {}).get("evidence_status"),
+                "mapped_paths": (link or {}).get("mapped_paths", []),
+            }
+        )
+    files_changed = len(compression.get("files", []) or [])
+    block_count = sum(1 for b in blockers if b.get("severity") == "block")
+    review_count = sum(
+        1 for b in blockers if b.get("severity") in {"review_required", "warn"}
+    )
+    covered = sum(
+        1 for item in intent_with_evidence if item.get("evidence_status") == "proven"
+    )
     structured = {
         "readiness": status,
         "risk_score": risk_score,
         "top_blocker": top_blocker,
         "next_action": next_action,
+        "summary_counts": {
+            "blockers": block_count,
+            "review_items": review_count,
+            "files_changed": files_changed,
+            "intent_total": len(intent_with_evidence),
+            "intent_covered": covered,
+        },
         "hotspots": compression.get("hotspots", [])[:8],
         "blockers": [
             {
@@ -450,14 +959,13 @@ def _render_comment_via_llm(
                 "severity": b.get("severity"),
                 "suggested_action": b.get("suggested_action"),
                 "source_agent": b.get("source_agent"),
+                "path": b.get("path"),
             }
             for b in blockers[:10]
         ],
+        "missing_evidence_findings": missing_evidence_findings[:8],
         "behavioral_deltas": behavioral_deltas[:6],
-        "intent_items": [
-            {"text": i.get("text"), "category": i.get("category")}
-            for i in intent_items[:8]
-        ],
+        "intent_items": intent_with_evidence,
     }
     user_prompt = (
         "Synthesize the following MergeGuard analysis into a reviewer-facing "
@@ -469,14 +977,46 @@ def _render_comment_via_llm(
         system=_TRUTH_REPORT_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,
-        max_tokens=900,
+        # The full comment (status banner + summary table + Intent table +
+        # findings + behavioral deltas + hotspots + footer) routinely runs
+        # ~1500 chars of markdown = ~500 tokens, but escape characters
+        # inside the JSON string roughly double that. Cap at 2200 so we
+        # never get truncated mid-string and lose the closing brace.
+        max_tokens=2200,
     )
     if not result:
         return None
     text = result.get("comment_markdown")
     if not isinstance(text, str) or not text.strip():
         return None
+    # Strict post-validation — if the LLM dropped a required section, reject
+    # the response so the caller falls back to the deterministic template
+    # (which always emits every section in the right order).
+    if not _validates_required_sections(text):
+        return None
     return text
+
+
+_REQUIRED_COMMENT_MARKERS = (
+    "<!-- mergeguard:sticky -->",
+    "<!-- mergeguard:comment -->",
+    "## MergeGuard Truth Report",
+    "### Intent vs Implementation",
+    "| Status | Risk | Blockers",
+)
+
+
+def _validates_required_sections(comment: str) -> bool:
+    """Return True only if the LLM kept every section the prompt requires.
+
+    Catches the most common drift mode: the LLM omits the Intent vs
+    Implementation table or the summary table because it thinks they're
+    redundant with the Findings list. They're not — they're the whole point.
+    """
+    for marker in _REQUIRED_COMMENT_MARKERS:
+        if marker not in comment:
+            return False
+    return True
 
 
 register_entrypoint(app, run)

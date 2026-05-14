@@ -22,6 +22,7 @@ from packages.core.analysis_utils import (  # noqa: E402
     language_for,
     normalize_path,
     risk_hits,
+    risk_hits_in_added_lines,
 )
 
 AGENT_ID = "review-compression"
@@ -38,7 +39,12 @@ def classify_file(file: dict[str, Any], settings: dict[str, Any]) -> dict[str, A
     additions = int(file.get("additions") or 0)
     deletions = int(file.get("deletions") or 0)
     changes = int(file.get("changes") or additions + deletions)
-    hits = risk_hits(path, patch, content)
+    # Strict match: only flag a file as security-sensitive when a risk
+    # keyword appears in lines the diff actually adds (or in the changed
+    # file's content). Path-only matches gave false positives (e.g. files
+    # under ``src/routes/_authenticated/`` getting tagged "auth-touching"
+    # just because the directory name contains "auth").
+    hits = risk_hits_in_added_lines(patch, content)
 
     if is_generated(path):
         classification = "generated"
@@ -153,7 +159,10 @@ def hotspot_themes(files: list[dict[str, Any]]) -> list[dict[str, Any]]:
     counts: dict[str, int] = {}
     for file in files:
         counts[file["classification"]] = counts.get(file["classification"], 0) + 1
-        for hit in risk_hits(file["path"], " ".join(file.get("risk_reasons", []))):
+        # Pull risk keywords from the per-file reasons we already computed
+        # (which were derived from the strict added-line scanner). Don't
+        # re-scan the path here.
+        for hit in risk_hits(" ".join(file.get("risk_reasons", []))):
             counts[hit] = counts.get(hit, 0) + 1
     return [
         {"theme": theme, "count": count}
