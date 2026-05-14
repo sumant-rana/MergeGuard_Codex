@@ -275,150 +275,83 @@
         box-shadow: var(--primary-button-shadow);
       }
 
+      /* Modern-classic theme toggle.
+         A single round button with two stacked icons (sun and moon). The icon
+         shown is the destination theme: dark mode shows the sun ("switch to
+         light"), light mode shows the moon ("switch to dark"). Icons cross-
+         fade with a small rotation so the transition reads as a flip. */
       .theme-toggle {
         position: relative;
         flex: 0 0 auto;
-        width: 60px;
-        min-width: 60px;
-        min-height: 27px;
+        display: inline-grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        min-height: 32px;
         padding: 0;
-        border: 0;
-        border-radius: 999px;
-        background: transparent;
-        box-shadow: none;
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        background: var(--button-bg);
+        color: var(--text);
+        cursor: pointer;
+        transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
       }
 
       .theme-toggle:hover {
-        border-color: transparent;
-        background: transparent;
+        transform: none;
+        border-color: color-mix(in oklab, var(--text) 36%, var(--border));
+        background: var(--button-hover-bg);
+        color: var(--text);
+      }
+
+      .theme-toggle:active {
+        transform: scale(0.96);
       }
 
       .theme-toggle:focus-visible {
-        outline: 3px solid color-mix(in oklab, var(--primary) 58%, transparent);
-        outline-offset: 4px;
-      }
-
-      .theme-toggle-track {
-        position: absolute;
-        inset: 2px;
-        border: 2px solid transparent;
-        border-radius: 999px;
-        background:
-          linear-gradient(var(--surface-inset), var(--surface-inset)) padding-box,
-          linear-gradient(135deg, var(--blue), var(--primary)) border-box;
-        box-shadow:
-          inset 0 0 0 1px color-mix(in oklab, var(--text) 6%, transparent),
-          0 10px 28px color-mix(in oklab, var(--primary) 14%, transparent);
-      }
-
-      .theme-toggle-thumb {
-        position: absolute;
-        top: 50%;
-        left: 4px;
-        display: grid;
-        place-items: center;
-        width: 22px;
-        aspect-ratio: 1;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary), var(--blue));
-        box-shadow:
-          0 8px 18px color-mix(in oklab, var(--blue) 28%, transparent),
-          inset 0 1px 0 color-mix(in oklab, white 34%, transparent);
-        transform: translate(30px, -50%);
-        transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+        outline: 2px solid color-mix(in oklab, var(--primary) 64%, transparent);
+        outline-offset: 2px;
       }
 
       .theme-toggle-icon {
         position: absolute;
         display: block;
-        transition: opacity 0.16s ease, transform 0.16s ease;
+        width: 16px;
+        height: 16px;
+        color: currentColor;
+        transition: opacity 0.22s ease, transform 0.22s ease;
+        pointer-events: none;
       }
 
-      .theme-toggle-icon-moon {
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        background: var(--primary-fg);
+      .theme-toggle-icon svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
 
-      .theme-toggle-icon-moon::before {
-        position: absolute;
-        top: -2px;
-        left: 6px;
-        width: 13px;
-        height: 13px;
-        border-radius: 50%;
-        background: color-mix(in oklab, var(--blue) 76%, var(--primary));
-        content: "";
-      }
-
-      .theme-toggle-icon-moon::after {
-        position: absolute;
-        top: 2px;
-        right: -8px;
-        width: 3px;
-        height: 3px;
-        border-radius: 50%;
-        background: var(--primary-fg);
-        box-shadow:
-          6px 4px 0 -1px var(--primary-fg),
-          1px 8px 0 -1px var(--primary-fg);
-        content: "";
-      }
-
-      .theme-toggle-icon-sun {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: var(--primary-fg);
-        opacity: 0;
-        transform: rotate(-20deg) scale(0.72);
-      }
-
-      .theme-toggle-icon-sun::after {
-        position: absolute;
-        top: -7px;
-        left: 5px;
-        width: 3px;
-        height: 3px;
-        border-radius: 50%;
-        background: var(--primary-fg);
-        box-shadow:
-          0 24px 0 var(--primary-fg),
-          12px 12px 0 var(--primary-fg),
-          -12px 12px 0 var(--primary-fg),
-          9px 3px 0 -1px var(--primary-fg),
-          -9px 3px 0 -1px var(--primary-fg),
-          9px 21px 0 -1px var(--primary-fg),
-          -9px 21px 0 -1px var(--primary-fg);
-        content: "";
-      }
-
-      :root[data-theme="light"] .theme-toggle-track {
-        background:
-          linear-gradient(var(--surface-inset), var(--surface-inset)) padding-box,
-          linear-gradient(135deg, var(--amber), var(--red), var(--primary)) border-box;
-        box-shadow:
-          inset 0 0 0 1px color-mix(in oklab, var(--text) 7%, transparent),
-          0 10px 24px color-mix(in oklab, var(--amber) 18%, transparent);
-      }
-
-      :root[data-theme="light"] .theme-toggle-thumb {
-        background: linear-gradient(135deg, var(--amber), var(--red));
-        box-shadow:
-          0 8px 18px color-mix(in oklab, var(--amber) 22%, transparent),
-          inset 0 1px 0 color-mix(in oklab, white 38%, transparent);
-        transform: translate(0, -50%);
-      }
-
-      :root[data-theme="light"] .theme-toggle-icon-moon {
-        opacity: 0;
-        transform: rotate(18deg) scale(0.72);
-      }
-
-      :root[data-theme="light"] .theme-toggle-icon-sun {
+      /* Dark mode: show sun, hide moon. */
+      :root[data-theme="dark"] .theme-toggle-icon-sun {
         opacity: 1;
-        transform: rotate(0) scale(1);
+        transform: rotate(0deg) scale(1);
+      }
+      :root[data-theme="dark"] .theme-toggle-icon-moon {
+        opacity: 0;
+        transform: rotate(-40deg) scale(0.7);
+      }
+
+      /* Light mode: show moon, hide sun. */
+      :root[data-theme="light"] .theme-toggle-icon-sun {
+        opacity: 0;
+        transform: rotate(40deg) scale(0.7);
+      }
+      :root[data-theme="light"] .theme-toggle-icon-moon {
+        opacity: 1;
+        transform: rotate(0deg) scale(1);
       }
 
       .sr-only {
@@ -585,8 +518,12 @@
         gap: 6px;
       }
 
+      /* The PR rail uses the compact variant — the queue list is the focus, so
+         these tiles must read as a tight one-row summary, not as hero stats. */
       .compact-metrics {
         width: 100%;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 4px;
       }
 
       .metric {
@@ -595,12 +532,24 @@
       }
 
       .compact-metrics .metric {
-        min-height: 50px;
-        padding: 7px 8px;
+        min-height: 0;
+        padding: 4px 6px;
+        border-radius: 6px;
+      }
+
+      .compact-metrics .metric span {
+        font-size: 6.6px;
+        letter-spacing: 0.06em;
       }
 
       .compact-metrics .metric strong {
-        font-size: 18px;
+        margin-top: 1px;
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .compact-metrics .metric small {
+        display: none;
       }
 
       .metric span {
@@ -851,11 +800,11 @@
         grid-template-areas:
           "main score"
           "actions actions";
-        gap: 4px 5px;
+        gap: 6px 5px;
         align-items: start;
-        padding: 5px;
+        padding: 7px 7px 8px;
         border: 1px solid var(--border);
-        border-radius: 7px;
+        border-radius: 8px;
         background: var(--card-bg);
         box-shadow: var(--shadow-soft);
       }
@@ -868,9 +817,9 @@
       .pr-row-actions {
         grid-area: actions;
         display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 4px;
+        align-items: stretch;
+        justify-content: stretch;
+        gap: 6px;
         flex-wrap: wrap;
       }
 
@@ -896,9 +845,21 @@
         display: flex;
         flex-wrap: wrap;
         gap: 4px;
+        align-items: center;
         margin-top: 4px;
         max-height: 34px;
         overflow: hidden;
+      }
+
+      /* Status + agent-count pills in the PR row are secondary information.
+         The promoted CTAs below (Analyze / Show details) get the spotlight. */
+      .pr-meta .pill {
+        min-height: 13px;
+        padding: 0 5px;
+        border-radius: 4px;
+        font-size: 7px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
       }
 
       .small-button {
@@ -933,6 +894,46 @@
       .small-button:disabled {
         cursor: wait;
         opacity: 0.62;
+      }
+
+      /* Promoted CTAs inside the PR row: bigger, taller, and they share width
+         so each row reads "open this PR" at a glance. */
+      .pr-row-actions .small-button {
+        flex: 1 1 0;
+        min-height: 28px;
+        padding: 0 12px;
+        border-width: 1.5px;
+        border-radius: 8px;
+        font-size: 10.5px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease;
+      }
+
+      .pr-row-actions .small-button:hover {
+        transform: translateY(-1px);
+      }
+
+      .pr-row-actions .small-button.primary {
+        box-shadow: var(--primary-button-shadow);
+      }
+
+      .pr-row-actions .small-button.primary:hover {
+        box-shadow:
+          var(--primary-button-shadow),
+          0 0 0 1px color-mix(in oklab, var(--primary) 28%, transparent);
+      }
+
+      .pr-row-actions .small-button.success {
+        border-color: color-mix(in oklab, var(--green) 60%, var(--border));
+        background: color-mix(in oklab, var(--green) 34%, var(--surface-raised));
+        color: var(--text);
+        box-shadow: 0 8px 18px color-mix(in oklab, var(--green) 16%, transparent);
+      }
+
+      .pr-row-actions .small-button.success:hover {
+        border-color: color-mix(in oklab, var(--green) 78%, transparent);
+        background: color-mix(in oklab, var(--green) 44%, var(--surface-raised));
       }
 
       .queue-card {
@@ -1408,7 +1409,10 @@
         isolation: isolate;
         width: 100%;
         min-width: 0;
-        padding: 22px 12px 12px;
+        /* Top and bottom paddings reserve room for skip-link highways that
+           route above/below the row of agent cards. Without this padding the
+           horizontal trunks would visually overlap the cards. */
+        padding: 60px 12px 60px;
       }
 
       .pipeline-link-layer {
@@ -1485,7 +1489,9 @@
         z-index: 2;
         display: grid;
         grid-template-columns: minmax(58px, 0.78fr) minmax(82px, 1fr) minmax(64px, 0.82fr) minmax(82px, 0.96fr) minmax(58px, 0.74fr) minmax(62px, 0.8fr);
-        gap: clamp(24px, 3vw, 86px);
+        /* Minimum gap is the minimum routable gutter width for inter-stage
+           trunks. Anything below ~36px crowds parallel adjacent links. */
+        gap: clamp(40px, 3.2vw, 96px);
         align-items: center;
         min-height: 320px;
       }
@@ -6087,15 +6093,11 @@
         .topbar-actions {
           width: 100%;
           margin-left: 0;
-          justify-content: stretch;
-        }
-
-        .topbar-actions .button {
-          flex: 1 1 min(160px, 100%);
+          justify-content: flex-end;
         }
 
         .topbar-actions .theme-toggle {
-          flex: 0 0 60px;
+          flex: 0 0 32px;
         }
 
         .slop-lanes,
@@ -6362,17 +6364,26 @@
         </div>
       </div>
       <div class="topbar-actions">
-        <button id="theme-toggle" class="button theme-toggle" type="button" aria-pressed="false">
-          <span class="theme-toggle-track" aria-hidden="true">
-            <span class="theme-toggle-thumb">
-              <span class="theme-toggle-icon theme-toggle-icon-sun"></span>
-              <span class="theme-toggle-icon theme-toggle-icon-moon"></span>
-            </span>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to light mode" title="Switch to light mode">
+          <span class="theme-toggle-icon theme-toggle-icon-sun" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <circle cx="12" cy="12" r="4.2"></circle>
+              <line x1="12" y1="2.5" x2="12" y2="5"></line>
+              <line x1="12" y1="19" x2="12" y2="21.5"></line>
+              <line x1="2.5" y1="12" x2="5" y2="12"></line>
+              <line x1="19" y1="12" x2="21.5" y2="12"></line>
+              <line x1="5.1" y1="5.1" x2="6.9" y2="6.9"></line>
+              <line x1="17.1" y1="17.1" x2="18.9" y2="18.9"></line>
+              <line x1="5.1" y1="18.9" x2="6.9" y2="17.1"></line>
+              <line x1="17.1" y1="6.9" x2="18.9" y2="5.1"></line>
+            </svg>
           </span>
-          <span id="theme-toggle-label" class="sr-only">Slate Citrus dark mode</span>
+          <span class="theme-toggle-icon theme-toggle-icon-moon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M20.5 14.4A8 8 0 1 1 9.6 3.5a6.6 6.6 0 0 0 10.9 10.9z"></path>
+            </svg>
+          </span>
         </button>
-        <button id="refresh-button" class="button" type="button">Refresh</button>
-        <button id="run-demo" class="button button-primary" type="button">Run Demo PR</button>
       </div>
     </header>
 
@@ -6608,10 +6619,7 @@
       const repoFilterEl = document.querySelector("#repo-filter");
       const ownerFilterEl = document.querySelector("#owner-filter");
       const stateFilterEl = document.querySelector("#state-filter");
-      const runButton = document.querySelector("#run-demo");
-      const refreshButton = document.querySelector("#refresh-button");
       const themeToggleButton = document.querySelector("#theme-toggle");
-      const themeToggleLabel = document.querySelector("#theme-toggle-label");
       const queueCountEl = document.querySelector("#queue-count");
       const queueTabButtons = [...document.querySelectorAll("[data-queue-tab]")];
       const workflowPanelEl = document.querySelector("#agent-workflow-panel");
@@ -6633,8 +6641,6 @@
       initQueueRailControls();
       initAgentOutputDialog();
       initCodeDialog();
-      runButton.addEventListener("click", runDemo);
-      refreshButton.addEventListener("click", () => loadQueue());
       agentDelayEl.addEventListener("input", () => {
         state.delayMs = Number(agentDelayEl.value);
         agentDelayValueEl.textContent = `${state.delayMs}ms`;
@@ -6677,13 +6683,10 @@
         const normalized = theme === "light" ? "light" : "dark";
         document.documentElement.dataset.theme = normalized;
         const isLight = normalized === "light";
+        const label = isLight ? "Switch to dark mode" : "Switch to light mode";
         themeToggleButton.setAttribute("aria-pressed", String(isLight));
-        themeToggleButton.setAttribute(
-          "aria-label",
-          isLight ? "Switch to Slate Citrus dark mode" : "Switch to Arctic Lab light mode"
-        );
-        themeToggleButton.title = isLight ? "Switch to Slate Citrus dark mode" : "Switch to Arctic Lab light mode";
-        themeToggleLabel.textContent = isLight ? "Arctic Lab light mode" : "Slate Citrus dark mode";
+        themeToggleButton.setAttribute("aria-label", label);
+        themeToggleButton.title = label;
       }
 
       function initQueueRailControls() {
@@ -6957,46 +6960,6 @@
         state.enabledAgents = new Set(state.agents.map((agent) => agent.id));
         state.selectedAgentId = state.agents[0]?.id || null;
         renderAgentWorkflow();
-      }
-
-      async function runDemo() {
-        const previous = runButton.textContent;
-        runButton.disabled = true;
-        runButton.textContent = "Running...";
-        state.currentRun = null;
-        workflowPanelEl.classList.remove("hidden");
-        detailEl.classList.add("hidden");
-        closeAgentOutput();
-        updateWorkflowHeader("Analyzing demo PR", "Invoking enabled agents with visible execution gaps.");
-        startFlowAnimation();
-        try {
-          const response = await fetch("/api/demo/analyze", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              enabled_agents: [...state.enabledAgents],
-              agent_delay_ms: state.delayMs
-            })
-          });
-          const data = await response.json();
-          if (data.run) {
-            state.selectedRunId = data.run.id;
-            state.selectedPrId = data.run.pull_request_id;
-            state.currentRun = data.run;
-            updateWorkflowHeader("Agent run complete", "Use Show details in the PR list to open the dashboard.");
-            renderAgentWorkflow(data.run);
-          }
-          await loadQueue({ preferredRunId: data.run?.id });
-          if (!response.ok) {
-            throw new Error(data.run?.summary?.next_action || data.error || "Demo analysis failed");
-          }
-        } catch (error) {
-          showAgentOutputError(error);
-        } finally {
-          stopFlowAnimation();
-          runButton.disabled = false;
-          runButton.textContent = previous;
-        }
       }
 
       async function loadQueue(options = {}) {
@@ -7428,42 +7391,232 @@
         svg.setAttribute("width", String(width));
         svg.setAttribute("height", String(height));
 
+        const routing = computePipelineRouting(board, boardRect, height);
+        const linksList = routing.links;
         const spotlightSet = pipelineSpotlightSet(run);
         const fragments = [];
-        for (const [linkIndex, { sourceId, targetId }] of pipelineLinks().entries()) {
-          const source = board.querySelector(`[data-pipeline-agent-id="${cssAttrSelectorValue(sourceId)}"]`);
-          const target = board.querySelector(`[data-pipeline-agent-id="${cssAttrSelectorValue(targetId)}"]`);
-          if (!source || !target) continue;
-          const sourceRect = source.getBoundingClientRect();
-          const targetRect = target.getBoundingClientRect();
-          const x1 = sourceRect.right - boardRect.left;
-          const y1 = sourceRect.top - boardRect.top + sourceRect.height / 2;
-          const x2 = targetRect.left - boardRect.left;
-          const y2 = targetRect.top - boardRect.top + targetRect.height / 2;
-          const sourceLayer = agentLayerIndex(sourceId);
-          const targetLayer = agentLayerIndex(targetId);
-          const laneOffset = ((linkIndex % 7) - 3) * 7;
-          const gap = Math.max(22, x2 - x1);
-          const elbowX = x1 + Math.max(18, gap / 2) + laneOffset;
-          const skipLane = skipLinkLane(sourceId, targetId, height);
-          const exitX = x1 + skipLane.exitOffset + laneOffset / 4;
-          const entryX = x2 - skipLane.entryOffset - laneOffset / 4;
-          const stateName = pipelineLinkVisualState(sourceId, targetId, run);
-          const pathD = targetLayer - sourceLayer > 1
-            ? `M ${x1.toFixed(1)} ${y1.toFixed(1)} H ${exitX.toFixed(1)} V ${skipLane.y.toFixed(1)} H ${entryX.toFixed(1)} V ${y2.toFixed(1)} H ${x2.toFixed(1)}`
-            : `M ${x1.toFixed(1)} ${y1.toFixed(1)} H ${elbowX.toFixed(1)} V ${y2.toFixed(1)} H ${x2.toFixed(1)}`;
-          const threadColor = toneColorFor(sourceId);
-          const pathId = `mg-link-${linkIndex}`;
-          const dimCls = spotlightSet && !(spotlightSet.has(sourceId) && spotlightSet.has(targetId)) ? " dim" : "";
+        for (const lnk of linksList) {
+          const route = pipelineLinkRoute(lnk, routing);
+          if (!route) continue;
+          const stateName = pipelineLinkVisualState(lnk.sourceId, lnk.targetId, run);
+          const threadColor = toneColorFor(lnk.sourceId);
+          const pathId = `mg-link-${lnk.idx}`;
+          const dimCls = spotlightSet && !(spotlightSet.has(lnk.sourceId) && spotlightSet.has(lnk.targetId)) ? " dim" : "";
           const style = `style="--thread-color: ${threadColor};"`;
           fragments.push(`
-            <path id="${pathId}" class="pipeline-link ${escAttr(stateName)}${dimCls}" d="${pathD}" ${style}></path>
-            <circle class="pipeline-link-terminal ${escAttr(stateName)}${dimCls}" cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="3.2" ${style}></circle>
-            <circle class="pipeline-link-terminal ${escAttr(stateName)}${dimCls}" cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="3.6" ${style}></circle>
-            ${pipelinePacketMarkup(pathId, stateName, dimCls, threadColor, linkIndex)}
+            <path id="${pathId}" class="pipeline-link ${escAttr(stateName)}${dimCls}" d="${route.d}" ${style}></path>
+            <circle class="pipeline-link-terminal ${escAttr(stateName)}${dimCls}" cx="${route.x1.toFixed(1)}" cy="${route.ySrc.toFixed(1)}" r="3.2" ${style}></circle>
+            <circle class="pipeline-link-terminal ${escAttr(stateName)}${dimCls}" cx="${route.x2.toFixed(1)}" cy="${route.yTgt.toFixed(1)}" r="3.6" ${style}></circle>
+            ${pipelinePacketMarkup(pathId, stateName, dimCls, threadColor, lnk.idx)}
           `);
         }
         svg.innerHTML = fragments.join("");
+      }
+
+      /**
+       * Build the routing context for the pipeline once per render:
+       *  - Per-agent card rectangles in board-local coordinates.
+       *  - Inter-stage gutters (the vertical strip between two consecutive
+       *    stages where adjacent links can safely run a vertical trunk).
+       *  - Top and bottom "highway" Y-lanes that skip-stage links route along
+       *    so they never cross any card.
+       *  - Per-card stub offsets so multiple links exiting (or entering) a
+       *    single card fan out cleanly rather than overlapping.
+       *  - Per-link assignment of highway lane Y, exit-gutter X, and
+       *    entry-gutter X with intra-gutter fanout when several links share
+       *    the same gutter.
+       */
+      function computePipelineRouting(board, boardRect, height) {
+        const layers = agentPipelineLayers;
+        const cardRects = new Map();
+        const layerCards = layers.map((layer) =>
+          layer.agentIds
+            .map((id) => {
+              const el = board.querySelector(`[data-pipeline-agent-id="${cssAttrSelectorValue(id)}"]`);
+              if (!el) return null;
+              const r = el.getBoundingClientRect();
+              const rect = {
+                id,
+                left: r.left - boardRect.left,
+                right: r.right - boardRect.left,
+                top: r.top - boardRect.top,
+                bottom: r.bottom - boardRect.top,
+                cy: r.top - boardRect.top + r.height / 2
+              };
+              cardRects.set(id, rect);
+              return rect;
+            })
+            .filter(Boolean)
+        );
+
+        const gutters = [];
+        for (let i = 0; i < layerCards.length - 1; i += 1) {
+          const left = layerCards[i];
+          const right = layerCards[i + 1];
+          if (!left.length || !right.length) {
+            gutters.push(null);
+            continue;
+          }
+          const leftX = Math.max(...left.map((c) => c.right));
+          const rightX = Math.min(...right.map((c) => c.left));
+          gutters.push({
+            left: leftX,
+            right: rightX,
+            center: (leftX + rightX) / 2,
+            width: Math.max(0, rightX - leftX)
+          });
+        }
+
+        const allCards = Array.from(cardRects.values());
+        const minTop = allCards.length ? Math.min(...allCards.map((c) => c.top)) : 0;
+        const maxBottom = allCards.length ? Math.max(...allCards.map((c) => c.bottom)) : height;
+        const topBase = Math.max(10, minTop - 16);
+        const bottomBase = Math.min(height - 6, maxBottom + 16);
+        const laneSpacing = 8;
+
+        const linksRaw = pipelineLinks();
+        const links = linksRaw.map((lnk, idx) => ({
+          sourceId: lnk.sourceId,
+          targetId: lnk.targetId,
+          idx,
+          sourceLayer: agentLayerIndex(lnk.sourceId),
+          targetLayer: agentLayerIndex(lnk.targetId),
+          span: agentLayerIndex(lnk.targetId) - agentLayerIndex(lnk.sourceId)
+        }));
+
+        const stubsBySource = new Map();
+        const stubsByTarget = new Map();
+        for (const lnk of links) {
+          if (!stubsBySource.has(lnk.sourceId)) stubsBySource.set(lnk.sourceId, []);
+          stubsBySource.get(lnk.sourceId).push(lnk);
+          if (!stubsByTarget.has(lnk.targetId)) stubsByTarget.set(lnk.targetId, []);
+          stubsByTarget.get(lnk.targetId).push(lnk);
+        }
+        const sortByCounterpartY = (group, idKey) => {
+          group.sort((a, b) => {
+            const ay = cardRects.get(a[idKey])?.cy ?? 0;
+            const by = cardRects.get(b[idKey])?.cy ?? 0;
+            return ay - by;
+          });
+        };
+        for (const group of stubsBySource.values()) sortByCounterpartY(group, "targetId");
+        for (const group of stubsByTarget.values()) sortByCounterpartY(group, "sourceId");
+
+        const adjByGutter = new Map();
+        const skipExitsByGutter = new Map();
+        const skipEntriesByGutter = new Map();
+        const skipLinks = [];
+        for (const lnk of links) {
+          if (lnk.span === 1) {
+            const key = lnk.sourceLayer;
+            if (!adjByGutter.has(key)) adjByGutter.set(key, []);
+            adjByGutter.get(key).push(lnk);
+          } else if (lnk.span > 1) {
+            skipLinks.push(lnk);
+            const exitKey = lnk.sourceLayer;
+            const entryKey = lnk.targetLayer - 1;
+            if (!skipExitsByGutter.has(exitKey)) skipExitsByGutter.set(exitKey, []);
+            skipExitsByGutter.get(exitKey).push(lnk);
+            if (!skipEntriesByGutter.has(entryKey)) skipEntriesByGutter.set(entryKey, []);
+            skipEntriesByGutter.get(entryKey).push(lnk);
+          }
+        }
+
+        const midline = (minTop + maxBottom) / 2;
+        const topSkips = [];
+        const bottomSkips = [];
+        for (const lnk of skipLinks) {
+          const src = cardRects.get(lnk.sourceId);
+          if (!src) continue;
+          (src.cy <= midline ? topSkips : bottomSkips).push(lnk);
+        }
+        topSkips.sort((a, b) => (b.span - a.span) || (a.sourceLayer - b.sourceLayer));
+        bottomSkips.sort((a, b) => (b.span - a.span) || (a.sourceLayer - b.sourceLayer));
+        const laneY = new Map();
+        topSkips.forEach((l, i) => laneY.set(l.idx, Math.max(8, topBase - i * laneSpacing)));
+        bottomSkips.forEach((l, i) => laneY.set(l.idx, Math.min(height - 6, bottomBase + i * laneSpacing)));
+
+        for (const group of skipExitsByGutter.values()) {
+          group.sort((a, b) => (laneY.get(a.idx) ?? 0) - (laneY.get(b.idx) ?? 0));
+        }
+        for (const group of skipEntriesByGutter.values()) {
+          group.sort((a, b) => (laneY.get(a.idx) ?? 0) - (laneY.get(b.idx) ?? 0));
+        }
+
+        return {
+          links,
+          cardRects,
+          gutters,
+          stubsBySource,
+          stubsByTarget,
+          adjByGutter,
+          skipExitsByGutter,
+          skipEntriesByGutter,
+          laneY,
+          topBase,
+          bottomBase
+        };
+      }
+
+      /**
+       * Render a single link as an orthogonal path that:
+       *  - exits the source card from its right edge at a stub-offset Y,
+       *  - runs vertically inside an inter-stage gutter (never inside a card),
+       *  - for skip-stage links, traverses a top or bottom highway clear of
+       *    every card before dropping back down inside the destination gutter,
+       *  - enters the target card on its left edge at a stub-offset Y.
+       */
+      function pipelineLinkRoute(lnk, routing) {
+        const src = routing.cardRects.get(lnk.sourceId);
+        const tgt = routing.cardRects.get(lnk.targetId);
+        if (!src || !tgt) return null;
+        const stubGap = 6;
+        const srcGroup = routing.stubsBySource.get(lnk.sourceId) || [];
+        const tgtGroup = routing.stubsByTarget.get(lnk.targetId) || [];
+        const srcCount = srcGroup.length;
+        const tgtCount = tgtGroup.length;
+        const srcIdx = srcGroup.indexOf(lnk);
+        const tgtIdx = tgtGroup.indexOf(lnk);
+        const ySrc = src.cy + (srcIdx - (srcCount - 1) / 2) * stubGap;
+        const yTgt = tgt.cy + (tgtIdx - (tgtCount - 1) / 2) * stubGap;
+        const x1 = src.right;
+        const x2 = tgt.left;
+
+        let d;
+        if (lnk.span <= 1) {
+          const gutter = routing.gutters[lnk.sourceLayer] || { left: x1, right: x2, center: (x1 + x2) / 2, width: Math.max(0, x2 - x1) };
+          const group = routing.adjByGutter.get(lnk.sourceLayer) || [];
+          const gCount = group.length;
+          const gIdx = group.indexOf(lnk);
+          const maxOff = Math.max(0, gutter.width / 2 - 8);
+          const span = Math.min(maxOff * 2, Math.max(0, (gCount - 1) * 6));
+          const step = gCount > 1 ? span / (gCount - 1) : 0;
+          const trunkRaw = gutter.center + (gIdx - (gCount - 1) / 2) * step;
+          const trunkX = Math.max(gutter.left + 6, Math.min(gutter.right - 6, trunkRaw));
+          d = `M ${x1.toFixed(1)} ${ySrc.toFixed(1)} H ${trunkX.toFixed(1)} V ${yTgt.toFixed(1)} H ${x2.toFixed(1)}`;
+        } else {
+          const exitGutter = routing.gutters[lnk.sourceLayer] || { left: x1, right: x1 + 30, center: x1 + 15, width: 30 };
+          const entryGutter = routing.gutters[lnk.targetLayer - 1] || { left: x2 - 30, right: x2, center: x2 - 15, width: 30 };
+          const exitGroup = routing.skipExitsByGutter.get(lnk.sourceLayer) || [];
+          const entryGroup = routing.skipEntriesByGutter.get(lnk.targetLayer - 1) || [];
+          const exitCount = exitGroup.length;
+          const entryCount = entryGroup.length;
+          const exitIdx = exitGroup.indexOf(lnk);
+          const entryIdx = entryGroup.indexOf(lnk);
+          const exitMaxOff = Math.max(0, exitGutter.width / 2 - 8);
+          const entryMaxOff = Math.max(0, entryGutter.width / 2 - 8);
+          const exitSpan = Math.min(exitMaxOff * 2, Math.max(0, (exitCount - 1) * 6));
+          const entrySpan = Math.min(entryMaxOff * 2, Math.max(0, (entryCount - 1) * 6));
+          const exitStep = exitCount > 1 ? exitSpan / (exitCount - 1) : 0;
+          const entryStep = entryCount > 1 ? entrySpan / (entryCount - 1) : 0;
+          const exitRaw = exitGutter.center + (exitIdx - (exitCount - 1) / 2) * exitStep;
+          const entryRaw = entryGutter.center + (entryIdx - (entryCount - 1) / 2) * entryStep;
+          const exitX = Math.max(exitGutter.left + 6, Math.min(exitGutter.right - 6, exitRaw));
+          const entryX = Math.max(entryGutter.left + 6, Math.min(entryGutter.right - 6, entryRaw));
+          const highwayY = routing.laneY.get(lnk.idx) ?? routing.topBase;
+          d = `M ${x1.toFixed(1)} ${ySrc.toFixed(1)} H ${exitX.toFixed(1)} V ${highwayY.toFixed(1)} H ${entryX.toFixed(1)} V ${yTgt.toFixed(1)} H ${x2.toFixed(1)}`;
+        }
+        return { d, x1, x2, ySrc, yTgt };
       }
 
       function pipelinePacketMarkup(pathId, stateName, dimCls, threadColor, linkIndex) {
@@ -7487,27 +7640,6 @@
             </animateMotion>
           </circle>
         `;
-      }
-
-      function skipLinkLane(sourceId, targetId, height) {
-        const routeKey = `${sourceId}->${targetId}`;
-        const topLanes = {
-          "semantic-diff-explainer->test-coverage-validator": 48,
-          "policy-gate->truth-report-synthesizer": 66
-        };
-        const bottomLanes = {
-          "intent-extractor->evidence-mapper": 132,
-          "semantic-evidence-agent->test-coverage-validator": 110,
-          "semantic-evidence-agent->truth-report-synthesizer": 78,
-          "slop-detector->truth-report-synthesizer": 96
-        };
-        if (topLanes[routeKey] != null) {
-          return { y: topLanes[routeKey], exitOffset: 30, entryOffset: 32 };
-        }
-        if (bottomLanes[routeKey] != null) {
-          return { y: Math.max(90, height - bottomLanes[routeKey]), exitOffset: 30, entryOffset: 32 };
-        }
-        return { y: Math.max(90, height - 74), exitOffset: 28, entryOffset: 28 };
       }
 
       function agentLayerIndex(agentId) {
@@ -7587,7 +7719,7 @@
             ? "This agent is disabled. Enable it in the pipeline panel to include it in the next run."
             : hasRun
               ? "This agent didn't run for the current analysis (pipeline failed earlier or the agent was skipped). Run a fresh analysis to populate."
-              : "No analysis has been run yet. Click \"Run Demo PR\" to populate agent outputs.";
+              : "No analysis has been run yet. Trigger an analysis to populate agent outputs.";
           agentOutputEl.innerHTML = `<div class="agent-output-layout">
             <div class="agent-output-summary">
               <p class="section-kicker">${esc(agent.stage)}</p>
