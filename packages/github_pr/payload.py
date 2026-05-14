@@ -221,6 +221,27 @@ def _analysis_context(pr: dict[str, Any]) -> str:
             parts = [label, title, f"({state})" if state else ""]
             lines.append(" ".join(str(part) for part in parts if part))
 
+    # `linked_issues` carries the FULL body of each issue the PR closes /
+    # references. The intent-extractor reads `analysis_context` as one of
+    # its intent sources, so dropping the body here is what makes
+    # acceptance criteria written in the issue (but not in the PR body)
+    # show up as `should` / `must_not` items.
+    linked_issues = pr.get("linked_issues") or []
+    if isinstance(linked_issues, list) and linked_issues:
+        lines.append("")
+        lines.append("Linked issue bodies:")
+        for issue in linked_issues[:5]:
+            if not isinstance(issue, dict):
+                continue
+            number = issue.get("number")
+            title = str(issue.get("title") or "")
+            body = str(issue.get("body") or "").strip()
+            if not number:
+                continue
+            lines.append(f"--- Issue #{number}: {title} ---")
+            if body:
+                lines.append(body)
+
     if pr.get("commit_history"):
         lines.append("Commit history:")
         for commit in pr["commit_history"][:25]:

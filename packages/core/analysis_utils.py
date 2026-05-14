@@ -72,7 +72,43 @@ def is_docs(path: str) -> bool:
 
 
 def risk_hits(*parts: str) -> list[str]:
+    """Loose match: a risk keyword anywhere in the haystack (path, patch, content).
+
+    Kept for backwards compat with callers that pass already-narrowed text.
+    Prefer ``risk_hits_in_added_lines`` for diff-driven classification —
+    matching on the path alone gives false positives (e.g., flagging files
+    just because they import from ``_authenticated/``).
+    """
     haystack = "\n".join(str(part).lower() for part in parts if part)
+    return [keyword for keyword in RISK_KEYWORDS if keyword in haystack]
+
+
+def added_patch_lines(patch: str) -> list[str]:
+    """Return only the lines added in a unified diff (no ``+++``/headers)."""
+    out: list[str] = []
+    for raw in (patch or "").splitlines():
+        if raw.startswith("+++") or raw.startswith("---") or raw.startswith("@@"):
+            continue
+        if raw.startswith("+"):
+            out.append(raw[1:])
+    return out
+
+
+def risk_hits_in_added_lines(patch: str, content: str = "") -> list[str]:
+    """Stricter risk match: scan only the ADDED diff lines (+ optional file content).
+
+    Deliberately ignores the file path so a clean component file under
+    ``src/routes/_authenticated/...`` doesn't get tagged "auth-touching" just
+    because the directory name contains ``auth``. Likewise a UI helper that
+    imports from a module named ``token-store`` won't trip "token" unless
+    the helper actually writes the word ``token`` in its added lines.
+    """
+    body = "\n".join(added_patch_lines(patch))
+    if content:
+        body = f"{body}\n{content}"
+    if not body:
+        return []
+    haystack = body.lower()
     return [keyword for keyword in RISK_KEYWORDS if keyword in haystack]
 
 

@@ -111,8 +111,14 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
 
 _INTENT_SYSTEM_PROMPT = (
     "You extract reviewer-relevant INTENT from a pull request's text. "
-    "Read the PR title, body, linked issues, and commit messages, then "
-    "identify discrete claims the author is making.\n\n"
+    "Read the PR title, body, linked-issue BODIES (the full text of every issue\n"
+    "the PR closes / references), and commit messages, then identify discrete\n"
+    "claims the author is making.\n\n"
+    "PRIORITY: linked-issue bodies typically contain the canonical acceptance\n"
+    "criteria and test cases. When an issue lists 'should' / 'must not' /\n"
+    "'out of scope' items or numbered acceptance criteria, extract each one\n"
+    "as its own intent item — these are the ground truth the implementation\n"
+    "will be checked against.\n\n"
     "Each item must be one of three categories:\n"
     "  - 'should'        — something the PR is trying to do / add / fix / support.\n"
     "  - 'must_not'      — an explicit prohibition / constraint (e.g., 'must not\n"
@@ -120,20 +126,46 @@ _INTENT_SYSTEM_PROMPT = (
     "  - 'out_of_scope'  — explicitly excluded from this PR (e.g., 'not changing\n"
     "                      billing logic', 'follow-up will handle X').\n\n"
     "Rules:\n"
-    "- Quote or closely paraphrase the author's own words in 'text'. Do not invent claims.\n"
-    "- Extract at most 12 items. Skip filler like 'opened PR', 'see linked ticket'.\n"
+    "- 'text' is the SHORT human-readable form of the claim — aim for 8-15\n"
+    "  words. Strip code blocks, file paths, and conditionals like 'when X is Y\n"
+    "  AND Z'. The reviewer should read each row in <2s. If the source uses\n"
+    "  prose like 'Render an empty-state row spanning all columns when ...',\n"
+    "  summarize to 'Show empty state when filters return zero rows'.\n"
+    "- Do NOT invent claims. Every item must be traceable to a sentence in the\n"
+    "  PR body or a linked issue.\n"
+    "- Set 'source' to 'linked_issue' when the claim comes from an issue body,\n"
+    "  'pr_text' when it comes from the PR title / body / commits.\n"
+    "- Extract at most 16 items. Skip filler like 'opened PR', 'see linked ticket'.\n"
     "- 'severity': 'review_required' for must_not, 'warn' otherwise.\n"
-    "- 'confidence': 0-1, lower if the claim is implicit or hedged.\n"
+    "- 'confidence': 0-1, higher (>=0.85) for claims pulled from numbered\n"
+    "  acceptance criteria in a linked issue.\n"
     "- 'terms': 2-5 lowercase keywords from the claim that a code-search would match.\n\n"
     "Output a single JSON object:\n"
     '{"intent_items": [\n'
     '   {"id": "intent-N", "text": str, "category": "should"|"must_not"|"out_of_scope",\n'
-    '    "source": "pr_text", "terms": [str], "confidence": float, "severity": "warn"|"review_required"}\n'
+    '    "source": "pr_text"|"linked_issue", "terms": [str], "confidence": float,\n'
+    '    "severity": "warn"|"review_required"}\n'
     "]}"
 )
 
 
 def _extract_via_llm(pr: dict[str, Any], text: str) -> list[dict[str, Any]] | None:
+    # Trim each issue body so a verbose ticket doesn't blow the LLM budget,
+    # but keep enough to capture acceptance criteria + test cases.
+    linked_issues_payload: list[dict[str, Any]] = []
+    for issue in (pr.get("linked_issues") or [])[:5]:
+        if not isinstance(issue, dict):
+            continue
+        body = str(issue.get("body") or "")
+        linked_issues_payload.append(
+            {
+                "number": issue.get("number"),
+                "title": issue.get("title", ""),
+                "labels": issue.get("labels", []),
+                "body": body[:3500],
+            }
+        )
+
     structured_input = {
         "title": pr.get("title", ""),
         "body": pr.get("body", ""),
@@ -141,6 +173,7 @@ def _extract_via_llm(pr: dict[str, Any], text: str) -> list[dict[str, Any]] | No
             {"number": i.get("number"), "title": i.get("title"), "state": i.get("state")}
             for i in (pr.get("issue_refs") or [])[:10] if isinstance(i, dict)
         ],
+        "linked_issues": linked_issues_payload,
         "commits": [
             {"oid": (c.get("oid") or "")[:12], "message": c.get("message", "")}
             for c in (pr.get("commit_history") or [])[:15] if isinstance(c, dict)
@@ -157,7 +190,11 @@ def _extract_via_llm(pr: dict[str, Any], text: str) -> list[dict[str, Any]] | No
         system=_INTENT_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,
-        max_tokens=1200,
+        # 16 intent items × (text + terms + metadata) routinely produces
+        # ~2.5 KB of JSON. Old cap of 1200 truncated mid-string for any PR
+        # with a long linked-issue body. Bumped to 3000 so the response
+        # always closes the array + outer brace.
+        max_tokens=3000,
     )
     if not result:
         return None
@@ -167,6 +204,7 @@ def _extract_via_llm(pr: dict[str, Any], text: str) -> list[dict[str, Any]] | No
 
     valid_categories = {"should", "must_not", "out_of_scope"}
     valid_severities = {"warn", "review_required"}
+    valid_sources = {"pr_text", "linked_issue"}
     cleaned: list[dict[str, Any]] = []
     for idx, raw in enumerate(items):
         if not isinstance(raw, dict):
@@ -183,12 +221,15 @@ def _extract_via_llm(pr: dict[str, Any], text: str) -> list[dict[str, Any]] | No
         terms = raw.get("terms")
         if not isinstance(terms, list) or not terms:
             terms = important_terms(text_field)
+        source = str(raw.get("source") or "pr_text")
+        if source not in valid_sources:
+            source = "pr_text"
         cleaned.append(
             {
                 "id": str(raw.get("id") or f"intent-{idx + 1}"),
                 "text": text_field,
                 "category": category,
-                "source": str(raw.get("source") or "pr_text"),
+                "source": source,
                 "terms": [str(t).lower() for t in terms][:8],
                 "confidence": float(raw.get("confidence") or 0.75),
                 "severity": severity,

@@ -21,5 +21,6 @@ tools/bin/agentic_*
 .env.*
 agents/*/.gitignore
 agents/*/logs/
+agents/*/observability/
 agents/*/.devcontainer/
 logs/
