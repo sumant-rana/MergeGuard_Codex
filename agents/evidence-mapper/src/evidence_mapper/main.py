@@ -64,9 +64,9 @@ def map_intent(
         "mapped_paths": [file["path"] for file in matched_files[:8]],
         "evidence_paths": [file["path"] for file in tests[:8]],
         "memory_status": memory_item.get("status", "not_found"),
-        "memory_evidence_paths": [item.get("path") or item.get("title") for item in memory_matches[:6]],
+        "memory_evidence_paths": [_memory_display_label(item) for item in memory_matches[:6]],
         "memory_test_candidates": [
-            item.get("path") or item.get("title") for item in memory_tests[:6]
+            _memory_display_label(item) for item in memory_tests[:6]
         ],
         "memory_match_count": len(memory_matches),
         "confidence": 0.84 if status == "proven" else 0.66 if status == "partial" else 0.55,
@@ -243,10 +243,10 @@ def _map_via_llm(
                 "evidence_paths": evidence[:8],
                 "memory_status": memory_item.get("status", "not_found"),
                 "memory_evidence_paths": [
-                    m.get("path") or m.get("title") for m in memory_matches[:6]
+                    _memory_display_label(m) for m in memory_matches[:6]
                 ],
                 "memory_test_candidates": [
-                    t.get("path") or t.get("title") for t in memory_tests[:6]
+                    _memory_display_label(t) for t in memory_tests[:6]
                 ],
                 "memory_match_count": len(memory_matches),
                 "confidence": float(raw.get("confidence") or (0.85 if status == "proven" else 0.65)),
@@ -262,14 +262,48 @@ def _memory_summary_for(memory_item: dict[str, Any] | None) -> dict[str, Any]:
     return {
         "status": memory_item.get("status", "not_found"),
         "test_candidates": [
-            t.get("path") or t.get("title")
+            _memory_display_label(t)
             for t in (memory_item.get("test_candidates") or [])[:3]
         ],
         "matches": [
-            m.get("path") or m.get("title")
+            _memory_display_label(m)
             for m in (memory_item.get("matches") or [])[:3]
         ],
     }
+
+
+def _memory_display_label(hit: dict[str, Any]) -> str:
+    """Pick a human-readable label for a memory hit.
+
+    Memory hits round-tripping through the memory server lose their original
+    ``path`` / ``title`` metadata; ``normalize_memory_hit`` then fills both
+    with ``"."``. Prefer real-looking paths; fall back to title, then to a
+    short snippet of the indexed text so the dashboard's Evidence panel can
+    actually show something useful in the Memory sector.
+    """
+    if not isinstance(hit, dict):
+        return ""
+    path = (hit.get("path") or "").strip()
+    if path and path != ".":
+        return path
+    title = (hit.get("title") or "").strip()
+    if title and title != ".":
+        return title
+    text = (hit.get("text") or "").strip()
+    if text:
+        # Strip the ``[kind]`` prefix from prefix-tagged records so the snippet
+        # is purely about content.
+        if text.startswith("["):
+            close = text.find("]")
+            if 0 < close < 32:
+                text = text[close + 1 :].strip()
+        # Compact to a single short line.
+        first_line = text.splitlines()[0] if text else ""
+        snippet = first_line[:80].strip()
+        if snippet:
+            return snippet
+    label = (hit.get("label") or "").strip()
+    return label or "memory hit"
 
 
 def suggested_action(

@@ -8643,8 +8643,16 @@
           ...(item.memory_test_candidates || []),
           ...(item.memory_evidence_paths || [])
         ]);
-        const codePaths = splitEvidencePaths(directPaths, "code");
-        const testPaths = splitEvidencePaths(directPaths, "tests");
+        // ``mapped_paths`` = changed IMPLEMENTATION files the intent
+        // touched → Code sector. ``evidence_paths`` = changed TEST files
+        // that prove the intent → Tests sector. Pull each from its proper
+        // source list, then drop tests from changedPaths (defensive — the
+        // agent occasionally includes a test in mapped_paths too).
+        const codePaths = splitEvidencePaths(changedPaths, "code");
+        const testPaths = splitEvidencePaths(
+          [...directPaths, ...changedPaths],
+          "tests"
+        );
         const proofPaths = uniqueReviewItems([...directPaths, ...memoryPaths], 8);
         const memoryCount = Number(item.memory_match_count || 0);
         const confidence = item.confidence == null ? null : Math.max(0, Math.min(1, Number(item.confidence)));
@@ -8668,10 +8676,15 @@
 
       function splitEvidencePaths(paths, kind) {
         const testish = /(^|\/|\\)(tests?|spec|__tests__)(\/|\\|\.|$)|\.(test|spec)\.|_test\.|_spec\./i;
-        return (paths || []).filter((path) => {
+        const seen = new Set();
+        const out = [];
+        for (const path of paths || []) {
+          if (seen.has(path)) continue;
+          seen.add(path);
           const isTest = testish.test(path);
-          return kind === "tests" ? isTest : !isTest;
-        });
+          if (kind === "tests" ? isTest : !isTest) out.push(path);
+        }
+        return out;
       }
 
       function evidenceStatsFor(rows) {
