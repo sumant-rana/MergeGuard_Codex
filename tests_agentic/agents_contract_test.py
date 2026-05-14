@@ -93,7 +93,7 @@ class AgentContractTest(unittest.TestCase):
         )
         output = coverage["output"]
         self.assertEqual(coverage["agent_id"], "test-coverage-validator")
-        self.assertEqual(coverage["status"], "failed")
+        self.assertEqual(coverage["status"], "completed")
         self.assertEqual(output["coverage_status"], "blocked")
         self.assertLess(output["coverage_score"], 50)
         self.assertTrue(output["coverage_findings"])

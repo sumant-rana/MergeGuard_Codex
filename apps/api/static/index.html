@@ -1384,15 +1384,16 @@
 
       .pipeline-board {
         position: relative;
+        isolation: isolate;
         width: 100%;
         min-width: 0;
-        padding: 10px 4px 6px;
+        padding: 22px 12px 12px;
       }
 
       .pipeline-link-layer {
         position: absolute;
         inset: 0;
-        z-index: 6;
+        z-index: 0;
         width: 100%;
         height: 100%;
         overflow: visible;
@@ -1402,11 +1403,11 @@
       .pipeline-link {
         fill: none;
         stroke: color-mix(in oklab, var(--muted) 58%, transparent);
-        stroke-width: 2.3;
+        stroke-width: 2;
         stroke-linecap: round;
         stroke-linejoin: round;
         stroke-dasharray: 7 9;
-        opacity: 0.92;
+        opacity: 0.74;
         vector-effect: non-scaling-stroke;
       }
 
@@ -1462,15 +1463,16 @@
         position: relative;
         z-index: 2;
         display: grid;
-        grid-template-columns: minmax(56px, 0.78fr) minmax(82px, 1.06fr) minmax(64px, 0.84fr) minmax(82px, 0.98fr) minmax(58px, 0.76fr) minmax(62px, 0.82fr);
-        gap: clamp(6px, 1vw, 48px);
+        grid-template-columns: minmax(58px, 0.78fr) minmax(82px, 1fr) minmax(64px, 0.82fr) minmax(82px, 0.96fr) minmax(58px, 0.74fr) minmax(62px, 0.8fr);
+        gap: clamp(24px, 3vw, 86px);
         align-items: center;
-        min-height: 284px;
+        min-height: 320px;
       }
 
       .pipeline-stage {
         position: relative;
         z-index: 5;
+        isolation: isolate;
         display: grid;
         align-content: center;
         justify-items: center;
@@ -1513,7 +1515,7 @@
 
       .pipeline-stage-list {
         display: grid;
-        gap: 6px;
+        gap: 10px;
         width: min(100%, clamp(70px, 6vw, 122px));
       }
 
@@ -1524,11 +1526,11 @@
 
       .pipeline-stage-intake .pipeline-stage-list,
       .pipeline-stage-guardrails .pipeline-stage-list {
-        gap: 8px;
+        gap: 12px;
       }
 
       .pipeline-stage-impact .pipeline-stage-list {
-        gap: 6px;
+        gap: 11px;
       }
 
       .pipeline-stage-coverage .pipeline-stage-head,
@@ -1543,27 +1545,37 @@
       .pipeline-card {
         position: relative;
         z-index: 5;
+        isolation: isolate;
         display: grid;
-        gap: 3px;
+        gap: 4px;
         min-width: 0;
-        min-height: 38px;
+        min-height: 42px;
         padding: 4px;
         border: 1px solid color-mix(in oklab, var(--muted) 24%, transparent);
         border-left: 2px solid color-mix(in oklab, var(--muted) 45%, transparent);
         border-radius: 7px;
         background:
-          linear-gradient(135deg, color-mix(in oklab, var(--surface-strong) 92%, transparent), color-mix(in oklab, var(--surface-soft) 95%, transparent)),
-          var(--surface-raised);
+          linear-gradient(135deg, color-mix(in oklab, var(--surface-strong) 88%, var(--surface-raised)), var(--surface-raised)),
+          var(--surface-strong);
         box-shadow: var(--shadow);
         transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
+      }
+
+      .pipeline-card::before {
+        position: absolute;
+        inset: -5px;
+        z-index: -1;
+        border-radius: 10px;
+        background: var(--surface-inset);
+        content: "";
       }
 
       .pipeline-card.completed {
         border-color: color-mix(in oklab, var(--green) 44%, transparent);
         border-left-color: color-mix(in oklab, var(--green) 90%, transparent);
         background:
-          linear-gradient(135deg, color-mix(in oklab, var(--green) 28%, transparent), color-mix(in oklab, var(--green) 12%, transparent)),
-          var(--surface-raised);
+          linear-gradient(135deg, color-mix(in oklab, var(--green) 24%, var(--surface-strong)), color-mix(in oklab, var(--green) 9%, var(--surface-raised))),
+          var(--surface-strong);
         box-shadow: 0 0 0 1px color-mix(in oklab, var(--green) 14%, transparent), var(--shadow);
       }
 
@@ -1571,8 +1583,8 @@
         border-color: color-mix(in oklab, var(--red) 48%, transparent);
         border-left-color: color-mix(in oklab, var(--red) 92%, transparent);
         background:
-          linear-gradient(135deg, color-mix(in oklab, var(--red) 28%, transparent), color-mix(in oklab, var(--red) 12%, transparent)),
-          var(--surface-raised);
+          linear-gradient(135deg, color-mix(in oklab, var(--red) 24%, var(--surface-strong)), color-mix(in oklab, var(--red) 9%, var(--surface-raised))),
+          var(--surface-strong);
         box-shadow: 0 0 0 1px color-mix(in oklab, var(--red) 14%, transparent), var(--shadow);
       }
 
@@ -1629,9 +1641,10 @@
       }
 
       .pipeline-card-title {
-        overflow-wrap: anywhere;
+        overflow-wrap: normal;
+        word-break: normal;
         color: var(--text);
-        font-size: 7.6px;
+        font-size: 7px;
         font-weight: 950;
         line-height: 1.12;
       }
@@ -2130,8 +2143,8 @@
         aspect-ratio: 1;
         border-radius: 50%;
         background:
-          conic-gradient(var(--review-tone, var(--primary)) calc(var(--review-score, 0) * 1%), color-mix(in oklab, var(--muted) 18%, transparent) 0),
-          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%);
+          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%),
+          conic-gradient(var(--review-tone, var(--primary)) calc(var(--review-score, 0) * 1%), color-mix(in oklab, var(--muted) 18%, transparent) 0);
         color: var(--text);
         font-size: 16px;
         font-weight: 950;
@@ -2258,6 +2271,204 @@
         font-size: 10px;
       }
 
+      .review-heat {
+        display: grid;
+        gap: 10px;
+      }
+
+      .review-heat-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: start;
+      }
+
+      .review-heat-title {
+        display: grid;
+        gap: 5px;
+      }
+
+      .review-heat-title h4 {
+        margin: 0;
+        color: var(--text);
+        font-size: 18px;
+        line-height: 1.1;
+      }
+
+      .review-heat-title p {
+        max-width: 900px;
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 10px;
+        line-height: 1.35;
+      }
+
+      .review-heat-badges {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 6px;
+      }
+
+      .review-theme-row {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 7px;
+      }
+
+      .review-theme-chip {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 7px;
+        align-items: center;
+        min-height: 36px;
+        padding: 7px;
+        border: 1px solid color-mix(in oklab, var(--theme-color, var(--primary)) 26%, var(--border));
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--theme-color, var(--primary)) 7%, var(--surface-muted));
+        color: var(--text-soft);
+        font-size: 9px;
+        font-weight: 850;
+        overflow: hidden;
+      }
+
+      .review-theme-chip::before {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--theme-color, var(--primary));
+        box-shadow: 0 0 12px color-mix(in oklab, var(--theme-color, var(--primary)) 44%, transparent);
+        content: "";
+      }
+
+      .review-theme-chip strong {
+        color: var(--text);
+      }
+
+      .review-heat-list {
+        display: grid;
+        gap: 7px;
+      }
+
+      .review-heat-row {
+        --row-color: var(--primary);
+        display: grid;
+        grid-template-columns: minmax(180px, 0.34fr) minmax(220px, 1fr) minmax(88px, 0.16fr) auto;
+        gap: 10px;
+        align-items: center;
+        min-height: 62px;
+        padding: 8px 10px;
+        border: 1px solid color-mix(in oklab, var(--row-color) 30%, var(--border));
+        border-left: 3px solid var(--row-color);
+        border-radius: 8px;
+        background:
+          linear-gradient(90deg, color-mix(in oklab, var(--row-color) 8%, transparent), transparent 52%),
+          var(--surface-raised);
+      }
+
+      .review-heat-file {
+        display: grid;
+        gap: 5px;
+        min-width: 0;
+      }
+
+      .review-heat-file .code-link {
+        font-size: 10px;
+      }
+
+      .review-heat-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+
+      .review-heat-kind {
+        padding: 2px 6px;
+        border: 1px solid color-mix(in oklab, var(--row-color) 38%, transparent);
+        border-radius: 5px;
+        background: color-mix(in oklab, var(--row-color) 12%, transparent);
+        color: var(--row-color);
+        font-size: 7.6px;
+        font-weight: 950;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .review-change-strip {
+        position: relative;
+        min-height: 30px;
+        overflow: hidden;
+        border: 1px solid color-mix(in oklab, var(--muted) 18%, transparent);
+        border-radius: 6px;
+        background:
+          linear-gradient(180deg, color-mix(in oklab, var(--blue) 7%, transparent), transparent),
+          var(--surface-inset);
+        box-shadow:
+          inset 0 0 0 1px color-mix(in oklab, var(--bg) 30%, transparent),
+          inset 0 12px 22px color-mix(in oklab, #000 12%, transparent);
+      }
+
+      .review-change-strip span {
+        position: absolute;
+        display: block;
+        pointer-events: none;
+      }
+
+      .review-strip-tick {
+        left: calc(var(--left) * 1%);
+        top: 50%;
+        width: 3px;
+        height: 5px;
+        transform: translate(-50%, -50%);
+        border-radius: 2px;
+        background: color-mix(in oklab, var(--muted) 22%, transparent);
+      }
+
+      .review-strip-block {
+        left: calc(var(--left) * 1%);
+        top: 6px;
+        width: calc(var(--width) * 1%);
+        height: 18px;
+        border-radius: 2px;
+        background: var(--row-color);
+        box-shadow:
+          0 0 0 1px color-mix(in oklab, #000 14%, transparent),
+          0 0 12px color-mix(in oklab, var(--row-color) 26%, transparent);
+      }
+
+      .review-risk-mini {
+        display: grid;
+        gap: 4px;
+        color: var(--muted);
+        font-size: 7.4px;
+        font-weight: 950;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .review-risk-bar {
+        height: 6px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--muted) 16%, transparent);
+      }
+
+      .review-risk-bar span {
+        display: block;
+        width: calc(var(--risk, 0) * 1%);
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--green), var(--amber), var(--red));
+      }
+
+      .review-risk-number {
+        color: var(--row-color);
+        font-size: 16px;
+        font-weight: 950;
+        line-height: 1;
+        text-align: right;
+      }
+
       .code-link {
         display: inline;
         max-width: 100%;
@@ -2344,14 +2555,15 @@
       .slop-score-dial {
         display: grid;
         place-items: center;
-        width: 64px;
+        width: 72px;
         aspect-ratio: 1;
         border-radius: 50%;
         background:
-          conic-gradient(var(--slop-tone, var(--amber)) calc(var(--slop-score, 0) * 1%), color-mix(in oklab, var(--muted) 16%, transparent) 0),
-          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%);
+          radial-gradient(circle at center, var(--surface-inset) 0 55%, transparent 56%),
+          conic-gradient(var(--slop-tone, var(--amber)) calc(var(--slop-score, 0) * 1%), color-mix(in oklab, var(--muted) 16%, transparent) 0);
         color: var(--text);
         text-align: center;
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--muted) 18%, transparent);
       }
 
       .slop-score-dial strong {
@@ -2599,8 +2811,8 @@
         aspect-ratio: 1;
         border-radius: 50%;
         background:
-          conic-gradient(var(--evidence-tone, var(--primary)) calc(var(--evidence-score, 0) * 1%), color-mix(in oklab, var(--muted) 16%, transparent) 0),
-          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%);
+          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%),
+          conic-gradient(var(--evidence-tone, var(--primary)) calc(var(--evidence-score, 0) * 1%), color-mix(in oklab, var(--muted) 16%, transparent) 0);
         color: var(--text);
         text-align: center;
       }
@@ -2821,19 +3033,19 @@
 
       .evidence-graph {
         display: grid;
-        min-height: 510px;
+        min-height: var(--proof-stage-height, 510px);
       }
 
       .proof-graph-stage {
         position: relative;
-        min-height: 510px;
+        min-height: var(--proof-stage-height, 510px);
         overflow: hidden;
         border: 1px solid var(--border);
         border-radius: 8px;
         background:
-          radial-gradient(circle at 18% 24%, color-mix(in oklab, var(--red) 10%, transparent), transparent 24%),
-          radial-gradient(circle at 45% 48%, color-mix(in oklab, var(--amber) 12%, transparent), transparent 30%),
-          radial-gradient(circle at 67% 66%, color-mix(in oklab, var(--green) 10%, transparent), transparent 24%),
+          radial-gradient(circle at 18% 24%, color-mix(in oklab, var(--red) 5%, transparent), transparent 24%),
+          radial-gradient(circle at 45% 48%, color-mix(in oklab, var(--amber) 7%, transparent), transparent 30%),
+          radial-gradient(circle at 67% 66%, color-mix(in oklab, var(--green) 6%, transparent), transparent 24%),
           var(--surface-muted);
       }
 
@@ -2860,9 +3072,9 @@
         fill: none;
         stroke: var(--edge-color, var(--primary));
         stroke-linecap: round;
-        stroke-width: 2;
-        opacity: 0.78;
-        filter: drop-shadow(0 0 6px color-mix(in oklab, var(--edge-color, var(--primary)) 28%, transparent));
+        stroke-width: 1.7;
+        opacity: 0.5;
+        filter: none;
       }
 
       .proof-graph-labels {
@@ -2901,8 +3113,8 @@
         border: 1px solid color-mix(in oklab, var(--node-tone) 54%, transparent);
         border-radius: 8px;
         background:
-          radial-gradient(circle at 20% 0, color-mix(in oklab, var(--node-tone) 20%, transparent), transparent 52%),
-          var(--surface-raised);
+          linear-gradient(135deg, color-mix(in oklab, var(--node-tone) 10%, transparent), transparent 58%),
+          var(--surface-strong);
         color: var(--text);
         text-align: left;
         cursor: pointer;
@@ -3002,13 +3214,13 @@
 
       .memory-radar {
         display: grid;
-        min-height: 510px;
+        min-height: 560px;
       }
 
       .memory-stage {
-        --memory-center-x: 35%;
+        --memory-center-x: 40%;
         position: relative;
-        min-height: 510px;
+        min-height: 560px;
         overflow: hidden;
         border: 1px solid var(--border);
         border-radius: 8px;
@@ -3039,18 +3251,18 @@
       }
 
       .memory-orbit.one {
-        width: 168px;
-        height: 168px;
+        width: 220px;
+        height: 220px;
       }
 
       .memory-orbit.two {
-        width: 250px;
-        height: 250px;
+        width: 340px;
+        height: 340px;
       }
 
       .memory-orbit.three {
-        width: 322px;
-        height: 322px;
+        width: 450px;
+        height: 450px;
       }
 
       .memory-center {
@@ -3060,7 +3272,7 @@
         z-index: 2;
         display: grid;
         place-items: center;
-        width: 112px;
+        width: 136px;
         aspect-ratio: 1;
         transform: translate(-50%, -50%);
         border: 1px solid color-mix(in oklab, var(--primary) 54%, transparent);
@@ -3075,7 +3287,7 @@
       .memory-center strong {
         display: block;
         color: var(--text);
-        font-size: 13px;
+        font-size: 15px;
         line-height: 1.05;
       }
 
@@ -3149,10 +3361,10 @@
         position: absolute;
         top: calc(100% + 4px);
         left: 50%;
-        width: 104px;
+        width: 130px;
         transform: translateX(-50%);
         color: var(--text-soft);
-        font-size: 7.5px;
+        font-size: 8px;
         font-weight: 850;
         line-height: 1.15;
         text-align: center;
@@ -3203,8 +3415,8 @@
         display: grid;
         align-content: start;
         gap: 8px;
-        width: min(280px, 34%);
-        min-width: 220px;
+        width: min(244px, 27%);
+        min-width: 204px;
         overflow: auto;
         padding: 10px;
         border: 1px solid var(--border);
@@ -3293,11 +3505,12 @@
         aspect-ratio: 1;
         border-radius: 50%;
         background:
-          conic-gradient(var(--primary) calc(var(--mesh-score, 0) * 1%), color-mix(in oklab, var(--muted) 18%, transparent) 0),
-          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%);
+          radial-gradient(circle at center, var(--surface-inset) 0 56%, transparent 57%),
+          conic-gradient(var(--primary) calc(var(--mesh-score, 0) * 1%), color-mix(in oklab, var(--muted) 18%, transparent) 0);
         color: var(--text);
         font-size: 17px;
         font-weight: 950;
+        text-shadow: 0 1px 8px var(--surface-inset);
       }
 
       .agent-stage-chain {
@@ -3426,11 +3639,12 @@
         aspect-ratio: 1;
         border-radius: 50%;
         background:
-          conic-gradient(var(--agent-color) calc(var(--agent-score, 0) * 1%), color-mix(in oklab, var(--muted) 16%, transparent) 0),
-          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%);
+          radial-gradient(circle at center, var(--surface-inset) 0 56%, transparent 57%),
+          conic-gradient(var(--agent-color) calc(var(--agent-score, 0) * 1%), color-mix(in oklab, var(--muted) 16%, transparent) 0);
         color: var(--text);
         font-size: 8px;
         font-weight: 950;
+        text-shadow: 0 1px 8px var(--surface-inset);
       }
 
       .agent-command-node h5 {
@@ -3505,8 +3719,8 @@
         aspect-ratio: 1;
         border-radius: 50%;
         background:
-          conic-gradient(var(--coverage-color, var(--red)) calc(var(--coverage-score, 0) * 1%), color-mix(in oklab, var(--muted) 16%, transparent) 0),
-          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%);
+          radial-gradient(circle at center, var(--surface-inset) 0 58%, transparent 59%),
+          conic-gradient(var(--coverage-color, var(--red)) calc(var(--coverage-score, 0) * 1%), color-mix(in oklab, var(--muted) 16%, transparent) 0);
         color: var(--text);
         text-align: center;
       }
@@ -3645,6 +3859,394 @@
         border: 1px dashed color-mix(in oklab, var(--primary) 34%, var(--border));
         border-radius: 8px;
         background: color-mix(in oklab, var(--primary) 8%, var(--surface-muted));
+      }
+
+      .coverage-sun-view {
+        display: grid;
+        gap: 10px;
+      }
+
+      .coverage-sun-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .coverage-sun-head h4,
+      .behavior-radar-head h4 {
+        margin: 0;
+        color: var(--text);
+        font-size: 18px;
+        line-height: 1.08;
+      }
+
+      .coverage-sun-head p,
+      .behavior-radar-head p {
+        max-width: 920px;
+        margin: 6px 0 0;
+        color: var(--text-soft);
+        font-size: 10px;
+        line-height: 1.35;
+      }
+
+      .coverage-sun-badges,
+      .behavior-radar-badges {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 6px;
+      }
+
+      .coverage-sun-layout {
+        display: grid;
+        grid-template-columns: minmax(360px, 0.66fr) minmax(260px, 0.34fr);
+        gap: 14px;
+        min-height: 420px;
+      }
+
+      .coverage-sun-card,
+      .coverage-req-list,
+      .behavior-radar-stage,
+      .behavior-delta-stack {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, color-mix(in oklab, var(--primary) 5%, transparent), transparent 54%),
+          var(--surface-muted);
+      }
+
+      .coverage-sun-card {
+        position: relative;
+        display: grid;
+        place-items: center;
+        min-height: 410px;
+        padding: 12px;
+      }
+
+      .coverage-sun {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: min(390px, 90%);
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at center, var(--surface-inset) 0 34%, transparent 35%),
+          var(--coverage-sun);
+        box-shadow: 0 0 0 1px color-mix(in oklab, var(--muted) 20%, transparent), inset 0 0 0 10px color-mix(in oklab, var(--surface-inset) 52%, transparent);
+      }
+
+      .coverage-sun-center {
+        display: grid;
+        place-items: center;
+        width: 30%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: var(--surface-inset);
+        box-shadow: 0 0 0 1px color-mix(in oklab, var(--muted) 26%, transparent);
+        text-align: center;
+      }
+
+      .coverage-sun-center strong {
+        display: block;
+        color: var(--text);
+        font-size: 25px;
+        line-height: 1;
+      }
+
+      .coverage-sun-center span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 7px;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .coverage-sun-label {
+        position: absolute;
+        left: calc(50% + var(--lx));
+        top: calc(50% + var(--ly));
+        display: grid;
+        gap: 1px;
+        transform: translate(-50%, -50%);
+        color: var(--label-color, var(--text-soft));
+        font-size: 8px;
+        font-weight: 950;
+        line-height: 1.1;
+        text-align: center;
+        text-shadow: 0 1px 8px var(--surface-inset);
+      }
+
+      .coverage-sun-label small {
+        color: var(--text-soft);
+        font-size: 7px;
+      }
+
+      .coverage-req-list {
+        display: grid;
+        align-content: start;
+        gap: 6px;
+        padding: 8px;
+      }
+
+      .coverage-req-row {
+        --req-color: var(--amber);
+        display: grid;
+        gap: 5px;
+        padding: 7px;
+        border: 1px solid color-mix(in oklab, var(--req-color) 32%, var(--border));
+        border-left: 3px solid var(--req-color);
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--req-color) 7%, var(--surface-raised));
+      }
+
+      .coverage-req-row.missing,
+      .coverage-req-row.block {
+        --req-color: var(--red);
+      }
+
+      .coverage-req-row.covered,
+      .coverage-req-row.success {
+        --req-color: var(--green);
+      }
+
+      .coverage-req-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .coverage-req-row h5 {
+        margin: 0;
+        overflow-wrap: anywhere;
+        color: var(--text);
+        font-size: 8.7px;
+        line-height: 1.2;
+      }
+
+      .coverage-req-bar {
+        height: 5px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--muted) 16%, transparent);
+      }
+
+      .coverage-req-bar span {
+        display: block;
+        width: calc(var(--coverage, 0) * 1%);
+        height: 100%;
+        border-radius: inherit;
+        background: var(--req-color);
+      }
+
+      .coverage-req-row p {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 7.8px;
+        line-height: 1.3;
+      }
+
+      .coverage-critical {
+        padding: 9px;
+        border: 1px solid color-mix(in oklab, var(--red) 30%, var(--border));
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--red) 8%, var(--surface-muted));
+      }
+
+      .coverage-critical span {
+        display: block;
+        color: var(--red);
+        font-size: 8px;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .coverage-critical strong {
+        display: block;
+        margin-top: 4px;
+        color: var(--text);
+        font-size: 10px;
+        line-height: 1.25;
+      }
+
+      .behavior-radar {
+        display: grid;
+        gap: 10px;
+      }
+
+      .behavior-radar-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .behavior-radar-layout {
+        display: grid;
+        grid-template-columns: minmax(440px, 0.68fr) minmax(240px, 0.32fr);
+        gap: 14px;
+        min-height: 520px;
+      }
+
+      .behavior-radar-stage {
+        position: relative;
+        min-height: 520px;
+        overflow: hidden;
+      }
+
+      .behavior-radar-ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border: 1px dashed color-mix(in oklab, var(--ring-color, var(--primary)) 32%, transparent);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .behavior-radar-ring.one {
+        --ring-color: var(--red);
+        width: min(42%, 268px);
+        aspect-ratio: 1;
+      }
+
+      .behavior-radar-ring.two {
+        --ring-color: var(--amber);
+        width: min(66%, 420px);
+        aspect-ratio: 1;
+      }
+
+      .behavior-radar-ring.three {
+        --ring-color: var(--primary);
+        width: min(88%, 540px);
+        aspect-ratio: 1;
+      }
+
+      .behavior-epicenter {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        z-index: 3;
+        display: grid;
+        place-items: center;
+        width: 138px;
+        aspect-ratio: 1;
+        transform: translate(-50%, -50%);
+        border: 2px solid color-mix(in oklab, var(--red) 70%, transparent);
+        border-radius: 50%;
+        background: var(--surface-inset);
+        color: var(--text);
+        text-align: center;
+        box-shadow: 0 0 30px color-mix(in oklab, var(--red) 18%, transparent);
+      }
+
+      .behavior-epicenter span {
+        display: block;
+        color: var(--red);
+        font-size: 7px;
+        font-weight: 950;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .behavior-epicenter strong {
+        display: block;
+        margin-top: 4px;
+        max-width: 96px;
+        overflow-wrap: anywhere;
+        font-size: 9px;
+        line-height: 1.15;
+      }
+
+      .behavior-radar-node {
+        --node-color: var(--amber);
+        position: absolute;
+        left: calc(50% + var(--x));
+        top: calc(50% + var(--y));
+        z-index: 4;
+        display: grid;
+        place-items: center;
+        width: var(--size, 46px);
+        aspect-ratio: 1;
+        transform: translate(-50%, -50%);
+        border: 2px solid var(--node-color);
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at center, var(--surface-inset) 0 60%, transparent 61%),
+          conic-gradient(var(--node-color) calc(var(--magnitude, 0) * 1%), color-mix(in oklab, var(--muted) 18%, transparent) 0);
+        color: var(--text);
+        font-size: 8px;
+        font-weight: 950;
+        box-shadow: 0 0 20px color-mix(in oklab, var(--node-color) 16%, transparent);
+      }
+
+      .behavior-radar-node.high {
+        --node-color: var(--red);
+      }
+
+      .behavior-radar-node.low {
+        --node-color: var(--green);
+      }
+
+      .behavior-radar-label {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 50%;
+        width: 108px;
+        transform: translateX(-50%);
+        color: var(--text-soft);
+        font-size: 7.6px;
+        line-height: 1.12;
+        text-align: center;
+      }
+
+      .behavior-delta-stack {
+        display: grid;
+        align-content: start;
+        gap: 6px;
+        padding: 8px;
+      }
+
+      .behavior-delta-card {
+        --delta-color: var(--amber);
+        display: grid;
+        gap: 4px;
+        padding: 7px;
+        border: 1px solid color-mix(in oklab, var(--delta-color) 30%, var(--border));
+        border-left: 3px solid var(--delta-color);
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--delta-color) 6%, var(--surface-raised));
+      }
+
+      .behavior-delta-card.high {
+        --delta-color: var(--red);
+      }
+
+      .behavior-delta-card.low {
+        --delta-color: var(--green);
+      }
+
+      .behavior-delta-card span {
+        color: var(--delta-color);
+      }
+
+      .behavior-delta-card h5 {
+        margin: 0;
+        color: var(--text);
+        font-size: 8.8px;
+        line-height: 1.2;
+      }
+
+      .behavior-delta-card p {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 7.8px;
+        line-height: 1.3;
       }
 
       .behavior-stage {
@@ -4203,8 +4805,30 @@
         .test-stage,
         .gate-stage,
         .contract-stage,
-        .agent-mesh-hero {
+        .agent-mesh-hero,
+        .coverage-sun-layout,
+        .behavior-radar-layout {
           grid-template-columns: 1fr;
+        }
+
+        .review-theme-row {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .review-heat-row {
+          grid-template-columns: minmax(170px, 0.42fr) minmax(220px, 1fr) minmax(80px, 0.16fr) auto;
+        }
+
+        .coverage-sun-card {
+          min-height: 360px;
+        }
+
+        .coverage-sun {
+          width: min(330px, 78%);
+        }
+
+        .behavior-radar-stage {
+          min-height: 460px;
         }
 
         .agent-stage-chain {
@@ -4231,11 +4855,11 @@
         }
 
         .memory-stage {
-          --memory-center-x: 42%;
+          --memory-center-x: 38%;
         }
 
         .memory-detail-panel {
-          width: min(250px, 36%);
+          width: min(232px, 31%);
           min-width: 210px;
         }
 
@@ -4275,6 +4899,13 @@
 
         .slop-lanes,
         .evidence-lanes,
+        .review-heat-hero,
+        .review-theme-row,
+        .review-heat-row,
+        .coverage-sun-head,
+        .coverage-sun-layout,
+        .behavior-radar-head,
+        .behavior-radar-layout,
         .test-target-grid,
         .test-rec-rail,
         .gate-wall,
@@ -4292,6 +4923,29 @@
         .contract-xray-row {
           display: grid;
           grid-template-columns: 1fr;
+        }
+
+        .review-heat-badges,
+        .coverage-sun-badges,
+        .behavior-radar-badges {
+          justify-content: flex-start;
+        }
+
+        .review-heat-row {
+          align-items: stretch;
+        }
+
+        .review-risk-number {
+          text-align: left;
+        }
+
+        .coverage-sun-card,
+        .behavior-radar-stage {
+          min-height: 380px;
+        }
+
+        .coverage-sun {
+          width: min(280px, 80%);
         }
 
         .behavior-arrow,
@@ -5274,11 +5928,12 @@
           const y2 = targetRect.top - boardRect.top + targetRect.height / 2;
           const sourceLayer = agentLayerIndex(sourceId);
           const targetLayer = agentLayerIndex(targetId);
-          const laneOffset = ((linkIndex % 5) - 2) * 12;
-          const elbowX = x1 + Math.max(28, (x2 - x1) / 2) + laneOffset;
+          const laneOffset = ((linkIndex % 7) - 3) * 7;
+          const gap = Math.max(22, x2 - x1);
+          const elbowX = x1 + Math.max(18, gap / 2) + laneOffset;
           const skipLane = skipLinkLane(sourceId, targetId, height);
-          const exitX = x1 + skipLane.exitOffset + laneOffset / 3;
-          const entryX = x2 - skipLane.entryOffset - laneOffset / 3;
+          const exitX = x1 + skipLane.exitOffset + laneOffset / 4;
+          const entryX = x2 - skipLane.entryOffset - laneOffset / 4;
           const stateName = pipelineLinkVisualState(sourceId, targetId, run);
           const path = targetLayer - sourceLayer > 1
             ? `M ${x1.toFixed(1)} ${y1.toFixed(1)} H ${exitX.toFixed(1)} V ${skipLane.y.toFixed(1)} H ${entryX.toFixed(1)} V ${y2.toFixed(1)} H ${x2.toFixed(1)}`
@@ -5295,19 +5950,22 @@
       function skipLinkLane(sourceId, targetId, height) {
         const routeKey = `${sourceId}->${targetId}`;
         const topLanes = {
-          "semantic-diff-explainer->test-coverage-validator": 78,
-          "policy-gate->truth-report-synthesizer": 128,
-          "semantic-evidence-agent->test-coverage-validator": 178,
-          "semantic-evidence-agent->truth-report-synthesizer": 228,
-          "slop-detector->truth-report-synthesizer": 278
+          "semantic-diff-explainer->test-coverage-validator": 48,
+          "policy-gate->truth-report-synthesizer": 66
+        };
+        const bottomLanes = {
+          "intent-extractor->evidence-mapper": 132,
+          "semantic-evidence-agent->test-coverage-validator": 110,
+          "semantic-evidence-agent->truth-report-synthesizer": 78,
+          "slop-detector->truth-report-synthesizer": 96
         };
         if (topLanes[routeKey] != null) {
-          return { y: topLanes[routeKey], exitOffset: 28, entryOffset: 30 };
+          return { y: topLanes[routeKey], exitOffset: 30, entryOffset: 32 };
         }
-        if (routeKey === "intent-extractor->evidence-mapper") {
-          return { y: Math.max(96, height - 52), exitOffset: 22, entryOffset: 26 };
+        if (bottomLanes[routeKey] != null) {
+          return { y: Math.max(90, height - bottomLanes[routeKey]), exitOffset: 30, entryOffset: 32 };
         }
-        return { y: Math.max(28, height - 58), exitOffset: 24, entryOffset: 24 };
+        return { y: Math.max(90, height - 74), exitOffset: 28, entryOffset: 28 };
       }
 
       function agentLayerIndex(agentId) {
@@ -5387,7 +6045,7 @@
             ? "This agent is disabled. Enable it in the pipeline panel to include it in the next run."
             : hasRun
               ? "This agent didn't run for the current analysis (pipeline failed earlier or the agent was skipped). Run a fresh analysis to populate."
-              : "No analysis has been run yet. Click “Run Demo PR” to populate agent outputs.";
+              : "No analysis has been run yet. Click \"Run Demo PR\" to populate agent outputs.";
           agentOutputEl.innerHTML = `<div class="agent-output-layout">
             <div class="agent-output-summary">
               <p class="section-kicker">${esc(agent.stage)}</p>
@@ -5765,34 +6423,129 @@
         const confidence = reviewConfidence(summary, run);
         const intent = primaryReviewIntent(summary, pr);
         const checklist = reviewChecklist(summary);
-        const files = reviewFileFocusItems(summary);
-        return `<div class="review-brief">
-          <section class="review-decision" style="--review-tone:${decision.color};--review-score:${score}">
-            <div>
-              <div class="chip-row">
-                ${pill(decision.status, decision.status)}
-                ${pill(`${confidence}% confidence`, "info")}
-              </div>
-              <h4>${esc(decision.title)}</h4>
-              <p>${esc(decision.reason)}</p>
+        const files = reviewFileFocusItems(summary, run);
+        const themes = reviewThemeChips(summary, files);
+        const mustCount = checklist.must.filter((item) => !item.startsWith("No ")).length;
+        const verifyCount = checklist.verify.filter((item) => !item.startsWith("No ")).length;
+        return `<div class="review-heat">
+          <section class="review-heat-hero">
+            <div class="review-heat-title">
+              <span class="review-list-label">Change triage / heat list</span>
+              <h4>Read this top-to-bottom and you have reviewed it.</h4>
+              <p>Files are ordered by review risk. The mini-strip on each row shows where the change clusters, so reviewers inspect dense or dangerous regions first.</p>
             </div>
-            <div class="review-decision-meter">
-              <div class="review-decision-score">${esc(scoreLabel(summary.risk_score))}</div>
-              <span class="review-list-label">risk</span>
+            <div class="review-heat-badges">
+              ${pill(`${mustCount} must-review`, mustCount ? "block" : "success")}
+              ${pill(`${verifyCount} verify`, verifyCount ? "review" : "success")}
+              ${pill(`${confidence}% confidence`, "info")}
             </div>
           </section>
-          <div class="review-signal-grid">
-            ${reviewSignal("PR intent", intent)}
-            ${reviewSignal("Top blocker", summary.top_blocker || "No merge blocker detected.")}
-            ${reviewSignal("Next action", summary.next_action || "No reviewer action generated.")}
-            ${reviewSignal("File focus", `${files.length || countItems(summary.hotspots)} priority files`)}
-          </div>
-          <div class="review-brief-grid">
-            ${reviewChecklistPanel(checklist)}
-            ${reviewFileFocusPanel(files)}
-          </div>
-          ${reviewCommentPanel(summary.comment)}
+          <section class="review-theme-row" aria-label="Review themes">
+            ${themes.map(reviewThemeChip).join("")}
+          </section>
+          <section class="review-heat-list" aria-label="Reviewer heat list">
+            ${files.length ? files.map((item, index) => reviewHeatRow(item, index)).join("") : `<div class="slop-empty">No priority files were flagged for this review.</div>`}
+          </section>
+          <section class="coverage-critical">
+            <span>Reviewer decision</span>
+            <strong>${esc(decision.reason || intent)}</strong>
+          </section>
         </div>`;
+      }
+
+      function reviewThemeChips(summary, files) {
+        const source = [
+          ...(files || []).flatMap((item) => [item.path, ...(item.reasons || []), ...(item.actions || [])]),
+          ...(summary.intent_items || []).map((item) => item.text),
+          summary.top_blocker,
+          summary.next_action
+        ].join(" ").toLowerCase();
+        const themeDefs = [
+          ["refund", "refund", "var(--primary)"],
+          ["email", "email", "var(--blue)"],
+          ["security", "security", "var(--red)"],
+          ["prompt", "prompt", "var(--violet)"],
+          ["charge", "charge", "var(--amber)"],
+          ["config", "config", "var(--green)"]
+        ];
+        const themes = themeDefs.map(([key, label, color]) => ({
+          label,
+          color,
+          count: (source.match(new RegExp(key, "g")) || []).length
+        })).filter((item) => item.count > 0).slice(0, 6);
+        return themes.length ? themes : [{
+          label: "review",
+          color: "var(--primary)",
+          count: Math.max(1, files?.length || 0)
+        }];
+      }
+
+      function reviewThemeChip(item) {
+        return `<div class="review-theme-chip" style="--theme-color:${item.color}">
+          <span>${esc(item.label)}</span>
+          <strong>${esc(item.count)}</strong>
+        </div>`;
+      }
+
+      function reviewHeatRow(item, index) {
+        const risk = numericScore(item.risk);
+        const tone = risk >= 80 ? "var(--red)" : risk >= 55 ? "var(--amber)" : risk >= 30 ? "var(--primary)" : "var(--green)";
+        const kind = reviewFileKind(item.path, item.reasons);
+        const owner = item.owners[0] || "unassigned";
+        return `<article class="review-heat-row" style="--row-color:${tone};--risk:${risk}">
+          <div class="review-heat-file">
+            <button class="code-link" type="button" data-code-path="${escAttr(item.path)}" aria-label="Open ${escAttr(item.path)} changed code"><code>${esc(item.path)}</code></button>
+            <div class="review-heat-meta">
+              <span class="review-heat-kind">${esc(kind)}</span>
+              <span class="muted">${esc(owner)}</span>
+            </div>
+          </div>
+          ${reviewChangeStrip(item.path, risk, index, kind)}
+          <div class="review-risk-mini">
+            <div class="review-risk-bar"><span></span></div>
+            <span>risk ${esc(risk)}</span>
+          </div>
+          <div class="review-risk-number">${esc(risk)}</div>
+        </article>`;
+      }
+
+      function reviewChangeStrip(path, risk, index, kind = "logic") {
+        const seed = stableNumber(`${path}:${risk}:${index}`);
+        const tickMarks = Array.from({ length: 20 }, (_, slot) => 4 + slot * 4.8);
+        const blocks = reviewStripBlocks(kind, risk, seed);
+        return `<div class="review-change-strip" aria-label="Change density strip">
+          ${tickMarks.map((left) => `<span class="review-strip-tick" style="--left:${left.toFixed(1)}"></span>`).join("")}
+          ${blocks.map((block) => `<span class="review-strip-block" style="--left:${block.left};--width:${block.width}"></span>`).join("")}
+        </div>`;
+      }
+
+      function reviewStripBlocks(kind, risk, seed) {
+        const presets = {
+          scratch: [1, 4, 9, 12, 15, 18, 21, 24, 27],
+          security: [7, 11, 13, 20, 24, 29, 34, 40],
+          logic: [3, 9, 18, 22, 28, 40, 54, 60, 70, 76, 83, 89],
+          prompt: [2, 5, 9, 12],
+          config: [2],
+          test: [8, 16, 24, 31]
+        };
+        const key = presets[kind] ? kind : "logic";
+        const count = Math.max(1, Math.min(presets[key].length, Math.round(risk / 11)));
+        const jitter = (seed % 5) - 2;
+        return presets[key].slice(0, count).map((base, index) => {
+          const wide = key === "prompt" && index < 2 ? 7 : key === "scratch" && index > 5 ? 5 : 3;
+          const left = Math.max(1, Math.min(96 - wide, base + jitter + (index % 2 ? 1 : 0)));
+          return { left: left.toFixed(1), width: wide.toFixed(1) };
+        });
+      }
+
+      function reviewFileKind(path, reasons = []) {
+        const text = `${path || ""} ${(reasons || []).join(" ")}`.toLowerCase();
+        if (text.includes("scratch") || text.includes("debug")) return "scratch";
+        if (text.includes("security") || text.includes("pii")) return "security";
+        if (text.includes("prompt")) return "prompt";
+        if (text.includes("test") || text.includes("spec")) return "test";
+        if (text.includes("config") || text.includes("flag")) return "config";
+        return "logic";
       }
 
       function reviewDecision(summary, score, run) {
@@ -5904,7 +6657,7 @@
         </div>`;
       }
 
-      function reviewFileFocusItems(summary) {
+      function reviewFileFocusItems(summary, run = state.currentRun) {
         const byPath = new Map();
         const ensure = (path) => {
           const key = String(path || "").trim();
@@ -5949,6 +6702,20 @@
           row.risk = Math.max(row.risk, Math.min(58, numericScore(item.score) || 48));
           row.reasons.push(item.message || item.category);
           row.actions.push(item.suggested_action || item.disposition);
+        }
+        if (!byPath.size) {
+          for (const file of [
+            ...(run?.changed_files || []),
+            ...(run?.input_payload?.changed_files || []),
+            ...(run?.input_payload?.files || [])
+          ]) {
+            const row = ensure(file.path || file.filename);
+            if (!row) continue;
+            const churn = Number(file.additions || 0) + Number(file.deletions || 0) + Number(file.changes || 0);
+            row.risk = Math.min(70, Math.max(24, Math.round(churn / 2)));
+            row.reasons.push(churn ? `${churn} changed lines` : "Changed file in this PR");
+            row.actions.push("Open and inspect this changed file.");
+          }
         }
         return [...byPath.values()]
           .map((item) => ({
@@ -6368,7 +7135,8 @@
         const links = summary.evidence_links || [];
         const rows = links.map(evidenceGraphRow);
         const selected = rows[0] || null;
-        return `<div class="evidence-graph">
+        const stageHeight = Math.max(510, rows.length * 74 + 92);
+        return `<div class="evidence-graph" style="--proof-stage-height:${stageHeight}px">
           <section class="proof-graph-stage" aria-label="Requirement proof graph">
             <svg class="proof-graph-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
               ${rows.map((row, index) => evidenceGraphLine(row, index, rows.length)).join("")}
@@ -6666,7 +7434,7 @@
 
       function memoryNodeButton(node, index, total) {
         const position = memoryNodePosition(node, index, total);
-        const size = 44 + Math.round(memoryScore(node) * 22);
+        const size = 58 + Math.round(memoryScore(node) * 34);
         const active = index === 0 ? " active" : "";
         return `<button
           class="memory-node kind-${escAttr(memoryKindClass(node.kind))}${active}"
@@ -6731,10 +7499,10 @@
 
       function memoryKindRadius(kind) {
         const key = memoryKindClass(kind);
-        if (key === "test") return 76;
-        if (key === "doc" || key === "policy") return 108;
-        if (key === "prior_pr") return 134;
-        return 122;
+        if (key === "test") return 124;
+        if (key === "doc" || key === "policy") return 166;
+        if (key === "prior_pr") return 212;
+        return 190;
       }
 
       function memoryKindOrder(kind) {
@@ -6785,6 +7553,12 @@
       function shortLabel(value, limit) {
         const text = String(value || "");
         return text.length > limit ? `${text.slice(0, limit - 1)}...` : text;
+      }
+
+      function stableNumber(value) {
+        return String(value || "").split("").reduce((hash, char) => {
+          return (hash * 31 + char.charCodeAt(0)) >>> 0;
+        }, 7);
       }
 
       function evidenceCard(item) {
@@ -6975,31 +7749,138 @@
         const confidence = percentValue(coverage.confidence);
         const gapCount = findings.filter((item) => testTargetTone(item) !== "covered").length;
         const targets = matrix.length ? matrix : [...behaviorCoverage, ...intentCoverage];
-        return `<div class="test-cockpit">
-          <section class="test-stage" style="--stage-accent:${toneColorForScore(score)}">
-            <aside class="test-score-panel">
-              <div class="test-score-dial" style="--coverage-score:${score};--coverage-color:${toneColorForScore(score)}">
-                <div><strong>${score}</strong><span>coverage</span></div>
-              </div>
-              <div>
-                <h4>${esc(statusLabel(coverage.coverage_status || "coverage unknown"))}</h4>
-                <p>${esc(testCockpitSummary(score, gapCount, targets.length))}</p>
-              </div>
-              <div class="test-stats">
-                ${summaryItem("Confidence", `${confidence}%`)}
-                ${summaryItem("Targets", `${targets.length}`)}
-                ${summaryItem("Gaps", `${gapCount}`)}
-                ${summaryItem("Ideas", `${recommendations.length}`)}
-              </div>
-            </aside>
-            <div class="test-target-grid">
-              ${targets.length ? targets.slice(0, 8).map((item) => testTargetCard(item, findings)).join("") : `<div class="slop-empty">No changed source targets required tests.</div>`}
+        const rows = coverageRequirementRows(targets, findings, recommendations);
+        const present = rows.filter((row) => row.coverage >= 70).length;
+        const toAdd = rows.filter((row) => row.coverage > 0 && row.coverage < 70).length;
+        const critical = rows.filter((row) => row.coverage === 0 || row.tone === "missing").length;
+        const criticalRow = rows.find((row) => row.coverage === 0 || row.tone === "missing") || rows[0];
+        return `<div class="coverage-sun-view">
+          <section class="coverage-sun-head">
+            <div>
+              <span class="review-list-label">Tests / coverage sun</span>
+              <h4>One picture for "is this PR tested?"</h4>
+              <p>Each requirement is a wedge. Filled wedges already have useful tests; empty wedges are review debt and should receive a new or extended test.</p>
+            </div>
+            <div class="coverage-sun-badges">
+              ${pill(`${present} present`, present ? "success" : "neutral")}
+              ${pill(`${toAdd} to add`, toAdd ? "review" : "success")}
+              ${pill(`${critical} critical`, critical ? "block" : "success")}
             </div>
           </section>
-          <section class="test-rec-rail" aria-label="Recommended test additions">
-            ${recommendations.length ? recommendations.map(testRecommendationCard).join("") : `<div class="slop-empty">No generated test suggestions.</div>`}
+          <section class="coverage-sun-layout">
+            <div class="coverage-sun-card">
+              <div class="coverage-sun" style="--coverage-sun:${coverageSunGradient(rows)}">
+                <div class="coverage-sun-center"><div><strong>${score}</strong><span>overall</span></div></div>
+              </div>
+              ${rows.slice(0, 8).map((row, index) => coverageSunLabel(row, index, rows.length)).join("")}
+            </div>
+            <div class="coverage-req-list">
+              ${rows.length ? rows.slice(0, 8).map(coverageRequirementRow).join("") : `<div class="slop-empty">No changed source targets required tests.</div>`}
+              ${criticalRow ? `<div class="coverage-critical"><span>Critical gap</span><strong>${esc(coverageCriticalText(criticalRow, findings))}</strong></div>` : ""}
+              <div class="chip-row">
+                ${pill(`${confidence}% confidence`, "info")}
+                ${pill(`${recommendations.length} test ideas`, recommendations.length ? "review" : "success")}
+              </div>
+            </div>
           </section>
         </div>`;
+      }
+
+      function coverageRequirementRows(targets, findings, recommendations) {
+        const rows = [];
+        for (const item of targets || []) {
+          const coverage = percentValue(item.coverage);
+          const tone = testTargetTone(item);
+          const label = coverageRequirementLabel(item);
+          rows.push({
+            label,
+            path: item.path || "",
+            coverage,
+            tone,
+            status: item.status || tone,
+            reason: item.reason || relatedFindingsForPath(findings, item.path)[0]?.message || "Coverage target generated from changed behavior.",
+            action: relatedFindingsForPath(findings, item.path)[0]?.suggested_action || "Add or link a changed test for this target."
+          });
+        }
+        if (!rows.length) {
+          for (const item of findings || []) {
+            rows.push({
+              label: coverageRequirementLabel(item),
+              path: item.path || "",
+              coverage: 0,
+              tone: "missing",
+              status: item.severity || "missing",
+              reason: item.message || "Coverage gap detected.",
+              action: item.suggested_action || "Add or link changed-test evidence."
+            });
+          }
+        }
+        for (const item of recommendations || []) {
+          if (rows.length >= 8) break;
+          rows.push({
+            label: item.intent || item.path || "Suggested test",
+            path: item.path || "",
+            coverage: 25,
+            tone: "partial",
+            status: "to add",
+            reason: item.intent || "Generated test recommendation.",
+            action: item.path ? `Add or extend ${item.path}.` : "Add a focused test."
+          });
+        }
+        return rows.slice(0, 8);
+      }
+
+      function coverageRequirementLabel(item) {
+        const raw = item.intent || item.intent_text || item.symbol || item.path || item.message || "changed behavior";
+        return String(raw).replaceAll("_", " ");
+      }
+
+      function coverageSunGradient(rows) {
+        if (!rows.length) return "conic-gradient(color-mix(in oklab, var(--muted) 18%, transparent) 0 100%)";
+        const step = 100 / rows.length;
+        const stops = [];
+        rows.forEach((row, index) => {
+          const start = index * step;
+          const end = (index + 1) * step;
+          const gap = Math.min(0.7, step * 0.1);
+          const color = coverageToneColor(row);
+          const fillColor = row.coverage === 0 ? `color-mix(in oklab, ${color} 16%, var(--surface-inset))` : color;
+          stops.push(`${fillColor} ${start.toFixed(2)}% ${(end - gap).toFixed(2)}%`);
+          stops.push(`var(--surface-inset) ${(end - gap).toFixed(2)}% ${end.toFixed(2)}%`);
+        });
+        return `conic-gradient(${stops.join(",")})`;
+      }
+
+      function coverageSunLabel(row, index, total) {
+        const angle = (-90 + (360 / Math.max(total, 1)) * (index + 0.5)) * Math.PI / 180;
+        const radius = 206;
+        const x = Math.round(Math.cos(angle) * radius);
+        const y = Math.round(Math.sin(angle) * radius);
+        return `<span class="coverage-sun-label" style="--lx:${x}px;--ly:${y}px;--label-color:${coverageToneColor(row)}">
+          R${index + 1}<small>${row.coverage}%</small>
+        </span>`;
+      }
+
+      function coverageRequirementRow(row, index) {
+        return `<article class="coverage-req-row ${escAttr(row.tone)}" style="--coverage:${row.coverage};--req-color:${coverageToneColor(row)}">
+          <div class="coverage-req-top">
+            <h5>R${index + 1} · ${row.path ? codePathButton(row.path) : esc(shortLabel(row.label, 46))}</h5>
+            ${pill(`${row.coverage}%`, row.tone)}
+          </div>
+          <div class="coverage-req-bar"><span></span></div>
+          <p>${esc(row.reason)}</p>
+        </article>`;
+      }
+
+      function coverageToneColor(row) {
+        if (row.tone === "missing" || row.coverage === 0) return "var(--red)";
+        if (row.coverage >= 70 || row.tone === "covered") return "var(--green)";
+        return "var(--amber)";
+      }
+
+      function coverageCriticalText(row, findings) {
+        const finding = relatedFindingsForPath(findings, row.path)[0];
+        return finding?.suggested_action || row.action || `${row.label} needs changed-test evidence before merge.`;
       }
 
       function testCockpitSummary(score, gaps, targets) {
@@ -7048,18 +7929,88 @@
       function behaviorShiftContent(summary) {
         const deltas = summary.behavioral_deltas || [];
         const blast = summary.blast_radius || [];
-        const reviewRequired = deltas.filter((item) => normalizeTone(item.severity) !== "success").length;
-        return `<div class="behavior-lens">
-          <div class="summary-strip">
-            ${summaryItem("Behavior deltas", `${deltas.length}`)}
-            ${summaryItem("Need review", `${reviewRequired}`)}
-            ${summaryItem("Blast items", `${blast.length}`)}
-          </div>
-          <section class="behavior-stage">
-            ${deltas.length ? `<div class="behavior-lanes">${deltas.slice(0, 6).map(behaviorShiftRow).join("")}</div>` : `<div class="slop-empty">No runtime behavior deltas detected.</div>`}
+        const nodes = behaviorBlastNodes(deltas, blast);
+        const magnitude = nodes.length ? Math.max(...nodes.map((node) => node.magnitude)) : 0;
+        const epicenter = deltas[0]?.symbol || deltas[0]?.path || blast[0]?.path || "changed behavior";
+        return `<div class="behavior-radar">
+          <section class="behavior-radar-head">
+            <div>
+              <span class="review-list-label">Behavior / blast radius radar</span>
+              <h4>Concentric blast rings radiate from the changed behavior.</h4>
+              <p>Ring 1 is direct behavior, ring 2 is services and callers, ring 3 is downstream impact. Larger nodes and red rings deserve earlier inspection.</p>
+            </div>
+            <div class="behavior-radar-badges">
+              ${pill(`magnitude ${magnitude}`, magnitude >= 70 ? "block" : "review")}
+              ${pill(`${nodes.length} entities`, "info")}
+              ${pill(`${deltas.length} deltas`, deltas.length ? "review" : "success")}
+            </div>
           </section>
-          ${blast.length ? `<section class="behavior-impact-grid">${blast.slice(0, 6).map(blastImpactCard).join("")}</section>` : ""}
+          <section class="behavior-radar-layout">
+            <div class="behavior-radar-stage">
+              <div class="behavior-radar-ring one" aria-hidden="true"></div>
+              <div class="behavior-radar-ring two" aria-hidden="true"></div>
+              <div class="behavior-radar-ring three" aria-hidden="true"></div>
+              <div class="behavior-epicenter"><div><span>epicenter</span><strong>${esc(shortLabel(epicenter, 34))}</strong></div></div>
+              ${nodes.map(behaviorRadarNode).join("")}
+            </div>
+            <div class="behavior-delta-stack">
+              <span class="review-list-label">Behavior deltas</span>
+              ${deltas.length ? deltas.slice(0, 5).map(behaviorDeltaCard).join("") : `<div class="slop-empty">No runtime behavior deltas detected.</div>`}
+            </div>
+          </section>
         </div>`;
+      }
+
+      function behaviorBlastNodes(deltas, blast) {
+        const raw = [];
+        for (const item of deltas || []) {
+          raw.push({
+            label: item.symbol || item.path || "behavior",
+            magnitude: normalizeTone(item.severity) === "block" ? 90 : 72,
+            ring: 1,
+            tone: normalizeTone(item.severity) === "success" ? "low" : "high"
+          });
+        }
+        for (const item of blast || []) {
+          for (const service of item.downstream_services || []) raw.push({ label: service, magnitude: 72, ring: 2, tone: "medium" });
+          for (const caller of item.direct_callers || []) raw.push({ label: caller, magnitude: 58, ring: 2, tone: "medium" });
+          if (item.path) raw.push({ label: item.path, magnitude: 48, ring: 3, tone: "low" });
+        }
+        const byLabel = new Map();
+        for (const node of raw) {
+          const key = String(node.label || "").toLowerCase();
+          if (!key) continue;
+          const existing = byLabel.get(key);
+          if (!existing || existing.magnitude < node.magnitude) byLabel.set(key, node);
+        }
+        return [...byLabel.values()].slice(0, 9).map((node, index, list) => {
+          const ringRadius = node.ring === 1 ? 142 : node.ring === 2 ? 204 : 252;
+          const angle = (-105 + (300 / Math.max(1, list.length - 1)) * index) * Math.PI / 180;
+          return {
+            ...node,
+            x: Math.round(Math.cos(angle) * ringRadius),
+            y: Math.round(Math.sin(angle) * ringRadius),
+            size: 48 + Math.round(node.magnitude / 3.8)
+          };
+        });
+      }
+
+      function behaviorRadarNode(node) {
+        return `<div class="behavior-radar-node ${escAttr(node.tone)}" style="--x:${node.x}px;--y:${node.y}px;--size:${node.size}px;--magnitude:${node.magnitude}">
+          ${esc(node.magnitude)}
+          <span class="behavior-radar-label">${esc(shortLabel(node.label, 26))}</span>
+        </div>`;
+      }
+
+      function behaviorDeltaCard(item) {
+        const tone = normalizeTone(item.severity) === "block" ? "high" : normalizeTone(item.severity) === "success" ? "low" : "medium";
+        const path = item.path || item.symbol || "changed behavior";
+        return `<article class="behavior-delta-card ${escAttr(tone)}">
+          <span class="review-list-label">Divergent input</span>
+          <h5>${path ? codePathButton(path) : esc(item.symbol || "Behavior change")}</h5>
+          <p>${esc(item.divergent_input || "Changed input or state observed by the behavior agent.")}</p>
+          <p>${esc(item.new_behavior || item.summary || "Head behavior differs from the base model.")}</p>
+        </article>`;
       }
 
       function behaviorShiftRow(item) {
