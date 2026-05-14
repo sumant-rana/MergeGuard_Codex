@@ -136,6 +136,13 @@ def collect_blockers(*sections: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def build_checks(status: str, prior: dict[str, Any]) -> list[dict[str, Any]]:
+    """Build the per-agent check cards shown on the Overview tab.
+
+    Each check carries a ``conclusion`` (success / neutral / failure → drives
+    the pill color) and a one-line ``summary`` that explains the verdict in
+    concrete terms the reviewer can act on.
+    """
+    review = prior.get("review-compression", {}).get("output", {})
     evidence = prior.get("evidence-mapper", {}).get("output", {})
     semantic = prior.get("semantic-diff-explainer", {}).get("output", {})
     policy = prior.get("policy-gate", {}).get("output", {})
@@ -144,17 +151,133 @@ def build_checks(status: str, prior: dict[str, Any]) -> list[dict[str, Any]]:
     slop = prior.get("slop-detector", {}).get("output", {})
     memory = prior.get("semantic-evidence-agent", {}).get("output", {})
     test_coverage = prior.get("test-coverage-validator", {}).get("output", {})
+
+    hotspots = review.get("hotspots", []) or []
+    file_count = len(review.get("files", []) or [])
+    missing_evidence_links = [
+        link for link in evidence.get("evidence_links", []) or [] if link.get("evidence_status") == "missing"
+    ]
+    partial_evidence_links = [
+        link for link in evidence.get("evidence_links", []) or [] if link.get("evidence_status") == "partial"
+    ]
+    missing_test_findings = evidence.get("missing_evidence_findings", []) or []
+    behavioral_deltas = semantic.get("behavioral_deltas", []) or []
+    policy_findings = policy.get("policy_findings", []) or []
+    policy_status = policy.get("policy_status") or ("block" if policy_findings else "pass")
+    prompt_findings = prompt.get("prompt_findings", []) or []
+    prompt_runs = prompt.get("prompt_canary_runs", []) or []
+    contract_findings = contracts.get("contract_findings", []) or []
+    suggested_test_count = len(contracts.get("suggested_tests", []) or [])
+    slop_findings = slop.get("slop_findings", []) or []
+    slop_remove = slop.get("remove_candidates", []) or []
+    slop_rework = slop.get("rework_candidates", []) or []
+    semantic_matches = memory.get("semantic_matches", []) or []
+    related_tests = memory.get("related_tests", []) or []
+    similar_prs = memory.get("similar_prs", []) or []
+    coverage_score = test_coverage.get("coverage_score")
+    coverage_findings = test_coverage.get("coverage_findings", []) or []
+    coverage_status = test_coverage.get("coverage_status") or "unknown"
+
     return [
-        {"name": "MergeGuard / Change Triage", "conclusion": "failure" if status == "blocked" else "neutral" if status == "review" else "success"},
-        {"name": "MergeGuard / Requirement Match", "conclusion": "neutral" if any(link["evidence_status"] == "missing" for link in evidence.get("evidence_links", [])) else "success"},
-        {"name": "MergeGuard / Repository Memory", "conclusion": memory_conclusion(memory)},
-        {"name": "MergeGuard / Verification Evidence", "conclusion": "neutral" if evidence.get("missing_evidence_findings") else "success"},
-        {"name": "MergeGuard / Test Coverage", "conclusion": test_coverage_conclusion(test_coverage)},
-        {"name": "MergeGuard / Behavior Impact", "conclusion": "neutral" if semantic.get("behavioral_deltas") else "success"},
-        {"name": "MergeGuard / Policy Guardrails", "conclusion": "failure" if any(item["severity"] == "block" for item in policy.get("policy_findings", [])) else "neutral" if policy.get("policy_findings") else "success"},
-        {"name": "MergeGuard / Prompt Drift Check", "conclusion": "failure" if prompt.get("prompt_findings") else "success"},
-        {"name": "MergeGuard / Runtime Contracts", "conclusion": "neutral" if contracts.get("contract_findings") else "success"},
-        {"name": "MergeGuard / Slop Detector", "conclusion": slop_conclusion(slop)},
+        {
+            "name": "MergeGuard / Change Triage",
+            "conclusion": "failure" if status == "blocked" else "neutral" if status == "review" else "success",
+            "summary": (
+                f"{file_count} file(s) classified, "
+                f"{len(hotspots)} hotspot(s) — top risk {hotspots[0]['risk_score']} on `{hotspots[0]['path']}`"
+                if hotspots else f"{file_count} file(s) classified, no hotspots above threshold"
+            ),
+        },
+        {
+            "name": "MergeGuard / Requirement Match",
+            "conclusion": "neutral" if missing_evidence_links else "success",
+            "summary": (
+                f"{len(missing_evidence_links)} intent(s) missing evidence, "
+                f"{len(partial_evidence_links)} partial"
+                if missing_evidence_links or partial_evidence_links
+                else f"All {len(evidence.get('evidence_links', []) or [])} intent(s) backed by changed files"
+            ),
+        },
+        {
+            "name": "MergeGuard / Repository Memory",
+            "conclusion": memory_conclusion(memory),
+            "summary": (
+                f"{len(semantic_matches)} match(es): "
+                f"{len(related_tests)} test(s), {len(similar_prs)} prior PR(s)"
+                if semantic_matches
+                else "No repository memory retrieved"
+            ),
+        },
+        {
+            "name": "MergeGuard / Verification Evidence",
+            "conclusion": "neutral" if missing_test_findings else "success",
+            "summary": (
+                f"{len(missing_test_findings)} file(s) lack changed-test evidence"
+                if missing_test_findings
+                else "Changed-test evidence found for all risky files"
+            ),
+        },
+        {
+            "name": "MergeGuard / Test Coverage",
+            "conclusion": test_coverage_conclusion(test_coverage),
+            "summary": (
+                f"Coverage {coverage_score}% ({coverage_status}) — {len(coverage_findings)} gap(s) flagged"
+                if coverage_score is not None
+                else "Coverage not evaluated"
+            ),
+        },
+        {
+            "name": "MergeGuard / Behavior Impact",
+            "conclusion": "neutral" if behavioral_deltas else "success",
+            "summary": (
+                f"{len(behavioral_deltas)} behavioral delta(s) detected, "
+                f"{sum(1 for d in behavioral_deltas if d.get('severity') == 'review_required')} require review"
+                if behavioral_deltas
+                else "No behavioral deltas detected"
+            ),
+        },
+        {
+            "name": "MergeGuard / Policy Guardrails",
+            "conclusion": "failure" if any(item.get("severity") == "block" for item in policy_findings)
+                          else "neutral" if policy_findings else "success",
+            "summary": (
+                f"{len(policy_findings)} policy violation(s): "
+                + ", ".join(f.get("rule_id", "rule") for f in policy_findings[:3])
+                if policy_findings
+                else f"Policy status: {policy_status} — 0 violations"
+            ),
+        },
+        {
+            "name": "MergeGuard / Prompt Drift Check",
+            "conclusion": "failure" if prompt_findings else "success",
+            "summary": (
+                f"{len(prompt_findings)} prompt drift finding(s) across {len(prompt_runs)} canary run(s)"
+                if prompt_findings
+                else f"{len(prompt_runs)} canary run(s) passed — no prompt drift"
+                if prompt_runs
+                else "No prompt files in this PR"
+            ),
+        },
+        {
+            "name": "MergeGuard / Runtime Contracts",
+            "conclusion": "neutral" if contract_findings else "success",
+            "summary": (
+                f"{len(contract_findings)} contract change(s); "
+                f"{suggested_test_count} suggested test(s)"
+                if contract_findings
+                else "No runtime contract changes"
+            ),
+        },
+        {
+            "name": "MergeGuard / Slop Detector",
+            "conclusion": slop_conclusion(slop),
+            "summary": (
+                f"{len(slop_findings)} slop finding(s): "
+                f"{len(slop_remove)} to remove, {len(slop_rework)} to rework"
+                if slop_findings
+                else "No slop detected"
+            ),
+        },
     ]
 
 

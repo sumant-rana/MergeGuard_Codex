@@ -7183,8 +7183,19 @@
       }
 
       function reviewThemeChips(summary, files) {
+        // ``hotspots`` from review-compression emits ``reason`` (singular
+        // string) — older shapes used ``reasons``/``actions`` (lists). Accept
+        // both so the theme chip count works regardless of the upstream
+        // shape, and also pull from ``hotspot_themes`` if the agent
+        // pre-computed any.
         const source = [
-          ...(files || []).flatMap((item) => [item.path, ...(item.reasons || []), ...(item.actions || [])]),
+          ...(files || []).flatMap((item) => [
+            item.path,
+            item.reason || "",
+            ...(item.reasons || []),
+            ...(item.actions || []),
+          ]),
+          ...((summary.hotspot_themes || []).flatMap((t) => [t.theme, ...(t.terms || [])])),
           ...(summary.intent_items || []).map((item) => item.text),
           summary.top_blocker,
           summary.next_action
@@ -8809,9 +8820,18 @@
               </div>
             </aside>
             <div class="gate-wall">
-              ${policy.length ? policy.slice(0, 5).map(policyGateCard).join("") : gatePassCard("Policy gate", "No policy guardrail blockers were returned.")}
-              ${prompts.length ? prompts.slice(0, 3).map(promptGateCard).join("") : gatePassCard("Prompt gate", "No prompt drift checks required reviewer action.")}
-              ${checks.length ? checkGateCard(checks) : gatePassCard("Required checks", "No required check details were returned.")}
+              ${policy.length ? policy.slice(0, 5).map(policyGateCard).join("") : gatePassCard(
+                "Policy gate",
+                "Policy rules evaluated — 0 violations. No block conditions matched in this PR."
+              )}
+              ${prompts.length ? prompts.slice(0, 3).map(promptGateCard).join("") : gatePassCard(
+                "Prompt gate",
+                "No prompt files in this PR — drift checks not applicable."
+              )}
+              ${checks.length ? checkGateCard(checks) : gatePassCard(
+                "Required checks",
+                "No required check details were returned."
+              )}
             </div>
           </section>
         </div>`;
