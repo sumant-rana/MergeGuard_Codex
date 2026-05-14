@@ -299,9 +299,17 @@ def record_from_repository_memory(item: dict[str, Any], analysis_run_id: str) ->
 
 def make_record(kind: str, key: str, text: str, metadata: dict[str, Any]) -> dict[str, Any]:
     label_key = short_hash(f"{kind}:{key}:{text[:180]}")
+    cleaned_text = text.strip()
+    # Prefix the text with the kind tag so it survives the round-trip through
+    # the memory server (which drops metadata). ``normalize_memory_hit`` peels
+    # the prefix off via ``_kind_from_text`` so downstream consumers + the
+    # dashboard's per-kind grouping (related_tests, similar_prs, doc, …) can
+    # bucket the hit correctly. Skip if the text already starts with a tag.
+    if cleaned_text and not cleaned_text.startswith("["):
+        cleaned_text = f"[{kind}] {cleaned_text}"
     return {
         "label": f"mergeguard:{kind}:{label_key}",
-        "text": text.strip(),
+        "text": cleaned_text,
         "metadata": {
             **metadata,
             "type": metadata.get("type") or kind,
@@ -349,14 +357,28 @@ def normalize_memory_hit(item: dict[str, Any]) -> dict[str, Any]:
     metadata = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
     text = str(item.get("text") or item.get("content") or item.get("summary") or "")
     path = normalize_path(str(metadata.get("path") or item.get("path") or ""))
-    kind = str(metadata.get("type") or item.get("type") or infer_kind(path))
+
+    label = str(item.get("label") or metadata.get("label") or "")
+
+    # The memory server can return hits with an empty metadata dict (only the
+    # `text` and `label` survive the round trip). We encode the kind into the
+    # second segment of the label (see ``make_record``) — extract it back so
+    # the UI's per-kind grouping (related_tests, similar_prs, etc.) works.
+    kind = str(
+        metadata.get("type")
+        or item.get("type")
+        or _kind_from_label(label)
+        or _kind_from_text(text)
+        or infer_kind(path)
+    )
+
     score = item.get("score", item.get("similarity", item.get("relevance", 0.72)))
     try:
         score_value = round(float(score), 3)
     except (TypeError, ValueError):
         score_value = 0.72
     return {
-        "label": str(item.get("label") or metadata.get("label") or short_hash(text)),
+        "label": label or short_hash(text),
         "kind": kind,
         "title": str(metadata.get("title") or item.get("title") or path or kind),
         "path": path,
@@ -368,6 +390,50 @@ def normalize_memory_hit(item: dict[str, Any]) -> dict[str, Any]:
         "risk_terms": metadata.get("risk_terms") or important_terms(text)[:8],
         "metadata": metadata,
     }
+
+
+_KNOWN_KINDS = frozenset(
+    {"test", "doc", "policy", "contract", "behavior", "concept", "intent", "prior_pr", "memory"}
+)
+
+
+def _kind_from_label(label: str) -> str | None:
+    """Labels are encoded ``mergeguard:<kind>:<hash>`` by ``make_record``."""
+    if not label.startswith("mergeguard:"):
+        return None
+    parts = label.split(":", 2)
+    if len(parts) < 3:
+        return None
+    candidate = parts[1].strip().lower()
+    return candidate if candidate in _KNOWN_KINDS else None
+
+
+def _kind_from_text(text: str) -> str | None:
+    """Best-effort kind detection from the body text when metadata is lost."""
+    if not text:
+        return None
+    # Records written by ``make_record`` start with ``[<kind>] …`` — this
+    # is the most reliable signal because we control the producer side.
+    if text.startswith("["):
+        end = text.find("]")
+        if 0 < end <= 32:
+            candidate = text[1:end].strip().lower()
+            if candidate in _KNOWN_KINDS:
+                return candidate
+    lower = text.lower()
+    # PR markers — look for typical PR-body patterns first because they often
+    # also include the word "test" in the description.
+    if "pull request" in lower or "pr #" in lower or " merged " in lower:
+        return "prior_pr"
+    if "test_" in lower or "_test." in lower or "/tests/" in lower or "spec." in lower:
+        return "test"
+    if "/docs/" in lower or "readme" in lower or ".md" in lower:
+        return "doc"
+    if "policy" in lower and ("rule" in lower or "block" in lower):
+        return "policy"
+    if "contract" in lower and ("schema" in lower or "api" in lower):
+        return "contract"
+    return None
 
 
 def infer_kind(path: str) -> str:
