@@ -54,7 +54,7 @@ services:
       # needs to fetch PR files / post check runs. Skipped silently when
       # blank (fixture mode covers the demo path).
       GITHUB_APP_ID: "${GITHUB_APP_ID:-}"
-      GITHUB_APP_PRIVATE_KEY_PATH: "${GITHUB_APP_PRIVATE_KEY_PATH:-/secrets/github-app-private-key.pem}"
+      GITHUB_APP_PRIVATE_KEY_PATH: "${GITHUB_APP_PRIVATE_KEY_PATH:-/secrets/skunkworks-mergegaurd.2026-05-14.private-key.pem}"
       GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
       CLOUD_MAX_CONCURRENT_INVOKES: "${CLOUD_MAX_CONCURRENT_INVOKES:-2}"
       # Per-agent workspace IDs. Adapter requires every entry — see

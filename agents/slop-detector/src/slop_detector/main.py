@@ -321,6 +321,12 @@ def repeated_added_line_count(lines: list[str]) -> int:
     return sum(count - 1 for count in seen.values() if count > 1)
 
 
+_COMMENTED_ASSERTION_RE = re.compile(
+    r"^\s*(?://|#)\s*(?:expect|assert(?:That|Equal|True|False|Raises)?|should\.)\s*\(",
+    re.IGNORECASE,
+)
+
+
 def test_slop_signal(path: str, text: str, added_lines: list[str]) -> str | None:
     if not added_lines:
         return None
@@ -330,6 +336,15 @@ def test_slop_signal(path: str, text: str, added_lines: list[str]) -> str | None
     snapshot_only = "__snapshots__" in path or (
         "snapshot" in lower and not any(pattern.search(text) for pattern in ASSERTION_PATTERNS[:2])
     )
+    # Commented-out assertions are a strong "weakened test" signal — the
+    # test still passes but no longer guarantees the original behaviour.
+    commented_assertions = sum(1 for line in added_lines if _COMMENTED_ASSERTION_RE.match(line))
+    if commented_assertions:
+        plural = "s" if commented_assertions > 1 else ""
+        return (
+            f"{commented_assertions} commented-out assertion{plural} "
+            f"in test file — coverage weakened without test removal"
+        )
     if has_test_shape and not has_assertion:
         return "test file has scenario shape but no assertions"
     if snapshot_only:
