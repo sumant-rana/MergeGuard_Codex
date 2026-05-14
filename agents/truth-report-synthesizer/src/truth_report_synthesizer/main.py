@@ -35,12 +35,16 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     compression = prior.get("review-compression", {}).get("output", {})
     evidence = prior.get("evidence-mapper", {}).get("output", {})
     semantic = prior.get("semantic-diff-explainer", {}).get("output", {})
+    concept_classifier = prior.get("concept-classifier", {}).get("output", {})
     policy = prior.get("policy-gate", {}).get("output", {})
     prompt = prior.get("prompt-canary", {}).get("output", {})
     contracts = prior.get("contract-comparator", {}).get("output", {})
     slop = prior.get("slop-detector", {}).get("output", {})
     memory = prior.get("semantic-evidence-agent", {}).get("output", {})
     test_coverage = prior.get("test-coverage-validator", {}).get("output", {})
+
+    concept_findings = concept_classifier.get("concept_findings", [])
+    block_concepts = [c for c in concept_findings if c.get("severity") == "block"]
 
     risk_score = min(
         100,
@@ -52,9 +56,14 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         + len(slop.get("slop_findings", [])) * 6
         + len(memory.get("memory_findings", [])) * 4
         + len(test_coverage.get("coverage_findings", [])) * 9
-        + (10 if test_coverage.get("coverage_status") == "blocked" else 0),
+        + (10 if test_coverage.get("coverage_status") == "blocked" else 0)
+        + len(block_concepts) * 22   # secret/auth/injection findings dominate scoring
+        + len([c for c in concept_findings if c.get("severity") == "review_required"]) * 4,
     )
-    blockers = collect_blockers(evidence, policy, prompt, contracts, slop, memory, test_coverage)
+    blockers = collect_blockers(
+        evidence, policy, prompt, contracts, slop, memory, test_coverage,
+        {"concept_findings": _concept_findings_as_blockers(concept_findings)},
+    )
     status = "blocked" if any(item.get("severity") == "block" for item in blockers) else "review" if blockers or risk_score >= 45 else "pass"
     top_blocker = blockers[0]["message"] if blockers else None
     next_action = blockers[0].get("suggested_action") if blockers else "Proceed with normal review."
@@ -121,6 +130,7 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
 def collect_blockers(*sections: dict[str, Any]) -> list[dict[str, Any]]:
     blockers: list[dict[str, Any]] = []
     keys = [
+        "concept_findings",
         "missing_evidence_findings",
         "policy_findings",
         "prompt_findings",
@@ -132,7 +142,37 @@ def collect_blockers(*sections: dict[str, Any]) -> list[dict[str, Any]]:
     for section in sections:
         for key in keys:
             blockers.extend(section.get(key, []))
-    return sorted(blockers, key=lambda item: 0 if item.get("severity") == "block" else 1)
+    # Sort: block-severity first, then by source priority so secrets/auth
+    # bypass beat generic policy or missing-tests when they tie.
+    source_priority = {
+        "concept-classifier": 0,
+        "policy-gate": 1,
+        "slop-detector": 2,
+        "evidence-mapper": 3,
+        "prompt-canary": 4,
+        "contract-comparator": 5,
+        "test-coverage-validator": 6,
+        "semantic-evidence-agent": 7,
+    }
+    return sorted(
+        blockers,
+        key=lambda item: (
+            0 if item.get("severity") == "block" else 1,
+            source_priority.get(item.get("source_agent", ""), 99),
+        ),
+    )
+
+
+def _concept_findings_as_blockers(concept_findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Shape concept-classifier output so it slots into the blocker list cleanly."""
+    out: list[dict[str, Any]] = []
+    for finding in concept_findings:
+        if finding.get("severity") not in {"block", "review_required"}:
+            continue
+        # Concept-classifier already attaches `message` + `suggested_action`;
+        # we just tag the source so downstream renderers can group by agent.
+        out.append({**finding, "source_agent": "concept-classifier"})
+    return out
 
 
 def build_checks(status: str, prior: dict[str, Any]) -> list[dict[str, Any]]:

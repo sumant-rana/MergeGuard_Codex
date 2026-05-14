@@ -69,18 +69,40 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
 
     deltas: list[dict[str, Any]] = []
     blast_radius: list[dict[str, Any]] = []
-    mode = "fallback"
+    llm_files = 0
+    fallback_files = 0
 
     if llm_available() and target_files:
-        llm_result = _analyze_via_llm(target_files, patches_by_path)
-        if llm_result is not None:
-            deltas = llm_result["behavioral_deltas"]
-            blast_radius = llm_result["blast_radius"]
-            mode = "llm"
+        # Chunk the LLM calls. One huge prompt → Claude truncates the JSON
+        # mid-write and the whole batch silently regresses to deterministic
+        # templates. Smaller batches keep individual responses well inside
+        # the model's max-output budget and let a failing batch fall back
+        # in isolation.
+        for chunk_start in range(0, len(target_files), _LLM_BATCH_SIZE):
+            chunk = target_files[chunk_start : chunk_start + _LLM_BATCH_SIZE]
+            chunk_result = _analyze_via_llm(chunk, patches_by_path)
+            if chunk_result is not None:
+                deltas.extend(chunk_result["behavioral_deltas"])
+                blast_radius.extend(chunk_result["blast_radius"])
+                llm_files += len(chunk)
+            else:
+                # This batch failed: deterministic for its files only.
+                for file in chunk:
+                    deltas.extend(extract_function_deltas(file))
+                    blast_radius.append(_blast_radius_fallback(file))
+                fallback_files += len(chunk)
+    else:
+        for file in target_files:
+            deltas.extend(extract_function_deltas(file))
+            blast_radius.append(_blast_radius_fallback(file))
+        fallback_files = len(target_files)
 
-    if mode == "fallback":
-        deltas = [delta for file in target_files for delta in extract_function_deltas(file)]
-        blast_radius = [_blast_radius_fallback(file) for file in target_files]
+    if llm_files and fallback_files:
+        mode = "mixed"
+    elif llm_files:
+        mode = "llm"
+    else:
+        mode = "fallback"
 
     output = {
         "behavioral_deltas": sorted(
@@ -91,15 +113,18 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     return make_agent_result(
         AGENT_ID,
         output,
-        confidence=0.85 if mode == "llm" else 0.72,
+        confidence=0.85 if mode == "llm" else 0.78 if mode == "mixed" else 0.72,
         messages=[
-            f"explained {len(deltas)} behavioral deltas via {mode}",
+            f"explained {len(deltas)} behavioral deltas via {mode} "
+            f"({llm_files}/{len(target_files)} files via LLM)",
         ],
         trace=[
             {
                 "step": "semantic_diff",
                 "mode": mode,
                 "files": len(target_files),
+                "files_via_llm": llm_files,
+                "files_via_fallback": fallback_files,
                 "deltas": len(deltas),
             }
         ],
@@ -109,21 +134,41 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
 # ── LLM path ────────────────────────────────────────────────────────────────
 
 
+# Files per LLM call. Each batch produces 2 * N output items (deltas + blast
+# rows) with ~100 tokens each; 6 keeps the response well under typical
+# max_tokens budgets so the model never truncates mid-JSON.
+_LLM_BATCH_SIZE = 6
+
+# Output token cap per batch. Generous enough for 6 files × full delta +
+# blast row (~1500 tokens) plus the JSON scaffolding; tight enough to bail
+# fast if the model rambles.
+_LLM_MAX_TOKENS = 4000
+
+# Cap per-file patch excerpt. Smaller than before — a 2.5KB excerpt × 6
+# files would push the prompt to ~15KB before instructions, which makes the
+# model more likely to over-summarize. 1.2KB captures the actual hunks and
+# trims boilerplate context lines.
+_LLM_PATCH_CHARS = 1200
+
+
 _SEMANTIC_DIFF_SYSTEM_PROMPT = (
     "You are a senior code reviewer analyzing the BEHAVIORAL impact of a pull request. "
     "For each changed file given, infer what the code did BEFORE and what it does NOW, "
     "based on the diff hunks. Then estimate downstream impact.\n\n"
     "Rules:\n"
     "- Ground every claim in the diff text — do NOT invent functions, services, or callers.\n"
-    "- Be specific and concrete; avoid generic 'business logic changed' filler.\n"
+    "- Be CONCISE: each old_behavior / new_behavior should be ONE sentence (<=180 chars).\n"
+    "  Conserving tokens is critical — never include the full diff text in your output.\n"
     "- If the diff is too small or unclear, say so plainly in old_behavior/new_behavior.\n"
     "- severity is 'review_required' for changes touching auth / payments / data writes /\n"
     "  schema-breaking edits / prompts; 'warn' otherwise.\n"
     "- divergent_input is the single most likely input that would behave differently\n"
     "  between old and new code (e.g., 'duplicate refund request with reused idempotency key').\n"
-    "- downstream_services / direct_callers / impacted_tests: at most 4 each. Only include\n"
-    "  names you can justify from the diff or the path. Empty arrays are fine.\n\n"
-    "Output a single JSON object:\n"
+    "- downstream_services / direct_callers / impacted_tests: at most 3 each, ≤30 chars each.\n"
+    "  Only include names you can justify from the diff or path. Empty arrays are fine.\n"
+    "- ALWAYS produce one delta AND one blast_radius row per file you receive.\n"
+    "- Output STRICT JSON only — no markdown fences, no prose before or after.\n\n"
+    "Schema:\n"
     "{\n"
     '  "behavioral_deltas": [\n'
     '    {"path": str, "symbol": str, "old_behavior": str, "new_behavior": str,\n'
@@ -142,13 +187,18 @@ def _analyze_via_llm(
     target_files: list[dict[str, Any]],
     patches_by_path: dict[str, str],
 ) -> dict[str, list[dict[str, Any]]] | None:
-    """Run one LLM call over all target files; return parsed deltas+blast radius."""
+    """Run one LLM call over a chunk of target files.
+
+    Callers chunk the file list (see ``_LLM_BATCH_SIZE``) before calling
+    this so individual responses stay well under ``_LLM_MAX_TOKENS`` and
+    a transient parse failure only loses the batch — not the whole PR.
+    """
     payload_files = []
     for file in target_files:
         path = file.get("path")
         patch = patches_by_path.get(path, "")
         # Cap patch text — diffs can be huge, the model doesn't need full file.
-        patch_excerpt = patch[:2500]
+        patch_excerpt = patch[:_LLM_PATCH_CHARS]
         payload_files.append(
             {
                 "path": path,
@@ -160,8 +210,9 @@ def _analyze_via_llm(
         )
 
     user_prompt = (
-        "Analyze the behavioral impact of the following changed files. Use the "
-        "system-prompt schema for the output.\n\n"
+        f"Analyze the behavioral impact of these {len(payload_files)} changed "
+        "file(s). One delta + one blast_radius row per file. Use the system-"
+        "prompt schema; respond with strict JSON only.\n\n"
         f"```json\n{json.dumps({'files': payload_files}, indent=2)}\n```"
     )
 
@@ -170,7 +221,7 @@ def _analyze_via_llm(
         system=_SEMANTIC_DIFF_SYSTEM_PROMPT,
         user=user_prompt,
         temperature=0.0,
-        max_tokens=1800,
+        max_tokens=_LLM_MAX_TOKENS,
     )
     if not result:
         return None

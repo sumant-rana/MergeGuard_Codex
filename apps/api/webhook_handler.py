@@ -23,14 +23,11 @@ from typing import Any
 from packages.github_pr import (
     GitHubAuthError,
     GitHubFetchError,
-    GitHubPostError,
+    apply_tiered_actions,
     build_envelope,
     hydrate_pull_request_payload,
     load_app_auth_from_env,
     normalize_github_pr_payload,
-    post_check_run,
-    status_to_check_conclusion,
-    upsert_pr_comment,
     verify_hmac_sha256,
 )
 from packages.mongo import LocalMergeGuardStore
@@ -177,39 +174,31 @@ def handle_github_webhook(
         summary.get("status"), summary.get("risk_score"),
     )
 
-    # Post results back to GitHub (best-effort — don't fail the webhook if posting fails).
+    # Post results back to GitHub (best-effort — collected into ActionReport).
     repo_full_name = normalized["repository"]["full_name"]
-    pr_num = normalized["pull_request"]["number"]
+    pr_num = int(normalized["pull_request"]["number"])
     head_sha = normalized["pull_request"]["head_sha"]
+    details_url = _details_url_for(run.get("id"))
 
-    comment_body = summary.get("comment") or _fallback_comment(summary)
-    try:
-        comment = upsert_pr_comment(repo_full_name, int(pr_num), comment_body, token)
-        logger.info(
-            "✓ posted sticky PR comment id=%s on %s#%s",
-            comment.get("id"), repo_full_name, pr_num,
-        )
-    except GitHubPostError as e:
-        logger.warning("⚠ failed to upsert PR comment: %s", e)
+    logger.info(
+        "▷ applying tiered actions (status=%s risk=%s) on %s#%s",
+        summary.get("status"), summary.get("risk_score"), repo_full_name, pr_num,
+    )
+    action_report = apply_tiered_actions(
+        repo_full_name, pr_num, head_sha, summary, token, details_url=details_url
+    )
 
-    check_status, conclusion = status_to_check_conclusion(summary.get("status", "review"))
-    try:
-        check = post_check_run(
-            repo_full_name,
-            head_sha,
-            name="MergeGuard",
-            status=check_status,
-            conclusion=conclusion,
-            output_title=f"MergeGuard: {summary.get('status', 'review')}",
-            output_summary=summary.get("top_blocker") or summary.get("next_action") or "",
-            token=token,
-        )
-        logger.info(
-            "✓ posted check_run id=%s status=%s conclusion=%s on %s@%s",
-            check.get("id"), check_status, conclusion, repo_full_name, head_sha[:12],
-        )
-    except GitHubPostError as e:
-        logger.warning("⚠ failed to post check run: %s", e)
+    logger.info(
+        "✓ tiered actions: comment_id=%s check_run_id=%s review=%s labels_added=%s labels_removed=%s reviewers=%s",
+        action_report.comment_id,
+        action_report.check_run_id,
+        f"{action_report.review_action}#{action_report.review_id}" if action_report.review_action else None,
+        action_report.labels_added or "[]",
+        action_report.labels_removed or "[]",
+        action_report.reviewers_requested or "[]",
+    )
+    for warning in action_report.warnings:
+        logger.warning("⚠ tiered-action warning: %s", warning)
 
     logger.info(
         "◀ webhook complete delivery_id=%s pr=%s#%s total=%.0fms",
@@ -223,6 +212,16 @@ def handle_github_webhook(
             "state": run.get("state"),
             "status": summary.get("status"),
             "risk_score": summary.get("risk_score"),
+            "actions": {
+                "comment_id": action_report.comment_id,
+                "check_run_id": action_report.check_run_id,
+                "review_id": action_report.review_id,
+                "review_action": action_report.review_action,
+                "labels_added": action_report.labels_added,
+                "labels_removed": action_report.labels_removed,
+                "reviewers_requested": action_report.reviewers_requested,
+                "warnings": action_report.warnings,
+            },
         },
     )
 
@@ -235,10 +234,11 @@ def _resolve_installation_token(installation_id: int | None) -> str | None:
     return os.environ.get("GITHUB_TOKEN") or None
 
 
-def _fallback_comment(summary: dict[str, Any]) -> str:
-    status = summary.get("status", "review")
-    risk = summary.get("risk_score", 0)
-    return (
-        f"**MergeGuard:** `{status}` (risk score: {risk})\n\n"
-        f"{summary.get('top_blocker') or summary.get('next_action') or ''}"
-    )
+def _details_url_for(run_id: str | None) -> str | None:
+    """Build a public dashboard URL for the given run, or None if unconfigured."""
+    if not run_id:
+        return None
+    public = os.environ.get("MERGEGUARD_PUBLIC_URL", "").rstrip("/")
+    if not public:
+        return None
+    return f"{public}/api/runs/{run_id}"

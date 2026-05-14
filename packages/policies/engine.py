@@ -8,6 +8,44 @@ def default_policy_pack() -> dict[str, Any]:
         "name": "MergeGuard Demo Policy",
         "version": 1,
         "rules": [
+            # Hard blockers — no requirement field means "this concept alone is the violation".
+            {
+                "id": "no-hardcoded-secrets",
+                "when": "secret_exposure",
+                "severity": "block",
+                "owner": "@security",
+                "override_allowed": False,
+                "message_override": "Hardcoded secret detected — rotate and move to env var.",
+                "suggested_action_override": "Rotate the leaked credential immediately. Move it to a runtime env var; add a secret-scan pre-commit hook.",
+            },
+            {
+                "id": "no-auth-bypass",
+                "when": "auth_bypass",
+                "severity": "block",
+                "owner": "@security",
+                "override_allowed": False,
+                "message_override": "Auth guard appears bypassed or weakened — block until restored.",
+                "suggested_action_override": "Restore the real auth check; do not gate auth on client-controlled flags.",
+            },
+            {
+                "id": "no-injection-pattern",
+                "when": "injection",
+                "severity": "block",
+                "owner": "@security",
+                "override_allowed": True,
+                "message_override": "Possible injection: untrusted value concatenated into a query/URL.",
+                "suggested_action_override": "Parameterise the query and validate the input before use.",
+            },
+            {
+                "id": "no-plain-http",
+                "when": "insecure_transport",
+                "severity": "block",
+                "owner": "@security",
+                "override_allowed": True,
+                "message_override": "Plain HTTP (not HTTPS) detected for an outbound request.",
+                "suggested_action_override": "Use https:// — plain HTTP is only acceptable for explicitly-marked dev loopbacks.",
+            },
+            # PII write requires explicit auth/encryption context.
             {
                 "id": "pii-write-requires-auth",
                 "when": "pii_write",
@@ -16,6 +54,7 @@ def default_policy_pack() -> dict[str, Any]:
                 "owner": "@security",
                 "override_allowed": True,
             },
+            # Soft rules — review required, not auto-blocked.
             {
                 "id": "billing-side-effect-needs-idempotency",
                 "when": "billing_side_effect",
@@ -68,28 +107,47 @@ def evaluate_policy_pack(pack: dict[str, Any], concept_findings: list[dict[str, 
         when = rule.get("when")
         if when not in concepts:
             continue
+        has_requirement = bool(rule.get("require") or rule.get("require_any"))
         required_ok = True
         if rule.get("require"):
             required_ok = rule["require"] in concepts
         if rule.get("require_any"):
             required_ok = any(concept in concepts for concept in rule["require_any"])
-        if required_ok:
+        # Rules with NO requirement field treat the concept's mere presence as
+        # the violation (e.g., secret_exposure, auth_bypass).
+        if has_requirement and required_ok:
             continue
-        source = next((finding for finding in concept_findings if finding["concept"] == when), {})
-        requirement = rule.get("require") or " or ".join(rule.get("require_any", []))
-        findings.append(
-            {
-                "rule_id": rule.get("id", f"{when}-policy"),
-                "concept": when,
-                "path": source.get("path"),
-                "symbol": source.get("symbol"),
-                "severity": rule.get("severity", "warn"),
-                "owner": rule.get("owner", "@owners"),
-                "override_allowed": rule.get("override_allowed", True),
-                "message": f"{when} requires {requirement}.",
-                "suggested_action": f"Add {requirement} evidence or request owner override.",
-            }
-        )
+        # Emit one violation per matching concept finding so the path stays
+        # specific — repeating the rule for each affected file.
+        sources = [f for f in concept_findings if f["concept"] == when] or [{}]
+        for source in sources:
+            requirement = rule.get("require") or " or ".join(rule.get("require_any", []))
+            default_message = (
+                rule.get("message_override")
+                or (f"{when} requires {requirement}." if requirement else f"{when} is not allowed.")
+            )
+            default_action = (
+                rule.get("suggested_action_override")
+                or (
+                    f"Add {requirement} evidence or request owner override."
+                    if requirement
+                    else "Remove or justify this change before merge."
+                )
+            )
+            findings.append(
+                {
+                    "rule_id": rule.get("id", f"{when}-policy"),
+                    "concept": when,
+                    "path": source.get("path"),
+                    "symbol": source.get("symbol"),
+                    "severity": rule.get("severity", "warn"),
+                    "owner": rule.get("owner", "@owners"),
+                    "override_allowed": rule.get("override_allowed", True),
+                    "message": default_message,
+                    "suggested_action": default_action,
+                    "evidence": source.get("evidence", []),
+                }
+            )
     return findings
 
 
