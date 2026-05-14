@@ -3675,6 +3675,634 @@
         line-height: 1.35;
       }
 
+      /* ===== Evidence Cosmos (A) + Proof Cards (C) ===== */
+
+      .evidence-rethink {
+        display: grid;
+        gap: 12px;
+      }
+
+      .evidence-kpis {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .evidence-kpi {
+        position: relative;
+        overflow: hidden;
+        min-height: 56px;
+        padding: 9px 10px;
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--kpi-tone, var(--primary));
+        border-radius: 8px;
+        background:
+          linear-gradient(90deg, color-mix(in oklab, var(--kpi-tone, var(--primary)) 14%, transparent), transparent 62%),
+          var(--surface-muted);
+      }
+
+      .evidence-kpi span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 950;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .evidence-kpi strong {
+        display: block;
+        margin-top: 4px;
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 950;
+        line-height: 1;
+      }
+
+      .evidence-kpi small {
+        display: block;
+        margin-top: 4px;
+        color: var(--text-soft);
+        font-size: 8.4px;
+        line-height: 1.2;
+      }
+
+      .evidence-kpi.tone-verified { --kpi-tone: var(--green); }
+      .evidence-kpi.tone-partial  { --kpi-tone: var(--amber); }
+      .evidence-kpi.tone-missing  { --kpi-tone: var(--red); }
+      .evidence-kpi.tone-total    { --kpi-tone: var(--primary); }
+
+      .evidence-cosmos {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background:
+          radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 38%),
+          radial-gradient(circle at 18% 18%, color-mix(in oklab, var(--green) 6%, transparent), transparent 28%),
+          radial-gradient(circle at 82% 82%, color-mix(in oklab, var(--violet) 7%, transparent), transparent 30%),
+          var(--surface-muted);
+      }
+
+      .evidence-cosmos::before {
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(circle, color-mix(in oklab, var(--primary) 16%, transparent) 1px, transparent 1.2px);
+        background-size: 22px 22px;
+        opacity: 0.18;
+        pointer-events: none;
+        content: "";
+      }
+
+      .evidence-cosmos-svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1000 / 480;
+      }
+
+      .cosmos-orbit-ring {
+        fill: none;
+        stroke: color-mix(in oklab, var(--muted) 24%, transparent);
+        stroke-width: 0.7;
+        stroke-dasharray: 2 4;
+      }
+
+      .cosmos-sector-arc {
+        fill: none;
+        stroke: color-mix(in oklab, var(--sector-tone, var(--primary)) 38%, transparent);
+        stroke-width: 1.6;
+        stroke-linecap: round;
+        opacity: 0.7;
+      }
+
+      .cosmos-sector-label {
+        fill: var(--sector-tone, var(--text));
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.18em;
+        text-anchor: middle;
+        text-transform: uppercase;
+        opacity: 0.85;
+      }
+
+      .cosmos-center-disc {
+        fill: var(--surface-strong);
+        stroke: color-mix(in oklab, var(--primary) 48%, transparent);
+        stroke-width: 1.4;
+        filter: drop-shadow(0 6px 18px color-mix(in oklab, #000 36%, transparent));
+      }
+
+      .cosmos-center-ring {
+        fill: none;
+        stroke-width: 6;
+        stroke-linecap: butt;
+      }
+
+      .cosmos-center-text-title {
+        fill: var(--muted);
+        font-size: 8px;
+        font-weight: 950;
+        letter-spacing: 0.18em;
+        text-anchor: middle;
+        text-transform: uppercase;
+      }
+
+      .cosmos-center-text-value {
+        fill: var(--text);
+        font-size: 19px;
+        font-weight: 950;
+        text-anchor: middle;
+      }
+
+      .cosmos-center-text-sub {
+        fill: var(--text-soft);
+        font-size: 8.4px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-anchor: middle;
+        text-transform: uppercase;
+      }
+
+      .cosmos-arc {
+        fill: none;
+        stroke: var(--arc-tone, var(--primary));
+        stroke-linecap: round;
+        stroke-width: calc(1.2 + var(--arc-strength, 0.5) * 2.6);
+        opacity: calc(0.35 + var(--arc-strength, 0.5) * 0.55);
+        transition: opacity 180ms ease, stroke-width 180ms ease;
+      }
+
+      .cosmos-arc.dashed {
+        stroke-dasharray: 3 5;
+        opacity: 0.4;
+      }
+
+      .cosmos-claim {
+        cursor: pointer;
+        transition: transform 220ms cubic-bezier(0.2, 0.6, 0.2, 1.2);
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+
+      .cosmos-claim-disc {
+        fill: var(--surface-strong);
+        stroke: var(--claim-tone, var(--primary));
+        stroke-width: 1.8;
+        filter: drop-shadow(0 4px 14px color-mix(in oklab, var(--claim-tone, var(--primary)) 28%, transparent));
+      }
+
+      .cosmos-claim-glow {
+        fill: var(--claim-tone, var(--primary));
+        opacity: 0.16;
+      }
+
+      .cosmos-claim-label {
+        fill: var(--text);
+        font-size: 8.6px;
+        font-weight: 950;
+        text-anchor: middle;
+        pointer-events: none;
+      }
+
+      .cosmos-claim.tone-verified { --claim-tone: var(--green); }
+      .cosmos-claim.tone-partial  { --claim-tone: var(--amber); }
+      .cosmos-claim.tone-missing  { --claim-tone: var(--red); }
+
+      .cosmos-claim.tone-missing .cosmos-claim-disc {
+        animation: cosmosMissingPulse 2200ms ease-in-out infinite;
+      }
+
+      @keyframes cosmosMissingPulse {
+        0%, 100% {
+          stroke-width: 1.8;
+          filter: drop-shadow(0 4px 14px color-mix(in oklab, var(--red) 28%, transparent));
+        }
+        50% {
+          stroke-width: 2.6;
+          filter: drop-shadow(0 4px 22px color-mix(in oklab, var(--red) 58%, transparent));
+        }
+      }
+
+      .cosmos-claim:hover .cosmos-claim-disc,
+      .cosmos-claim:focus-visible .cosmos-claim-disc,
+      .cosmos-claim.active .cosmos-claim-disc {
+        stroke-width: 2.6;
+        filter: drop-shadow(0 4px 22px color-mix(in oklab, var(--claim-tone, var(--primary)) 56%, transparent));
+      }
+
+      .cosmos-claim:hover,
+      .cosmos-claim:focus-visible,
+      .cosmos-claim.active {
+        transform: scale(1.08);
+      }
+
+      .cosmos-pellet {
+        fill: var(--pellet-tone, var(--primary));
+        stroke: color-mix(in oklab, var(--surface) 78%, transparent);
+        stroke-width: 1;
+      }
+
+      .cosmos-pellet.dashed {
+        fill: transparent;
+        stroke: color-mix(in oklab, var(--muted) 48%, transparent);
+        stroke-dasharray: 2 2;
+      }
+
+      .cosmos-pellet-count {
+        fill: var(--text);
+        font-size: 7.8px;
+        font-weight: 950;
+        text-anchor: middle;
+        pointer-events: none;
+      }
+
+      .cosmos-pellet-count.dashed {
+        fill: var(--muted);
+      }
+
+      .evidence-cosmos.is-spotlit .cosmos-claim:not(.active),
+      .evidence-cosmos.is-spotlit .cosmos-arc:not(.active),
+      .evidence-cosmos.is-spotlit .cosmos-pellet:not(.active),
+      .evidence-cosmos.is-spotlit .cosmos-pellet-count:not(.active) {
+        opacity: 0.18;
+      }
+
+      .evidence-cosmos.is-spotlit .cosmos-claim.active,
+      .evidence-cosmos.is-spotlit .cosmos-arc.active,
+      .evidence-cosmos.is-spotlit .cosmos-pellet.active,
+      .evidence-cosmos.is-spotlit .cosmos-pellet-count.active {
+        opacity: 1;
+      }
+
+      .evidence-cosmos-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 12px 10px;
+        border-top: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+        color: var(--muted);
+        font-size: 8.2px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .evidence-cosmos-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 8px;
+        border: 1px solid color-mix(in oklab, var(--legend-tone, var(--muted)) 38%, var(--border));
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--legend-tone, var(--surface)) 9%, var(--surface-inset));
+        color: var(--text-soft);
+      }
+
+      .evidence-cosmos-legend-dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--legend-tone, var(--primary));
+      }
+
+      .evidence-cosmos-empty {
+        padding: 36px;
+        color: var(--text-soft);
+        text-align: center;
+      }
+
+      /* ----- Proof Cards (C) ----- */
+
+      .evidence-pcards {
+        display: grid;
+        gap: 9px;
+      }
+
+      .evidence-pcards-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface-muted);
+      }
+
+      .evidence-pcards-toolbar-group {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+      }
+
+      .evidence-pcards-toolbar-label {
+        color: var(--muted);
+        font-size: 8.2px;
+        font-weight: 950;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .evidence-pcards-chip {
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--surface-strong);
+        color: var(--text-soft);
+        font-size: 9px;
+        font-weight: 800;
+        line-height: 1.1;
+        cursor: pointer;
+      }
+
+      .evidence-pcards-chip:hover,
+      .evidence-pcards-chip:focus-visible {
+        border-color: color-mix(in oklab, var(--primary) 60%, var(--border));
+        color: var(--text);
+      }
+
+      .evidence-pcards-chip.is-active {
+        border-color: var(--chip-tone, var(--primary));
+        background: color-mix(in oklab, var(--chip-tone, var(--primary)) 16%, var(--surface-strong));
+        color: var(--text);
+      }
+
+      .evidence-pcards-chip.tone-verified { --chip-tone: var(--green); }
+      .evidence-pcards-chip.tone-partial  { --chip-tone: var(--amber); }
+      .evidence-pcards-chip.tone-missing  { --chip-tone: var(--red); }
+      .evidence-pcards-chip.tone-all      { --chip-tone: var(--primary); }
+
+      .evidence-pcards-grid {
+        display: grid;
+        gap: 9px;
+      }
+
+      .evidence-pcards-grid.filter-verified .evidence-pcard:not(.tone-verified),
+      .evidence-pcards-grid.filter-partial  .evidence-pcard:not(.tone-partial),
+      .evidence-pcards-grid.filter-missing  .evidence-pcard:not(.tone-missing) {
+        display: none;
+      }
+
+      .evidence-pcard {
+        position: relative;
+        display: grid;
+        gap: 8px;
+        padding: 11px;
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--card-tone, var(--primary));
+        border-radius: 9px;
+        background:
+          linear-gradient(120deg, color-mix(in oklab, var(--card-tone, var(--primary)) 9%, transparent), transparent 56%),
+          var(--surface-raised);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+                    0 6px 20px rgba(0, 0, 0, 0.22);
+        scroll-margin-top: 16px;
+      }
+
+      .evidence-pcard.tone-verified { --card-tone: var(--green); }
+      .evidence-pcard.tone-partial  { --card-tone: var(--amber); }
+      .evidence-pcard.tone-missing  { --card-tone: var(--red); }
+
+      .evidence-pcard.is-spotlight {
+        outline: 2px solid var(--card-tone, var(--primary));
+        outline-offset: 2px;
+        animation: pcardFlash 1400ms ease-out;
+      }
+
+      @keyframes pcardFlash {
+        0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--card-tone, var(--primary)) 70%, transparent); }
+        40%  { box-shadow: 0 0 0 8px color-mix(in oklab, var(--card-tone, var(--primary)) 26%, transparent); }
+        100% { box-shadow: 0 0 0 0 transparent; }
+      }
+
+      .evidence-pcard-head {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .evidence-pcard-ring {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 56px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background:
+          conic-gradient(var(--card-tone, var(--primary)) calc(var(--ring-pct, 0) * 1%),
+                         color-mix(in oklab, var(--muted) 18%, transparent) 0);
+      }
+
+      .evidence-pcard-ring::after {
+        position: absolute;
+        inset: 6px;
+        border-radius: 50%;
+        background: var(--surface-strong);
+        content: "";
+      }
+
+      .evidence-pcard-ring strong {
+        position: relative;
+        z-index: 1;
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 950;
+        line-height: 1;
+      }
+
+      .evidence-pcard-ring span {
+        position: relative;
+        z-index: 1;
+        margin-top: 1px;
+        color: var(--muted);
+        font-size: 6.6px;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .evidence-pcard-title h5 {
+        margin: 0;
+        color: var(--text);
+        font-size: 12.5px;
+        line-height: 1.25;
+      }
+
+      .evidence-pcard-title p {
+        margin: 4px 0 0;
+        color: var(--text-soft);
+        font-size: 9px;
+        line-height: 1.3;
+      }
+
+      .evidence-pcard-meta {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-end;
+      }
+
+      .evidence-pcard-body {
+        display: grid;
+        grid-template-columns: 112px minmax(0, 1fr);
+        gap: 12px;
+      }
+
+      .evidence-trust {
+        display: grid;
+        gap: 5px;
+        align-content: start;
+        padding: 8px;
+        border: 1px solid color-mix(in oklab, var(--card-tone, var(--primary)) 26%, var(--border));
+        border-radius: 7px;
+        background: color-mix(in oklab, var(--surface-inset) 80%, transparent);
+      }
+
+      .evidence-trust-label {
+        margin-bottom: 2px;
+        color: var(--muted);
+        font-size: 7.4px;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .evidence-trust-slot {
+        display: grid;
+        grid-template-columns: 14px minmax(0, 1fr) auto;
+        gap: 6px;
+        align-items: center;
+        padding: 3px 4px;
+        border-radius: 5px;
+        color: var(--text-soft);
+        font-size: 8.6px;
+        font-weight: 800;
+      }
+
+      .evidence-trust-slot.is-on {
+        background: color-mix(in oklab, var(--slot-tone, var(--green)) 16%, transparent);
+        color: var(--text);
+      }
+
+      .evidence-trust-slot.is-on { --slot-tone: var(--green); }
+      .evidence-trust-slot.is-off { --slot-tone: var(--muted); }
+
+      .evidence-trust-icon {
+        display: grid;
+        place-items: center;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--slot-tone, var(--muted));
+        color: var(--surface-strong);
+        font-size: 8px;
+        font-weight: 950;
+        line-height: 1;
+      }
+
+      .evidence-trust-slot.is-off .evidence-trust-icon {
+        background: transparent;
+        border: 1px dashed color-mix(in oklab, var(--muted) 60%, transparent);
+        color: var(--muted);
+      }
+
+      .evidence-trust-count {
+        color: var(--muted);
+        font-size: 8.2px;
+        font-weight: 950;
+      }
+
+      .evidence-exhibits {
+        display: grid;
+        gap: 8px;
+        align-content: start;
+      }
+
+      .evidence-exhibit {
+        display: grid;
+        gap: 5px;
+        padding: 7px 8px;
+        border: 1px solid color-mix(in oklab, var(--exhibit-tone, var(--card-tone, var(--primary))) 22%, var(--border));
+        border-radius: 7px;
+        background: color-mix(in oklab, var(--surface-inset) 60%, transparent);
+      }
+
+      .evidence-exhibit.kind-code   { --exhibit-tone: var(--blue); }
+      .evidence-exhibit.kind-tests  { --exhibit-tone: var(--green); }
+      .evidence-exhibit.kind-memory { --exhibit-tone: var(--violet); }
+
+      .evidence-exhibit.is-empty {
+        border-style: dashed;
+        background: transparent;
+        opacity: 0.7;
+      }
+
+      .evidence-exhibit-head {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        justify-content: space-between;
+      }
+
+      .evidence-exhibit-head h6 {
+        margin: 0;
+        color: var(--exhibit-tone, var(--text));
+        font-size: 9px;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .evidence-exhibit-head small {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .evidence-exhibit-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .evidence-exhibit.is-empty .evidence-exhibit-empty {
+        color: var(--muted);
+        font-size: 8.6px;
+        font-style: italic;
+      }
+
+      .evidence-pcard-action {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        padding: 7px 9px;
+        border-top: 1px dashed color-mix(in oklab, var(--card-tone, var(--primary)) 28%, transparent);
+      }
+
+      .evidence-pcard-action span {
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .evidence-pcard-action strong {
+        color: var(--text);
+        font-size: 9.4px;
+        line-height: 1.3;
+      }
+
       .memory-radar {
         display: grid;
         min-height: 560px;
@@ -5374,8 +6002,20 @@
         .gate-wall,
         .behavior-impact-grid,
         .agent-stage-chain,
-        .agent-command-grid {
+        .agent-command-grid,
+        .evidence-kpis,
+        .evidence-pcard-body {
           grid-template-columns: 1fr;
+        }
+
+        .evidence-pcard-head {
+          grid-template-columns: 48px minmax(0, 1fr);
+        }
+
+        .evidence-pcard-meta {
+          grid-column: 1 / -1;
+          flex-direction: row;
+          align-items: center;
         }
 
         .agent-stage-link:not(:last-child)::after {
@@ -6085,6 +6725,110 @@
             bindCodeLinks(detailBody);
           });
         }
+      }
+
+      function bindEvidenceCosmos() {
+        const cosmos = detailEl.querySelector("[data-cosmos-root]");
+        const cardsGrid = detailEl.querySelector("[data-evidence-cards]");
+        if (!cosmos && !cardsGrid) return;
+
+        if (cardsGrid) {
+          bindCodeLinks(cardsGrid);
+          evidenceSortCards(cardsGrid, "risk");
+        }
+
+        const sortGroup = detailEl.querySelector("[data-evidence-sort-group]");
+        const filterGroup = detailEl.querySelector("[data-evidence-filter-group]");
+
+        if (cardsGrid && sortGroup) {
+          for (const chip of sortGroup.querySelectorAll("[data-evidence-sort]")) {
+            chip.addEventListener("click", () => {
+              for (const other of sortGroup.querySelectorAll("[data-evidence-sort]")) {
+                other.classList.toggle("is-active", other === chip);
+              }
+              evidenceSortCards(cardsGrid, chip.dataset.evidenceSort || "risk");
+            });
+          }
+        }
+
+        if (cardsGrid && filterGroup) {
+          for (const chip of filterGroup.querySelectorAll("[data-evidence-filter]")) {
+            chip.addEventListener("click", () => {
+              for (const other of filterGroup.querySelectorAll("[data-evidence-filter]")) {
+                other.classList.toggle("is-active", other === chip);
+              }
+              const filter = chip.dataset.evidenceFilter || "all";
+              cardsGrid.classList.remove("filter-verified", "filter-partial", "filter-missing");
+              if (filter !== "all") cardsGrid.classList.add(`filter-${filter}`);
+            });
+          }
+        }
+
+        if (cosmos) {
+          const claims = cosmos.querySelectorAll("[data-claim-id].cosmos-claim");
+          const allTargets = cosmos.querySelectorAll("[data-claim-id]");
+          const spotlight = (id) => {
+            const isClearing = !id;
+            cosmos.classList.toggle("is-spotlit", !isClearing);
+            for (const el of allTargets) {
+              const match = el.dataset.claimId === id;
+              el.classList.toggle("active", !isClearing && match);
+            }
+            if (isClearing) return;
+            if (cardsGrid) {
+              for (const card of cardsGrid.querySelectorAll("[data-evidence-card]")) {
+                card.classList.remove("is-spotlight");
+              }
+              const card = cardsGrid.querySelector(`[data-evidence-card][data-claim-id="${cssEscape(id)}"]`);
+              if (card) {
+                card.classList.add("is-spotlight");
+                card.scrollIntoView({ behavior: "smooth", block: "center" });
+                window.setTimeout(() => card.classList.remove("is-spotlight"), 1600);
+              }
+            }
+          };
+          for (const claim of claims) {
+            claim.addEventListener("click", () => spotlight(claim.dataset.claimId));
+            claim.addEventListener("keydown", (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                spotlight(claim.dataset.claimId);
+              }
+              if (event.key === "Escape") spotlight(null);
+            });
+          }
+          cosmos.addEventListener("click", (event) => {
+            if (event.target === cosmos || event.target.classList.contains("evidence-cosmos-legend")) {
+              spotlight(null);
+            }
+          });
+        }
+      }
+
+      function evidenceSortCards(grid, mode) {
+        const cards = Array.from(grid.querySelectorAll("[data-evidence-card]"));
+        const cmpNum = (a, b, key, asc) => {
+          const av = Number(a.dataset[key] || 0);
+          const bv = Number(b.dataset[key] || 0);
+          return asc ? av - bv : bv - av;
+        };
+        const cmpStr = (a, b, key) => String(a.dataset[key] || "").localeCompare(String(b.dataset[key] || ""));
+        const sorters = {
+          risk:      (a, b) => cmpNum(a, b, "sortRisk", true) || cmpNum(a, b, "sortConf", true) || cmpNum(a, b, "sortIndex", true),
+          "conf-asc":  (a, b) => cmpNum(a, b, "sortConf", true)  || cmpNum(a, b, "sortRisk", true),
+          "conf-desc": (a, b) => cmpNum(a, b, "sortConf", false) || cmpNum(a, b, "sortRisk", true),
+          alpha:     (a, b) => cmpStr(a, b, "sortAlpha")
+        };
+        const fn = sorters[mode] || sorters.risk;
+        cards.sort(fn);
+        for (const card of cards) grid.appendChild(card);
+      }
+
+      function cssEscape(value) {
+        if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+          return CSS.escape(value);
+        }
+        return String(value || "").replace(/[^a-zA-Z0-9_-]/g, (ch) => `\\${ch}`);
       }
 
       function bindAgentDecisionMesh() {
@@ -6965,6 +7709,7 @@
         bindCodeLinks();
         bindMemoryNodes();
         bindEvidenceGraph();
+        bindEvidenceCosmos();
         bindAgentDecisionMesh();
         detailEl.querySelector(".dashboard-tab-body")?.scrollTo({ top: 0 });
       }
@@ -7873,26 +8618,378 @@
 
       function evidenceProofContent(summary) {
         const links = summary.evidence_links || [];
-        const rows = links.map(evidenceGraphRow);
-        const selected = rows[0] || null;
-        const stageHeight = Math.max(510, rows.length * 74 + 92);
-        return `<div class="evidence-graph" style="--proof-stage-height:${stageHeight}px">
-          <section class="proof-graph-stage" aria-label="Requirement proof graph">
-            <svg class="proof-graph-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-              ${rows.map((row, index) => evidenceGraphLine(row, index, rows.length)).join("")}
-            </svg>
-            <div class="proof-graph-labels" aria-hidden="true">
-              <span>Claim</span>
-              <span>Changed files</span>
-              <span>Proof</span>
-              <span>Verdict</span>
-            </div>
-            ${rows.length ? rows.map((row, index) => evidenceGraphNodes(row, index, rows.length)).join("") : `<div class="proof-graph-empty">No requirement evidence was produced for this PR.</div>`}
-            <aside id="evidence-graph-detail" class="proof-graph-detail" aria-live="polite">
-              ${selected ? evidenceGraphDetail(selected) : `<span class="review-list-label">Selected claim</span><h4>No proof selected</h4><p>No requirement evidence was produced for this PR.</p>`}
-            </aside>
-          </section>
+        const rows = links.map(evidenceRichRow);
+        const stats = evidenceStatsFor(rows);
+        if (!rows.length) {
+          return `<div class="evidence-rethink">
+            ${evidenceKpiTiles(stats)}
+            <section class="evidence-cosmos" aria-label="Requirement evidence cosmos">
+              <div class="evidence-cosmos-empty">No requirement evidence was produced for this PR.</div>
+            </section>
+          </div>`;
+        }
+        return `<div class="evidence-rethink">
+          ${evidenceKpiTiles(stats)}
+          ${evidenceCosmosMarkup(rows)}
+          ${evidenceProofCardsStack(rows)}
         </div>`;
+      }
+
+      function evidenceRichRow(item) {
+        const tone = evidenceTone(item);
+        const changedPaths = cleanEvidencePaths(item.mapped_paths || []);
+        const directPaths = cleanEvidencePaths(item.evidence_paths || []);
+        const memoryPaths = cleanEvidencePaths([
+          ...(item.memory_test_candidates || []),
+          ...(item.memory_evidence_paths || [])
+        ]);
+        const codePaths = splitEvidencePaths(directPaths, "code");
+        const testPaths = splitEvidencePaths(directPaths, "tests");
+        const proofPaths = uniqueReviewItems([...directPaths, ...memoryPaths], 8);
+        const memoryCount = Number(item.memory_match_count || 0);
+        const confidence = item.confidence == null ? null : Math.max(0, Math.min(1, Number(item.confidence)));
+        const claimText = item.intent_text || item.message || "Requirement";
+        const claimId = item.intent_id || claimText;
+        return {
+          ...item,
+          tone,
+          changedPaths,
+          codePaths,
+          testPaths,
+          memoryPaths,
+          proofPaths,
+          memoryCount,
+          confidence,
+          claimText,
+          claimId,
+          graphId: claimId
+        };
+      }
+
+      function splitEvidencePaths(paths, kind) {
+        const testish = /(^|\/|\\)(tests?|spec|__tests__)(\/|\\|\.|$)|\.(test|spec)\.|_test\.|_spec\./i;
+        return (paths || []).filter((path) => {
+          const isTest = testish.test(path);
+          return kind === "tests" ? isTest : !isTest;
+        });
+      }
+
+      function evidenceStatsFor(rows) {
+        const stats = { total: rows.length, verified: 0, partial: 0, missing: 0, avgConfidence: null };
+        let confSum = 0;
+        let confCount = 0;
+        for (const row of rows) {
+          if (row.tone === "verified") stats.verified += 1;
+          else if (row.tone === "missing") stats.missing += 1;
+          else stats.partial += 1;
+          if (row.confidence != null) {
+            confSum += row.confidence;
+            confCount += 1;
+          }
+        }
+        if (confCount > 0) stats.avgConfidence = confSum / confCount;
+        return stats;
+      }
+
+      function evidenceKpiTiles(stats) {
+        const coveragePct = stats.total ? Math.round(((stats.verified + stats.partial * 0.5) / stats.total) * 100) : 0;
+        return `<div class="evidence-kpis">
+          ${evidenceKpiTile("Coverage", `${coveragePct}%`, "total", `${stats.verified}/${stats.total} verified`)}
+          ${evidenceKpiTile("Verified", `${stats.verified}`, "verified", "Proof linked")}
+          ${evidenceKpiTile("Partial", `${stats.partial}`, "partial", "Needs review")}
+          ${evidenceKpiTile("Missing", `${stats.missing}`, "missing", stats.missing ? "Action required" : "All accounted for")}
+        </div>`;
+      }
+
+      function evidenceKpiTile(label, value, tone, sub) {
+        return `<div class="evidence-kpi tone-${escAttr(tone)}">
+          <span>${esc(label)}</span>
+          <strong>${esc(value)}</strong>
+          <small>${esc(sub)}</small>
+        </div>`;
+      }
+
+      function evidenceCosmosMarkup(rows) {
+        const layout = evidenceCosmosLayout(rows);
+        const sectorArcs = evidenceCosmosSectors();
+        const claims = rows.map((row, index) => evidenceCosmosClaim(row, layout[index])).join("");
+        const arcs = rows.map((row, index) => evidenceCosmosArcs(row, layout[index])).join("");
+        const pellets = rows.map((row, index) => evidenceCosmosPellets(row, layout[index])).join("");
+        const center = evidenceCosmosCenter(rows);
+        return `<section class="evidence-cosmos" aria-label="Requirement evidence cosmos" data-cosmos-root>
+          <svg class="evidence-cosmos-svg" viewBox="0 0 1000 480" role="img" aria-label="Claims orbiting the pull request connected to code, tests, and memory evidence">
+            <circle class="cosmos-orbit-ring" cx="500" cy="240" r="138" />
+            <circle class="cosmos-orbit-ring" cx="500" cy="240" r="215" />
+            ${sectorArcs}
+            ${arcs}
+            ${pellets}
+            ${center}
+            ${claims}
+          </svg>
+          <div class="evidence-cosmos-legend" aria-hidden="true">
+            <span class="evidence-cosmos-legend-item" style="--legend-tone: var(--green)"><span class="evidence-cosmos-legend-dot"></span>Verified</span>
+            <span class="evidence-cosmos-legend-item" style="--legend-tone: var(--amber)"><span class="evidence-cosmos-legend-dot"></span>Partial</span>
+            <span class="evidence-cosmos-legend-item" style="--legend-tone: var(--red)"><span class="evidence-cosmos-legend-dot"></span>Missing</span>
+            <span class="evidence-cosmos-legend-item" style="--legend-tone: var(--blue)"><span class="evidence-cosmos-legend-dot"></span>Code</span>
+            <span class="evidence-cosmos-legend-item" style="--legend-tone: var(--green)"><span class="evidence-cosmos-legend-dot"></span>Tests</span>
+            <span class="evidence-cosmos-legend-item" style="--legend-tone: var(--violet)"><span class="evidence-cosmos-legend-dot"></span>Memory</span>
+            <span class="evidence-cosmos-legend-item">Click a claim to spotlight its proof card</span>
+          </div>
+        </section>`;
+      }
+
+      function evidenceCosmosLayout(rows) {
+        const cx = 500;
+        const cy = 240;
+        const claimR = 138;
+        const pelletR = 215;
+        const total = Math.max(rows.length, 1);
+        return rows.map((row, index) => {
+          const sweep = 360 / total;
+          const angleDeg = -90 + index * sweep + (total === 1 ? 0 : 0);
+          const rad = (angleDeg * Math.PI) / 180;
+          const claimX = cx + Math.cos(rad) * claimR;
+          const claimY = cy + Math.sin(rad) * claimR;
+          const offsets = { code: -7, tests: 0, memory: 7 };
+          const pellets = {};
+          for (const [kind, off] of Object.entries(offsets)) {
+            const a = ((angleDeg + off) * Math.PI) / 180;
+            pellets[kind] = {
+              x: cx + Math.cos(a) * pelletR,
+              y: cy + Math.sin(a) * pelletR,
+              angle: angleDeg + off
+            };
+          }
+          return { cx, cy, claimX, claimY, angleDeg, pellets };
+        });
+      }
+
+      function evidenceCosmosSectors() {
+        const sectors = [
+          { label: "Code",   tone: "var(--blue)",   centerAngle: -90 },
+          { label: "Tests",  tone: "var(--green)",  centerAngle: 30 },
+          { label: "Memory", tone: "var(--violet)", centerAngle: 150 }
+        ];
+        const cx = 500;
+        const cy = 240;
+        const arcR = 245;
+        const labelR = 232;
+        return sectors.map((sector) => {
+          const start = sector.centerAngle - 50;
+          const end = sector.centerAngle + 50;
+          const r1 = (start * Math.PI) / 180;
+          const r2 = (end * Math.PI) / 180;
+          const x1 = cx + Math.cos(r1) * arcR;
+          const y1 = cy + Math.sin(r1) * arcR;
+          const x2 = cx + Math.cos(r2) * arcR;
+          const y2 = cy + Math.sin(r2) * arcR;
+          const rl = (sector.centerAngle * Math.PI) / 180;
+          const lx = cx + Math.cos(rl) * labelR;
+          const ly = cy + Math.sin(rl) * labelR + 4;
+          return `
+            <path class="cosmos-sector-arc" style="--sector-tone:${sector.tone}" d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${arcR} ${arcR} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}" />
+            <text class="cosmos-sector-label" style="--sector-tone:${sector.tone}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}">${esc(sector.label)}</text>
+          `;
+        }).join("");
+      }
+
+      function evidenceCosmosCenter(rows) {
+        const stats = evidenceStatsFor(rows);
+        const total = Math.max(stats.total, 1);
+        const verifiedPct = stats.verified / total;
+        const partialPct = stats.partial / total;
+        const cx = 500;
+        const cy = 240;
+        const r = 46;
+        const C = 2 * Math.PI * r;
+        const verifiedLen = C * verifiedPct;
+        const partialLen = C * partialPct;
+        const missingLen = C - verifiedLen - partialLen;
+        return `
+          <g class="cosmos-center-group">
+            <circle class="cosmos-center-disc" cx="${cx}" cy="${cy}" r="${r + 8}" />
+            <circle class="cosmos-center-ring" cx="${cx}" cy="${cy}" r="${r}"
+              transform="rotate(-90 ${cx} ${cy})"
+              stroke="var(--green)"
+              stroke-dasharray="${verifiedLen.toFixed(2)} ${(C - verifiedLen).toFixed(2)}" />
+            <circle class="cosmos-center-ring" cx="${cx}" cy="${cy}" r="${r}"
+              transform="rotate(${(-90 + verifiedPct * 360).toFixed(2)} ${cx} ${cy})"
+              stroke="var(--amber)"
+              stroke-dasharray="${partialLen.toFixed(2)} ${(C - partialLen).toFixed(2)}" />
+            <circle class="cosmos-center-ring" cx="${cx}" cy="${cy}" r="${r}"
+              transform="rotate(${(-90 + (verifiedPct + partialPct) * 360).toFixed(2)} ${cx} ${cy})"
+              stroke="var(--red)"
+              stroke-dasharray="${missingLen.toFixed(2)} ${(C - missingLen).toFixed(2)}" />
+            <text class="cosmos-center-text-title" x="${cx}" y="${cy - 14}">Pull Request</text>
+            <text class="cosmos-center-text-value" x="${cx}" y="${cy + 6}">${stats.verified}/${stats.total}</text>
+            <text class="cosmos-center-text-sub" x="${cx}" y="${cy + 20}">Verified</text>
+          </g>
+        `;
+      }
+
+      function evidenceCosmosClaim(row, position) {
+        const radius = row.confidence == null ? 14 : 11 + row.confidence * 10;
+        const labelChar = (row.intent_id || row.claimText || "?").trim().charAt(0).toUpperCase() || "?";
+        const id = escAttr(row.claimId);
+        const aria = escAttr(`Spotlight claim ${row.claimText}`);
+        return `
+          <g class="cosmos-claim tone-${escAttr(row.tone)}" data-claim-id="${id}" role="button" tabindex="0" aria-label="${aria}">
+            <circle class="cosmos-claim-glow" cx="${position.claimX.toFixed(1)}" cy="${position.claimY.toFixed(1)}" r="${(radius + 8).toFixed(1)}" />
+            <circle class="cosmos-claim-disc" cx="${position.claimX.toFixed(1)}" cy="${position.claimY.toFixed(1)}" r="${radius.toFixed(1)}" />
+            <text class="cosmos-claim-label" x="${position.claimX.toFixed(1)}" y="${(position.claimY + 3).toFixed(1)}">${esc(labelChar)}</text>
+          </g>
+        `;
+      }
+
+      function evidenceCosmosArcs(row, position) {
+        const kinds = [
+          { key: "code",   count: row.codePaths.length },
+          { key: "tests",  count: row.testPaths.length },
+          { key: "memory", count: row.memoryPaths.length }
+        ];
+        const tone = evidenceToneColor(row.tone);
+        const claimId = escAttr(row.claimId);
+        return kinds.map((k) => {
+          const pellet = position.pellets[k.key];
+          const has = k.count > 0;
+          const strength = has ? Math.min(1, 0.35 + 0.18 * Math.log2(1 + k.count) + (row.confidence || 0.5) * 0.25) : 0.18;
+          const midX = (position.claimX + pellet.x) / 2 + Math.cos(((position.angleDeg + 90) * Math.PI) / 180) * 8;
+          const midY = (position.claimY + pellet.y) / 2 + Math.sin(((position.angleDeg + 90) * Math.PI) / 180) * 8;
+          const d = `M ${position.claimX.toFixed(1)} ${position.claimY.toFixed(1)} Q ${midX.toFixed(1)} ${midY.toFixed(1)} ${pellet.x.toFixed(1)} ${pellet.y.toFixed(1)}`;
+          return `<path class="cosmos-arc${has ? "" : " dashed"}" data-claim-id="${claimId}" data-arc-kind="${escAttr(k.key)}" style="--arc-tone:${tone};--arc-strength:${strength.toFixed(2)}" d="${d}" />`;
+        }).join("");
+      }
+
+      function evidenceCosmosPellets(row, position) {
+        const kinds = [
+          { key: "code",   count: row.codePaths.length,   tone: "var(--blue)" },
+          { key: "tests",  count: row.testPaths.length,   tone: "var(--green)" },
+          { key: "memory", count: row.memoryPaths.length, tone: "var(--violet)" }
+        ];
+        const claimId = escAttr(row.claimId);
+        return kinds.map((k) => {
+          const pellet = position.pellets[k.key];
+          const has = k.count > 0;
+          const r = has ? Math.min(11, 5 + Math.sqrt(k.count) * 2) : 4.4;
+          const pelletCls = `cosmos-pellet${has ? "" : " dashed"}`;
+          const textCls = `cosmos-pellet-count${has ? "" : " dashed"}`;
+          return `
+            <circle class="${pelletCls}" data-claim-id="${claimId}" data-arc-kind="${escAttr(k.key)}" style="--pellet-tone:${k.tone}" cx="${pellet.x.toFixed(1)}" cy="${pellet.y.toFixed(1)}" r="${r.toFixed(1)}" />
+            <text class="${textCls}" data-claim-id="${claimId}" data-arc-kind="${escAttr(k.key)}" x="${pellet.x.toFixed(1)}" y="${(pellet.y + 2.4).toFixed(1)}">${esc(has ? String(k.count) : "0")}</text>
+          `;
+        }).join("");
+      }
+
+      function evidenceProofCardsStack(rows) {
+        const cards = rows.map((row, index) => evidenceProofCardHtml(row, index)).join("");
+        return `<section class="evidence-pcards" aria-label="Requirement proof cards">
+          <div class="evidence-pcards-toolbar" data-evidence-toolbar>
+            <span class="evidence-pcards-toolbar-label">Sort</span>
+            <div class="evidence-pcards-toolbar-group" data-evidence-sort-group>
+              <button type="button" class="evidence-pcards-chip is-active" data-evidence-sort="risk">Risk first</button>
+              <button type="button" class="evidence-pcards-chip" data-evidence-sort="conf-asc">Low confidence</button>
+              <button type="button" class="evidence-pcards-chip" data-evidence-sort="conf-desc">High confidence</button>
+              <button type="button" class="evidence-pcards-chip" data-evidence-sort="alpha">A-Z</button>
+            </div>
+            <span class="evidence-pcards-toolbar-label" style="margin-left:6px">Filter</span>
+            <div class="evidence-pcards-toolbar-group" data-evidence-filter-group>
+              <button type="button" class="evidence-pcards-chip tone-all is-active" data-evidence-filter="all">All</button>
+              <button type="button" class="evidence-pcards-chip tone-verified" data-evidence-filter="verified">Verified</button>
+              <button type="button" class="evidence-pcards-chip tone-partial" data-evidence-filter="partial">Partial</button>
+              <button type="button" class="evidence-pcards-chip tone-missing" data-evidence-filter="missing">Missing</button>
+            </div>
+          </div>
+          <div class="evidence-pcards-grid" data-evidence-cards>
+            ${cards}
+          </div>
+        </section>`;
+      }
+
+      function evidenceProofCardHtml(row, index) {
+        const conf = row.confidence;
+        const confPct = conf == null ? 0 : Math.round(conf * 100);
+        const confLabel = conf == null ? "n/a" : `${confPct}%`;
+        const sortRisk = row.tone === "missing" ? 0 : row.tone === "partial" ? 1 : 2;
+        const sortConf = conf == null ? -1 : conf;
+        const totalProof = row.codePaths.length + row.testPaths.length + row.memoryPaths.length;
+        const subline = `${row.changedPaths.length} changed · ${row.codePaths.length} code · ${row.testPaths.length} tests · ${row.memoryPaths.length} memory`;
+        const claimId = escAttr(row.claimId);
+        const trust = evidenceTrustLedger(row);
+        const exhibits = [
+          evidenceExhibit("Code", "code", row.codePaths, row.tone, "No changed code linked to this claim."),
+          evidenceExhibit("Tests", "tests", row.testPaths, row.tone, "No new or recalled tests covering this claim."),
+          evidenceExhibit("Memory", "memory", row.memoryPaths, row.tone, "No prior PRs, ADRs, or docs recalled for this claim.")
+        ].join("");
+        return `<article class="evidence-pcard tone-${escAttr(row.tone)}"
+          data-evidence-card
+          data-claim-id="${claimId}"
+          data-tone="${escAttr(row.tone)}"
+          data-sort-risk="${sortRisk}"
+          data-sort-conf="${sortConf}"
+          data-sort-alpha="${escAttr((row.claimText || "").toLowerCase())}"
+          data-sort-index="${index}"
+          style="--ring-pct:${confPct}">
+          <header class="evidence-pcard-head">
+            <div class="evidence-pcard-ring" aria-label="Confidence ${esc(confLabel)}">
+              <strong>${esc(confLabel)}</strong>
+              <span>CONF</span>
+            </div>
+            <div class="evidence-pcard-title">
+              <h5>${esc(row.claimText)}</h5>
+              <p>${esc(subline)}</p>
+            </div>
+            <div class="evidence-pcard-meta">
+              ${pill(row.evidence_status || row.tone, row.tone)}
+              ${pill(`${totalProof} proof`, totalProof ? "info" : "neutral")}
+            </div>
+          </header>
+          <div class="evidence-pcard-body">
+            ${trust}
+            <div class="evidence-exhibits">
+              ${exhibits}
+            </div>
+          </div>
+          <footer class="evidence-pcard-action">
+            <span>Reviewer action</span>
+            <strong>${esc(row.suggested_action || fallbackEvidenceAction(row.tone))}</strong>
+          </footer>
+        </article>`;
+      }
+
+      function evidenceTrustLedger(row) {
+        const slots = [
+          { key: "code",   label: "Code",   count: row.codePaths.length,   tone: "var(--blue)" },
+          { key: "tests",  label: "Tests",  count: row.testPaths.length,   tone: "var(--green)" },
+          { key: "memory", label: "Memory", count: row.memoryPaths.length, tone: "var(--violet)" }
+        ];
+        const rows = slots.map((slot) => {
+          const on = slot.count > 0;
+          const cls = on ? "is-on" : "is-off";
+          const icon = on ? "&#10003;" : "&middot;";
+          const countText = on ? String(slot.count) : "—";
+          return `<div class="evidence-trust-slot ${cls}" style="--slot-tone:${on ? slot.tone : "var(--muted)"}">
+            <span class="evidence-trust-icon" aria-hidden="true">${icon}</span>
+            <span>${esc(slot.label)}</span>
+            <span class="evidence-trust-count">${esc(countText)}</span>
+          </div>`;
+        }).join("");
+        return `<aside class="evidence-trust" aria-label="Trust ledger">
+          <div class="evidence-trust-label">Trust ledger</div>
+          ${rows}
+        </aside>`;
+      }
+
+      function evidenceExhibit(label, kind, paths, tone, emptyMessage) {
+        const isEmpty = paths.length === 0;
+        const cls = `evidence-exhibit kind-${escAttr(kind)}${isEmpty ? " is-empty" : ""}`;
+        const head = `<div class="evidence-exhibit-head">
+          <h6>${esc(label)}</h6>
+          <small>${esc(isEmpty ? "no proof" : `${paths.length} item${paths.length === 1 ? "" : "s"}`)}</small>
+        </div>`;
+        const body = isEmpty
+          ? `<div class="evidence-exhibit-empty">${esc(emptyMessage)}</div>`
+          : `<div class="evidence-exhibit-list">${paths.slice(0, 8).map((path) => evidencePathChip(path, tone)).join("")}</div>`;
+        return `<div class="${cls}">${head}${body}</div>`;
       }
 
       function evidenceGraphRow(item) {
