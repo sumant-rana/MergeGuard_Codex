@@ -174,35 +174,30 @@ def handle_github_webhook(
         summary.get("status"), summary.get("risk_score"),
     )
 
-    # Post results back to GitHub (best-effort — collected into ActionReport).
     repo_full_name = normalized["repository"]["full_name"]
     pr_num = int(normalized["pull_request"]["number"])
     head_sha = normalized["pull_request"]["head_sha"]
-    details_url = _details_url_for(run.get("id"))
 
-    logger.info(
-        "▷ applying tiered actions (status=%s risk=%s) on %s#%s",
-        summary.get("status"), summary.get("risk_score"), repo_full_name, pr_num,
+    # Persist the GitHub context (repo, PR, head SHA, installation_id) on the
+    # run so a later manual "Apply to GitHub" button click can mint a fresh
+    # installation token and post the comment + check_run. We do NOT post
+    # anything to GitHub here — that's an explicit reviewer decision now,
+    # surfaced via POST /api/runs/<id>/apply-actions.
+    store.set_github_context(
+        run.get("id"),
+        {
+            "repo_full_name": repo_full_name,
+            "pr_number": pr_num,
+            "head_sha": head_sha,
+            "installation_id": envelope.installation_id,
+            "details_url": _details_url_for(run.get("id")),
+        },
     )
-    action_report = apply_tiered_actions(
-        repo_full_name, pr_num, head_sha, summary, token, details_url=details_url
-    )
-
     logger.info(
-        "✓ tiered actions: comment_id=%s check_run_id=%s review=%s labels_added=%s labels_removed=%s reviewers=%s",
-        action_report.comment_id,
-        action_report.check_run_id,
-        f"{action_report.review_action}#{action_report.review_id}" if action_report.review_action else None,
-        action_report.labels_added or "[]",
-        action_report.labels_removed or "[]",
-        action_report.reviewers_requested or "[]",
-    )
-    for warning in action_report.warnings:
-        logger.warning("⚠ tiered-action warning: %s", warning)
-
-    logger.info(
-        "◀ webhook complete delivery_id=%s pr=%s#%s total=%.0fms",
+        "◀ webhook complete delivery_id=%s pr=%s#%s total=%.0fms — "
+        "awaiting manual 'Apply to GitHub' for status=%s risk=%s",
         delivery_id, repo_full_name, pr_num, (time.monotonic() - t0) * 1000,
+        summary.get("status"), summary.get("risk_score"),
     )
     return WebhookResponse(
         200,
@@ -212,16 +207,7 @@ def handle_github_webhook(
             "state": run.get("state"),
             "status": summary.get("status"),
             "risk_score": summary.get("risk_score"),
-            "actions": {
-                "comment_id": action_report.comment_id,
-                "check_run_id": action_report.check_run_id,
-                "review_id": action_report.review_id,
-                "review_action": action_report.review_action,
-                "labels_added": action_report.labels_added,
-                "labels_removed": action_report.labels_removed,
-                "reviewers_requested": action_report.reviewers_requested,
-                "warnings": action_report.warnings,
-            },
+            "actions_pending": True,
         },
     )
 

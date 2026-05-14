@@ -5848,6 +5848,116 @@
         white-space: pre-wrap;
       }
 
+      .comment-action-panel {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: color-mix(in oklab, var(--panel-bg) 60%, transparent);
+        margin-top: 16px;
+      }
+      .comment-action-title {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .comment-action-subtitle {
+        margin: -4px 0 4px;
+        font-size: 12.5px;
+      }
+      .comment-action-decisions {
+        border: 0;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+      }
+      .comment-action-decisions legend {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-soft);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 6px;
+      }
+      .comment-action-radio {
+        position: relative;
+        display: flex;
+        gap: 10px;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        align-items: flex-start;
+        transition: border-color 0.12s, background 0.12s;
+      }
+      .comment-action-radio:hover { border-color: color-mix(in oklab, var(--primary) 30%, var(--border)); }
+      .comment-action-radio input { margin-top: 3px; }
+      .comment-action-radio strong { display: block; font-size: 14px; }
+      .comment-action-radio > div > span { display: block; font-size: 12px; color: var(--text-soft); margin-top: 4px; }
+      .comment-action-radio input:checked ~ div strong { color: var(--primary); }
+      .comment-action-radio.recommended {
+        border-color: color-mix(in oklab, var(--green) 55%, var(--border));
+        background: color-mix(in oklab, var(--green) 8%, transparent);
+      }
+      .comment-action-radio.recommended input:checked ~ div strong { color: var(--green); }
+      .comment-action-rec-pill {
+        display: inline-block !important;
+        margin-top: 4px;
+        margin-right: 4px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 10.5px !important;
+        font-weight: 600;
+        color: var(--green) !important;
+        background: color-mix(in oklab, var(--green) 18%, transparent);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .comment-action-targets { font-size: 12px; }
+      .comment-action-feedback:empty { display: none; }
+      .comment-action-success {
+        padding: 8px 12px;
+        border-radius: 6px;
+        background: color-mix(in oklab, var(--green) 12%, transparent);
+        color: var(--green);
+        font-size: 13px;
+      }
+      .comment-action-error {
+        padding: 8px 12px;
+        border-radius: 6px;
+        background: color-mix(in oklab, var(--red) 12%, transparent);
+        color: var(--red);
+        font-size: 13px;
+      }
+      .comment-action-warnings {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--text-soft);
+      }
+      .comment-applied {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 10px;
+        align-items: center;
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--green) 10%, transparent);
+        color: var(--text-strong);
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+      .comment-applied details { width: 100%; margin-top: 4px; }
+      .comment-action-empty {
+        padding: 12px 14px;
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+
       .bar-list {
         display: grid;
         gap: 8px;
@@ -7711,7 +7821,66 @@
         bindEvidenceGraph();
         bindEvidenceCosmos();
         bindAgentDecisionMesh();
+        bindApplyActionButtons();
         detailEl.querySelector(".dashboard-tab-body")?.scrollTo({ top: 0 });
+      }
+
+      function bindApplyActionButtons() {
+        for (const button of detailEl.querySelectorAll('[data-action="apply-pr-actions"]')) {
+          button.addEventListener("click", () => applyPrActions(button));
+        }
+      }
+
+      async function applyPrActions(button) {
+        const runId = button.dataset.runId;
+        if (!runId) return;
+        const panel = button.closest("[data-action-panel]");
+        const feedback = panel?.querySelector("[data-action-feedback]");
+        const selected = panel?.querySelector('input[name^="decision-"]:checked');
+        const decision = selected?.value || "auto";
+
+        button.disabled = true;
+        const originalLabel = button.textContent;
+        button.textContent = "Posting…";
+        if (feedback) feedback.innerHTML = '<span class="muted">Calling GitHub…</span>';
+
+        try {
+          const resp = await fetch(`/api/runs/${encodeURIComponent(runId)}/apply-actions`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ decision }),
+          });
+          const data = await resp.json();
+          if (!resp.ok || data.error) {
+            throw new Error(data.error || `HTTP ${resp.status}`);
+          }
+          if (feedback) {
+            const r = data.report || {};
+            const bits = [
+              `<strong>Posted</strong> as <code>${esc(data.applied_status)}</code>`,
+              r.comment_id ? `comment <code>#${esc(r.comment_id)}</code>` : null,
+              r.check_run_id ? `check <code>#${esc(r.check_run_id)}</code>` : null,
+              r.review_action ? `review <code>${esc(r.review_action)}</code>` : null,
+            ].filter(Boolean);
+            feedback.innerHTML = `<div class="comment-action-success">${bits.join(" · ")}</div>`;
+            if ((r.warnings || []).length) {
+              feedback.innerHTML += `<details class="comment-action-warnings"><summary>${r.warnings.length} warning(s)</summary><ul>${r.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></details>`;
+            }
+          }
+          // Refresh the queue so the detail rerenders with `github_actions` populated.
+          await loadQueue({ preferredRunId: runId });
+          if (state.currentRun?.id === runId) {
+            const fresh = state.rows.find((r) => r.latest_run?.id === runId)?.latest_run;
+            if (fresh) renderDetail(fresh);
+          }
+        } catch (err) {
+          if (feedback) {
+            feedback.innerHTML = `<div class="comment-action-error">✗ ${esc(err.message || err)}</div>`;
+          }
+        } finally {
+          button.disabled = false;
+          button.textContent = originalLabel;
+        }
       }
 
       function detailTabs(run, summary, pr, agentNames) {
@@ -7821,9 +7990,73 @@
             title: "Generated PR comment",
             description: "Ready-to-post reviewer summary synthesized from the agent run.",
             count: summary.comment ? 1 : 0,
-            content: `<pre class="comment-box">${esc(summary.comment || "No comment generated.")}</pre>`
+            content: commentTabContent(run, summary)
           }
         ];
+      }
+
+      function commentTabContent(run, summary) {
+        const runId = run?.id;
+        const ctx = run?.github_context || {};
+        const isWebhookRun = Boolean(ctx.repo_full_name);
+        const already = run?.github_actions || null;
+        const analysisStatus = String(summary.status || "review").toLowerCase();
+        const commentBody = summary.comment || "No comment generated.";
+
+        // The analysis status drives which decision is RECOMMENDED:
+        // - "blocked" → recommend request_changes
+        // - anything else (pass / review / unknown) → recommend approve
+        const recommended = analysisStatus === "blocked" ? "request_changes" : "approve";
+
+        const appliedBanner = already ? `
+          <div class="comment-applied" role="status">
+            <span>✓ Posted to GitHub on ${esc((run.actions_posted_at || "").slice(0, 19).replace("T", " "))}</span>
+            <span>·</span>
+            <span>Decision: <strong>${esc(already.applied_status || already.status || "?")}</strong></span>
+            ${already.comment_id ? `<span>· Comment <code>#${esc(already.comment_id)}</code></span>` : ""}
+            ${already.check_run_id ? `<span>· Check <code>#${esc(already.check_run_id)}</code></span>` : ""}
+            ${(already.warnings || []).length ? `<details><summary>${already.warnings.length} warning(s)</summary><ul>${already.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></details>` : ""}
+          </div>` : "";
+
+        const radioFor = (value, title, blurb) => {
+          const isRecommended = value === recommended;
+          return `
+            <label class="comment-action-radio${isRecommended ? " recommended" : ""}">
+              <input type="radio" name="decision-${escAttr(runId)}" value="${escAttr(value)}"${isRecommended ? " checked" : ""}>
+              <div>
+                <strong>${esc(title)}</strong>
+                ${isRecommended ? `<span class="comment-action-rec-pill">Recommended · analysis ${esc(analysisStatus)}</span>` : ""}
+                <span>${esc(blurb)}</span>
+              </div>
+            </label>`;
+        };
+
+        const actionPanel = !isWebhookRun ? `
+          <div class="comment-action-empty muted">
+            This is a demo / fixture run — no GitHub repo is attached, so it can't be applied. Trigger from a real webhook to enable Apply.
+          </div>` : `
+          <div class="comment-action-panel" data-action-panel data-run-id="${escAttr(runId)}">
+            <h5 class="comment-action-title">Take action on this PR</h5>
+            <p class="comment-action-subtitle muted">Review the generated comment above, then pick a decision. The button below will post the comment to GitHub and update the MergeGuard check.</p>
+            <fieldset class="comment-action-decisions">
+              <legend>Decision</legend>
+              ${radioFor("approve", "Approve", "Posts comment + ✓ success check on the PR")}
+              ${radioFor("request_changes", "Request changes", "Posts comment + ✗ failure check + REQUEST_CHANGES review")}
+            </fieldset>
+            <div class="comment-action-targets muted">
+              Will post to <code>${esc(ctx.repo_full_name)}#${esc(ctx.pr_number)}</code> (head <code>${esc((ctx.head_sha || "").slice(0, 7))}</code>)
+            </div>
+            <button class="primary-button" type="button" data-action="apply-pr-actions" data-run-id="${escAttr(runId)}">
+              ${already ? "Re-apply to GitHub" : "Apply to GitHub"}
+            </button>
+            <div class="comment-action-feedback" data-action-feedback></div>
+          </div>`;
+
+        return `
+          ${appliedBanner}
+          <pre class="comment-box">${esc(commentBody)}</pre>
+          ${actionPanel}
+        `;
       }
 
       function tabButton(tab, selected) {
