@@ -186,17 +186,31 @@ def _violated_intents(
     ]
 
 
+_INTENT_DEDUP_PHRASES = (
+    "not covered by changed tests",
+    "is only partially supported",
+    "is only partial",
+    "partial changed-test coverage",
+    "has partial changed-test coverage",
+    "has missing changed-test coverage",
+    "missing changed-test coverage",
+    "intent is not covered by changed tests",
+)
+
+
 def _is_redundant_intent_finding(blocker: dict[str, Any]) -> bool:
-    """Drop generic 'intent-N not covered by tests' findings — duplicated by the
-    Intent vs Implementation table.
+    """Drop generic 'intent-N not covered / partially supported' findings —
+    the Intent vs Implementation table already surfaces the same information.
+
+    Without this filter, the same gap shows up twice: once as a 🟡 Partial / ❌
+    Missing row in the Intent table, and again as a 'Review-required finding'
+    in the findings section — which then incorrectly becomes the top blocker.
     """
     path = str(blocker.get("path") or "")
-    msg = str(blocker.get("message") or "")
+    msg = str(blocker.get("message") or "").lower()
     if path.startswith("intent-"):
         return True
-    if "not covered by changed tests" in msg.lower():
-        return True
-    return False
+    return any(phrase in msg for phrase in _INTENT_DEDUP_PHRASES)
 
 
 def _promote_intent_gaps(

@@ -316,6 +316,13 @@ def coverage_findings(
     for item in coverage_matrix:
         if item["status"] == "covered":
             continue
+        # When the PR ships AT LEAST ONE test file, suppress 'partial'
+        # source-coverage-gap findings — the Intent vs Implementation table
+        # already shows which specific claims are partial, and emitting a
+        # second 'has partial coverage' finding made it look like the top
+        # blocker even on PRs that are well-tested at the file level.
+        if item["status"] == "partial" and tests:
+            continue
         severity = "block" if item["risk_score"] >= 60 and item["status"] == "missing" else "review_required"
         findings.append(
             {
