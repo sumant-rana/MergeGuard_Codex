@@ -142,10 +142,23 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         for item in memory.get("requirement_evidence", [])
         if item.get("intent_id")
     }
+    # Build a patch lookup so the LLM-path can actually READ the changed
+    # code, not just file paths. Without this the LLM has to guess whether
+    # the implementation "really" covers each intent and tends to default
+    # to "partial" out of caution.
+    raw_changed_files = payload.get("changed_files", [])
+    patches_by_path = {
+        f.get("path"): str(f.get("patch") or "")
+        for f in raw_changed_files
+        if isinstance(f, dict) and f.get("path")
+    }
+
     mode = "fallback"
     links: list[dict[str, Any]] = []
     if llm_available() and intent_items:
-        llm_links = _map_via_llm(intent_items, files, memory_by_intent)
+        llm_links = _map_via_llm(
+            intent_items, files, memory_by_intent, patches_by_path
+        )
         if llm_links is not None:
             links = llm_links
             mode = "llm"
@@ -212,6 +225,27 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
 _EVIDENCE_SYSTEM_PROMPT = (
     "You are a senior reviewer mapping pull-request INTENT items to the "
     "CHANGED FILES that prove or fail to prove each intent.\n\n"
+    "Each changed file comes with a ``patch_excerpt`` (first ~1500 chars of "
+    "the unified diff, with ``+`` and ``-`` line prefixes preserved). USE THIS "
+    "to verify whether each intent's claim is actually implemented — do NOT "
+    "guess from the file name alone. Examples:\n"
+    "  • Intent: 'Accept HTMLAttributes<HTMLSpanElement>' — look for a type "
+    "    signature like ``React.HTMLAttributes<HTMLSpanElement>`` AND a "
+    "    ``{...props}`` spread on the returned element. If both present in "
+    "    the patch: proven. If only the type but no spread: partial. If neither: "
+    "    missing.\n"
+    "  • Intent: 'Use semantic Tailwind classes border-muted, animate-spin' — "
+    "    search the patch for each named class. If all named classes appear in "
+    "    a ``className`` string: proven. If some are absent: partial. Don't "
+    "    mark missing if at least one is present.\n"
+    "  • Intent: 'T4 — custom aria-label is preserved' — look for a test in "
+    "    the *.test.* patch that renders the component with an explicit "
+    "    ``aria-label`` prop AND asserts the rendered attribute equals it. "
+    "    If both present: proven.\n\n"
+    "Bias toward 'proven' when the patch contains direct, literal evidence; "
+    "reserve 'partial' for genuinely ambiguous cases. The reviewer reads this "
+    "table — calling a covered claim 'partial' is a false positive that "
+    "actively misleads them.\n\n"
     "IMPORTANT — the meaning of evidence_status depends on the intent's category:\n\n"
     "  category == 'should' (something the PR should do):\n"
     "    - 'proven'   — a changed test or impl file directly exercises this intent.\n"
@@ -244,21 +278,34 @@ _EVIDENCE_SYSTEM_PROMPT = (
 )
 
 
+_PATCH_EXCERPT_CHARS = 1500
+
+
 def _map_via_llm(
     intent_items: list[dict[str, Any]],
     files: list[dict[str, Any]],
     memory_by_intent: dict[str, dict[str, Any]],
+    patches_by_path: dict[str, str] | None = None,
 ) -> list[dict[str, Any]] | None:
-    file_summaries = [
-        {
-            "path": f.get("path"),
-            "classification": f.get("classification"),
-            "risk_score": f.get("risk_score"),
-            "risk_reasons": (f.get("risk_reasons") or [])[:4],
-        }
-        for f in files
-        if isinstance(f, dict) and f.get("path")
-    ]
+    patches_by_path = patches_by_path or {}
+    file_summaries = []
+    for f in files:
+        if not isinstance(f, dict) or not f.get("path"):
+            continue
+        path = f["path"]
+        patch_excerpt = (patches_by_path.get(path) or "")[:_PATCH_EXCERPT_CHARS]
+        file_summaries.append(
+            {
+                "path": path,
+                "classification": f.get("classification"),
+                "risk_score": f.get("risk_score"),
+                "risk_reasons": (f.get("risk_reasons") or [])[:4],
+                # The actual added/removed code so the LLM can verify
+                # whether an intent's claim is implemented (not just guess
+                # from the file name).
+                "patch_excerpt": patch_excerpt,
+            }
+        )
     intent_summaries = [
         {
             "id": item.get("id"),
