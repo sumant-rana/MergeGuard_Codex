@@ -261,17 +261,23 @@ class LocalMergeGuardStore:
         return sorted(runs, key=lambda item: item["created_at"], reverse=True)[0]["input_payload"]
 
     def queue(self) -> list[dict[str, Any]]:
+        # Ordering: any PR whose latest run is currently executing comes
+        # first (the reviewer wants to see what's happening *now* without
+        # scrolling). Within each group we then rank by risk_score desc, and
+        # tiebreak on updated_at desc so the freshest activity floats up.
         rows = []
         for pr in self.state["pull_requests"]:
             latest = self.latest_run_for_pr(pr["id"])
             rows.append({"pull_request": pr, "latest_run": latest})
-        return sorted(
-            rows,
-            key=lambda row: row.get("latest_run", {})
-            .get("summary", {})
-            .get("risk_score", 0),
-            reverse=True,
-        )
+
+        def _sort_key(row: dict[str, Any]) -> tuple[int, int, str]:
+            latest = row.get("latest_run") or {}
+            is_running = str(latest.get("state") or "").lower() == "running"
+            risk = (latest.get("summary") or {}).get("risk_score") or 0
+            updated = latest.get("updated_at") or ""
+            return (1 if is_running else 0, int(risk), updated)
+
+        return sorted(rows, key=_sort_key, reverse=True)
 
     def record_override(
         self,

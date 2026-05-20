@@ -809,6 +809,28 @@
         box-shadow: var(--shadow-soft);
       }
 
+      .pr-row-running {
+        border-color: color-mix(in oklab, var(--primary) 55%, transparent);
+        background: color-mix(in oklab, var(--primary) 8%, var(--card-bg));
+        box-shadow:
+          var(--shadow-soft),
+          0 0 0 1px color-mix(in oklab, var(--primary) 30%, transparent);
+      }
+
+      /* Inside a primary-tinted "running" row, pills that themselves use
+         var(--primary) for text + border lose all contrast — the text color
+         matches the border color, and the row tint bleeds through their
+         transparent background, so the pill renders as a single orange bar
+         with no readable label. Force solid card-bg background and switch
+         the text to --text so the labels are sharply legible. The orange
+         border still conveys the "running" accent. */
+      .pr-row-running .pill-running,
+      .pr-row-running .pill-info {
+        background: var(--card-bg);
+        color: var(--text);
+        border-color: color-mix(in oklab, var(--primary) 55%, transparent);
+      }
+
       .pr-row-main {
         grid-area: main;
         min-width: 0;
@@ -6957,6 +6979,7 @@
         }
 
         renderQueue();
+        maybeAttachToWebhookRun();
       }
 
       function chooseSelectedRow(preferredRunId) {
@@ -7027,6 +7050,12 @@
         for (const button of queueListEl.querySelectorAll("[data-action='analyze']")) {
           button.addEventListener("click", () => analyzePr(button.dataset.prId));
         }
+        for (const button of queueListEl.querySelectorAll("[data-action='watch']")) {
+          button.addEventListener("click", () => {
+            const row = state.rows.find((r) => r.pull_request?.id === button.dataset.prId);
+            if (row) attachToLiveRun(row);
+          });
+        }
         for (const button of queueListEl.querySelectorAll("[data-action='details']")) {
           button.addEventListener("click", () => showDetails(button.dataset.runId));
         }
@@ -7052,8 +7081,8 @@
         detailEl.classList.add("hidden");
         closeAgentOutput();
         updateWorkflowHeader(
-          `Analyzing #${pr.number}`,
-          `${pr.repository?.full_name || "repository"} / ${pr.title || "Untitled PR"}`
+          `Analyzing #${pr.number} · ${pr.title || "Untitled PR"}`,
+          `${pr.repository?.full_name || "repository"}`
         );
         renderAgentWorkflow();
         renderQueue();
@@ -7084,6 +7113,14 @@
           return;
         }
 
+        bindLivePipelineEvents(runId);
+      }
+
+      // Subscribes to the SSE stream for an existing run and reflects each
+      // agent-status / run-finished event into state.currentRun + the live
+      // workflow view. Used by both manual analyzePr (right after the POST
+      // returns a run_id) and the webhook auto-attach path below.
+      function bindLivePipelineEvents(runId) {
         const es = new EventSource(`/api/runs/${encodeURIComponent(runId)}/events`);
         state.flowEventSource = es;
 
@@ -7150,6 +7187,65 @@
             showAgentOutputError(new Error("Live event stream disconnected. Click Show details to view the latest state."));
           }
         };
+      }
+
+      // Auto-attach: a webhook-triggered run is already executing in the
+      // background — open the same live pipeline view that manual Analyze
+      // shows, seeded with whatever agents have already finished, and start
+      // streaming further agent-status events.
+      function attachToLiveRun(row) {
+        if (!row?.latest_run?.id || !row?.pull_request?.id) return;
+        const run = row.latest_run;
+        const pr = row.pull_request;
+        closeFlowStream();
+        if (state.flowTimer) {
+          window.clearInterval(state.flowTimer);
+          state.flowTimer = null;
+        }
+        state.activeAnalysisPrId = pr.id;
+        state.selectedPrId = pr.id;
+        state.selectedRunId = run.id;
+        state.currentRun = run;
+        state.runningAgentId = null;
+        // Seed completed-set from existing agent_results so the live view
+        // reflects progress already made when we attach mid-pipeline.
+        state.flowCompletedAgentIds = new Set(Object.keys(run.agent_results || {}));
+        state.replayInFlight = false;
+        workflowPanelEl.classList.remove("hidden");
+        detailEl.classList.add("hidden");
+        closeAgentOutput();
+        updateWorkflowHeader(
+          `Analyzing #${pr.number} · ${pr.title || "Untitled PR"}`,
+          `${pr.repository?.full_name || "repository"}`
+        );
+        renderAgentWorkflow(state.currentRun);
+        renderQueue();
+        // Anchor elapsed-time to the run's actual start so the live timer is
+        // honest about how long ago the webhook fired.
+        if (!state.runStartedAt) {
+          const createdMs = run.created_at ? Date.parse(run.created_at) : NaN;
+          state.runStartedAt = Number.isFinite(createdMs) ? createdMs : Date.now();
+        }
+        bindLivePipelineEvents(run.id);
+      }
+
+      // Called from loadQueue's polling loop. Surfaces a webhook-triggered
+      // running run exactly once, only when the user isn't already focused
+      // on something else (mid-Analyze click, watching another live run, or
+      // reading a completed PR's detail view).
+      function maybeAttachToWebhookRun() {
+        if (state.flowEventSource) return;                          // already streaming
+        if (state.activeAnalysisPrId) return;                       // manual Analyze in flight
+        if (!detailEl.classList.contains("hidden")) return;         // user reading a detail
+        const runningRow = state.rows.find(
+          (row) => String(row.latest_run?.state || "").toLowerCase() === "running"
+        );
+        if (!runningRow) return;
+        const runId = runningRow.latest_run.id;
+        state.autoAttachedRunIds = state.autoAttachedRunIds || new Set();
+        if (state.autoAttachedRunIds.has(runId)) return;            // already attached this session
+        state.autoAttachedRunIds.add(runId);
+        attachToLiveRun(runningRow);
       }
 
       function closeFlowStream() {
@@ -7942,9 +8038,24 @@
         const score = numericScore(summary.risk_score);
         const status = summary.status || run.state || "queued";
         const tone = score >= 70 ? "hot" : score >= 40 ? "mid" : "";
-        const analyzing = state.activeAnalysisPrId === pr.id;
         const canShowDetails = run.id && ["completed", "failed"].includes(run.state);
-        return `<article class="pr-row" data-pr-id="${escAttr(pr.id || "")}">
+        const isRunning = String(run.state || "").toLowerCase() === "running";
+        // "Live" = this PR's run is the one currently being streamed in the
+        // workflow panel. Used to gate the primary button's label/action.
+        const isLive = state.activeAnalysisPrId === pr.id && Boolean(state.flowEventSource);
+        let primaryButtonHTML;
+        if (isLive) {
+          primaryButtonHTML = `<button class="small-button primary" type="button" disabled>Watching</button>`;
+        } else if (isRunning) {
+          // The run already exists in the store — let the user re-attach to
+          // its SSE stream instead of starting a fresh analysis. This is the
+          // affordance for switching back to a running PR's live view after
+          // navigating away to another PR.
+          primaryButtonHTML = `<button class="small-button primary" type="button" data-action="watch" data-pr-id="${escAttr(pr.id || "")}">Watch live</button>`;
+        } else {
+          primaryButtonHTML = `<button class="small-button primary" type="button" data-action="analyze" data-pr-id="${escAttr(pr.id || "")}">Analyze</button>`;
+        }
+        return `<article class="pr-row${isRunning ? " pr-row-running" : ""}" data-pr-id="${escAttr(pr.id || "")}">
           <div class="pr-row-main">
             <div class="pr-title-line">
               <h3>#${esc(pr.number || "")} ${esc(pr.title || "Untitled PR")}</h3>
@@ -7962,9 +8073,7 @@
             <div class="score-track"><div class="score-fill ${tone}" style="width:${score}%"></div></div>
           </div>
           <div class="pr-row-actions">
-            <button class="small-button primary" type="button" data-action="analyze" data-pr-id="${escAttr(pr.id || "")}" ${analyzing ? "disabled" : ""}>
-              ${analyzing ? "Analyzing" : "Analyze"}
-            </button>
+            ${primaryButtonHTML}
             ${canShowDetails ? `<button class="small-button success" type="button" data-action="details" data-run-id="${escAttr(run.id)}">Show details</button>` : ""}
           </div>
         </article>`;

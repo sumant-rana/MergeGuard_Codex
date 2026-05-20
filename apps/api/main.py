@@ -139,6 +139,25 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
 
                 def _on_run_created(run_dict: dict) -> None:
                     run_holder.update(run_dict)
+                    # Manual /api/prs/{id}/analyze never sees the GitHub
+                    # webhook envelope, so it has no installation_id of its
+                    # own. If a prior webhook-sourced run on this same PR
+                    # carried a github_context, inherit it onto the new run
+                    # so the "Apply to GitHub" panel stays alive on
+                    # re-analyze (instead of falling back to the demo /
+                    # fixture-run empty state).
+                    new_run_id = run_dict.get("id") or ""
+                    inherited = _find_inherited_github_context(
+                        bg_store, pr_id, exclude_run_id=new_run_id
+                    )
+                    if inherited and new_run_id:
+                        try:
+                            bg_store.set_github_context(new_run_id, inherited)
+                        except Exception:
+                            logging.exception(
+                                "failed to inherit github_context onto run %s",
+                                new_run_id,
+                            )
                     run_ready.set()
 
                 try:
@@ -334,12 +353,18 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
 
     def send_json(self, payload: dict, status: int = 200) -> None:
         body = json.dumps(payload, indent=2).encode("utf-8")
-        self.send_response(status)
-        self.send_header("content-type", "application/json; charset=utf-8")
-        self.send_header("cache-control", "no-store")
-        self.send_header("content-length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.send_response(status)
+            self.send_header("content-type", "application/json; charset=utf-8")
+            self.send_header("cache-control", "no-store")
+            self.send_header("content-length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            # Client closed the connection mid-response — common during
+            # dashboard polling when a tab is hidden / navigated away. The
+            # response we just wrote is fine to drop; nothing to log.
+            return
 
     def _stream_run_events(self, run_id: str) -> None:
         # Server-Sent Events stream for a single analysis run. Polls the JSON
@@ -442,14 +467,73 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
+def _sweep_orphaned_runs() -> None:
+    """Mark any ``running`` runs as failed on startup.
+
+    A run can only be in the ``running`` state because some prior process
+    instance was actively driving its pipeline. If we're booting now, that
+    process is gone — the run is an orphan with no thread to resume it.
+    Leaving them as ``running`` is what causes the "stuck pipeline" rows in
+    the dashboard, where the count is frozen mid-flight and ``Show details``
+    never appears. Failing them at boot is the only safe outcome.
+    """
+    try:
+        store = LocalMergeGuardStore(STORE_PATH)
+        store.load()
+        stuck = [
+            run
+            for run in store.state.get("analysis_runs", [])
+            if str(run.get("state") or "").lower() == "running"
+        ]
+        if not stuck:
+            return
+        for run in stuck:
+            try:
+                store.fail_run(
+                    run["id"],
+                    "Pipeline orphaned by container restart — no thread to resume.",
+                )
+            except Exception:
+                logging.exception("startup-sweep: failed to mark run %s", run.get("id"))
+        logging.info(
+            "startup-sweep: marked %d orphaned 'running' run(s) as failed", len(stuck)
+        )
+    except Exception:
+        # Sweep is best-effort — never block startup over it.
+        logging.exception("startup-sweep failed")
+
+
 def main() -> None:
     # Allow override via env so the same entrypoint works in a container
     # (bind 0.0.0.0) and in a host shell (bind loopback).
     host = os.environ.get("MERGEGUARD_HOST", "127.0.0.1")
     port = int(os.environ.get("MERGEGUARD_PORT", "4100"))
+    _sweep_orphaned_runs()
     server = ThreadingHTTPServer((host, port), MergeGuardHandler)
     print(f"MergeGuard agentic dashboard: http://{host}:{port}")
     server.serve_forever()
+
+
+def _find_inherited_github_context(
+    store: LocalMergeGuardStore, pr_id: str, *, exclude_run_id: str = ""
+) -> dict | None:
+    """Return the most recent non-empty ``github_context`` from any prior run
+    on this PR, or None.
+
+    Used by the manual /api/prs/{id}/analyze route to keep the "Apply to
+    GitHub" panel functional on re-analysis of a webhook-imported PR.
+    """
+    candidates = [
+        run
+        for run in store.state.get("analysis_runs", [])
+        if run.get("pull_request_id") == pr_id and run.get("id") != exclude_run_id
+    ]
+    candidates.sort(key=lambda r: r.get("created_at") or "", reverse=True)
+    for run in candidates:
+        ctx = run.get("github_context")
+        if ctx and ctx.get("repo_full_name"):
+            return dict(ctx)
+    return None
 
 
 def fallback_payload_for_pr(pr: dict) -> dict:
