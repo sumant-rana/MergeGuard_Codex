@@ -111,15 +111,21 @@ def is_docs(path: str) -> bool:
     return clean.startswith("docs/") or clean.endswith((".md", ".mdx", ".rst", ".txt"))
 
 
-def _tokenize(text: str) -> set[str]:
+def tokenize(text: str) -> set[str]:
     """Lower-case token set, split on non-letters AND camelCase boundaries.
 
-    Used by ``risk_hits*`` so a substring of a longer identifier (the classic
+    Used by ``risk_hits*`` and downstream agents (concept-classifier, inline
+    anchors) so a substring of a longer identifier (the classic
     `_authenticated` matching `auth` problem) no longer fires the keyword,
     while still letting `chargeGateway` / `customerEmail` register the
     `charge` / `email` keywords they genuinely contain.
     """
     return {tok.lower() for tok in _TOKEN_SPLIT_RE.split(text) if tok}
+
+
+# Back-compat alias for callers that imported the underscore-prefixed name
+# while it was internal. New code should use ``tokenize``.
+_tokenize = tokenize
 
 
 def risk_hits(*parts: str) -> list[str]:
@@ -133,7 +139,7 @@ def risk_hits(*parts: str) -> list[str]:
     tokens: set[str] = set()
     for part in parts:
         if part:
-            tokens.update(_tokenize(str(part)))
+            tokens.update(tokenize(str(part)))
     return [keyword for keyword in RISK_KEYWORDS if keyword in tokens]
 
 
@@ -157,7 +163,7 @@ def risk_hits_in_added_lines(patch: str, content: str = "") -> list[str]:
     imports from a module named ``token-store`` won't trip "token" unless
     the helper actually writes the word ``token`` in its added lines.
 
-    Uses token-aware matching (see ``_tokenize``) so identifiers like
+    Uses token-aware matching (see ``tokenize``) so identifiers like
     ``_authenticated`` no longer match the bare ``auth`` keyword.
     """
     body = "\n".join(added_patch_lines(patch))
@@ -165,7 +171,7 @@ def risk_hits_in_added_lines(patch: str, content: str = "") -> list[str]:
         body = f"{body}\n{content}"
     if not body:
         return []
-    tokens = _tokenize(body)
+    tokens = tokenize(body)
     return [keyword for keyword in RISK_KEYWORDS if keyword in tokens]
 
 

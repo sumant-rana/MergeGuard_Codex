@@ -75,11 +75,35 @@ WEAK_IMPLEMENTATION_PATTERNS = [
 ]
 
 ASSERTION_PATTERNS = [
+    # Plain ``expect(...)`` — classic Jest/vitest/Jasmine.
     re.compile(r"\bexpect\s*\(", re.I),
-    re.compile(r"\bassert(That|Equal|True|False|Raises)?\s*\(", re.I),
+    # Chained ``expect.<thing>(...)`` — vitest-browser-react's
+    # ``expect.element(...)``, vitest's ``expect.poll(...)`` /
+    # ``expect.soft(...)`` / ``expect.hasAssertions(...)``. Without this
+    # rule the slop-detector flags modern Vitest tests as "no assertions"
+    # purely because they don't use the legacy ``expect(value)`` form.
+    re.compile(r"\bexpect\s*\.", re.I),
+    # Python ``assert ...`` / ``assertEqual(...)`` / ``self.assertTrue(...)``.
+    re.compile(r"\bassert(That|Equal|True|False|Raises|In|NotIn|IsNone|IsNotNone|Greater|GreaterEqual|Less|LessEqual)?\s*\(", re.I),
+    re.compile(r"\bself\.assert", re.I),
+    # Chai-style ``thing.should.<…>``.
     re.compile(r"\bshould\.", re.I),
-    re.compile(r"\bto(Equal|Be|Contain|Have|Throw)\b", re.I),
+    # Standalone matcher call: ``.toBe(...)``, ``.toEqual(...)``,
+    # ``.toBeInTheDocument()``, ``.toHaveBeenCalled(...)``, etc. The earlier
+    # ``\bto(Equal|Be|…)\b`` rule had to end on a word boundary, which
+    # silently failed on real matcher names like ``toBeInTheDocument``
+    # because ``e`` (in ``toBe``) and ``I`` are both word characters.
+    re.compile(r"\.\s*(?:toBe|toEqual|toContain|toHave|toThrow|toMatch|toStrictEqual|toBeTruthy|toBeFalsy|toBeDefined|toBeNull|toBeInTheDocument|toHaveTextContent|toHaveBeenCalled)\w*\s*\(", re.I),
+    # Sinon / Chai / Jest globals occasionally land in test files.
+    re.compile(r"\bsinon\.\w+\s*\(", re.I),
+    re.compile(r"\bverify(That)?\s*\(", re.I),
 ]
+
+# Minimum added lines before the "scenario shape but no assertions" rule is
+# allowed to fire. Without this guard, a one-line vitest patch that touches a
+# matcher's options object (e.g. ``{ exact: true }``) was being flagged as a
+# weak test even though the file already had dozens of real assertions.
+_WEAK_TEST_MIN_ADDED_LINES = 6
 
 
 @app.tool()
@@ -111,41 +135,48 @@ def inspect_file(
         categories.append("temporary_file")
         score += 18
 
-    debug_hits = pattern_hits(DEBUG_PATTERNS, text)
-    if debug_hits:
-        signals.extend(debug_hits)
-        categories.append("debug_artifact")
-        score += 28 + min(12, 3 * len(debug_hits))
-
-    placeholder_hits = pattern_hits(PLACEHOLDER_PATTERNS, text)
-    if placeholder_hits:
-        signals.extend(placeholder_hits)
-        categories.append("placeholder_work")
-        score += 22 + min(10, 2 * len(placeholder_hits))
-
-    weak_hits = pattern_hits(WEAK_IMPLEMENTATION_PATTERNS, "\n".join(added_lines))
-    if weak_hits and not is_docs_like(path):
-        signals.extend(weak_hits)
-        categories.append("weak_implementation")
-        score += 18 + min(10, 2 * len(weak_hits))
-
-    commented_ratio = commented_added_ratio(added_lines)
-    if commented_ratio >= 0.42 and len(added_lines) >= 8:
-        signals.append(f"{round(commented_ratio * 100)}% of added lines are comments")
-        categories.append("commented_or_dead_code")
-        score += 18
-
-    duplicate_count = repeated_added_line_count(added_lines)
-    if duplicate_count >= 4:
-        signals.append(f"{duplicate_count} repeated added lines")
-        categories.append("copy_paste_noise")
-        score += 14
-
-    if is_generated(path) or classification == "generated":
+    # Generated files (lockfiles, TanStack/router trees, protobuf bundles,
+    # codegen output) shouldn't be subject to "looks weak" / "looks placeholder"
+    # / "copy-paste" heuristics — the patterns those heuristics fire on
+    # (literal route registrations, repeated table rows, `as any` casts)
+    # are *idiomatic* in generated output. Only the volume-based
+    # ``generated_churn`` signal applies; everything else short-circuits.
+    file_is_generated = is_generated(path, content) or classification == "generated"
+    if file_is_generated:
         if changes > 120 or additions > 80:
             signals.append("large generated/lock/snapshot churn")
             categories.append("generated_churn")
             score += 24
+    else:
+        debug_hits = pattern_hits(DEBUG_PATTERNS, text)
+        if debug_hits:
+            signals.extend(debug_hits)
+            categories.append("debug_artifact")
+            score += 28 + min(12, 3 * len(debug_hits))
+
+        placeholder_hits = pattern_hits(PLACEHOLDER_PATTERNS, text)
+        if placeholder_hits:
+            signals.extend(placeholder_hits)
+            categories.append("placeholder_work")
+            score += 22 + min(10, 2 * len(placeholder_hits))
+
+        weak_hits = pattern_hits(WEAK_IMPLEMENTATION_PATTERNS, "\n".join(added_lines))
+        if weak_hits and not is_docs_like(path):
+            signals.extend(weak_hits)
+            categories.append("weak_implementation")
+            score += 18 + min(10, 2 * len(weak_hits))
+
+        commented_ratio = commented_added_ratio(added_lines)
+        if commented_ratio >= 0.42 and len(added_lines) >= 8:
+            signals.append(f"{round(commented_ratio * 100)}% of added lines are comments")
+            categories.append("commented_or_dead_code")
+            score += 18
+
+        duplicate_count = repeated_added_line_count(added_lines)
+        if duplicate_count >= 4:
+            signals.append(f"{duplicate_count} repeated added lines")
+            categories.append("copy_paste_noise")
+            score += 14
 
     if is_test(path):
         test_smell = test_slop_signal(path, text, added_lines)
@@ -345,7 +376,7 @@ def test_slop_signal(path: str, text: str, added_lines: list[str]) -> str | None
             f"{commented_assertions} commented-out assertion{plural} "
             f"in test file — coverage weakened without test removal"
         )
-    if has_test_shape and not has_assertion:
+    if has_test_shape and not has_assertion and len(added_lines) >= _WEAK_TEST_MIN_ADDED_LINES:
         return "test file has scenario shape but no assertions"
     if snapshot_only:
         return "snapshot-only change needs reviewer confirmation"

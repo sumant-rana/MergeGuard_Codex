@@ -22,6 +22,7 @@ from packages.agent_runtime import (  # noqa: E402
     register_entrypoint,
 )
 from packages.core.analysis_utils import saturate_risk  # noqa: E402
+from packages.core.inline_comments import build_inline_comments  # noqa: E402
 
 AGENT_ID = "truth-report-synthesizer"
 
@@ -104,8 +105,15 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     # blocker list so they outrank partial-coverage findings.
     blockers = _promote_intent_gaps(missing_should_intents, violated_intents) + blockers
 
+    # Status gating: a PR only escalates to "blocked" when there's an actual
+    # block-severity finding (concept-classifier secrets, must_not violations)
+    # or when the saturated risk score is *catastrophically* high. Bumping
+    # the score threshold from 80 -> 90 stops review-required findings from
+    # silently auto-blocking via score arithmetic. PRs that earn a "blocked"
+    # verdict now do so because something is genuinely broken, not because
+    # several lukewarm warnings happened to sum past the cap.
     has_block_severity = any(item.get("severity") == "block" for item in blockers)
-    if has_block_severity or risk_score >= 80 or violated_intents:
+    if has_block_severity or risk_score >= 90 or violated_intents:
         status = "blocked"
     elif blockers or missing_should_intents or risk_score >= 40:
         status = "review"
@@ -114,6 +122,14 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
 
     top_blocker = blockers[0]["message"] if blockers else None
     next_action = blockers[0].get("suggested_action") if blockers else "Proceed with normal review."
+    inline_comments = build_inline_comments(
+        changed_files=payload.get("changed_files", []),
+        behavioral_deltas=semantic.get("behavioral_deltas", []),
+        blockers=blockers,
+        hotspots=compression.get("hotspots", []),
+        sticky_anchor=None,  # filled in by the poster once the sticky exists
+    )
+
     summary = {
         "risk_score": risk_score,
         "risk_score_raw": int(round(risk_score_raw)),
@@ -167,6 +183,7 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
             evidence_links=evidence.get("evidence_links", []),
             missing_evidence_findings=evidence.get("missing_evidence_findings", []),
         ),
+        "inline_comments": inline_comments,
     }
     return make_agent_result(
         AGENT_ID,
