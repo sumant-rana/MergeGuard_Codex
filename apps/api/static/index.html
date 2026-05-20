@@ -817,17 +817,13 @@
           0 0 0 1px color-mix(in oklab, var(--primary) 30%, transparent);
       }
 
-      /* Inside a primary-tinted "running" row, pills that themselves use
-         var(--primary) for text + border lose all contrast — the text color
-         matches the border color, and the row tint bleeds through their
-         transparent background, so the pill renders as a single orange bar
-         with no readable label. Force solid card-bg background and switch
-         the text to --text so the labels are sharply legible. The orange
-         border still conveys the "running" accent. */
+      /* Inside the primary-tinted "running" row, the default transparent
+         pill background composes with the row tint, dropping orange-on-
+         orange contrast. Force solid card-bg so pills render identically to
+         non-highlighted rows. */
       .pr-row-running .pill-running,
       .pr-row-running .pill-info {
         background: var(--card-bg);
-        color: var(--text);
         border-color: color-mix(in oklab, var(--primary) 55%, transparent);
       }
 
@@ -869,8 +865,9 @@
         gap: 4px;
         align-items: center;
         margin-top: 4px;
-        max-height: 34px;
-        overflow: hidden;
+        /* No max-height: long repo names wrap to a 2nd line, and we'd rather
+           let the row grow than clip the status + agent-count pills, which
+           are the row's most actionable info. */
       }
 
       /* Status + agent-count pills in the PR row are secondary information.
