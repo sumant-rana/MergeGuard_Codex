@@ -34,6 +34,14 @@ services:
       - "${MERGEGUARD_HOST_PORT:-4100}:4100"
     networks:
       - mergeguard_codex-all_default
+    # Pull GitHub credentials / webhook secret from the repo-root .env so
+    # they don't have to be hand-copied into the ``environment:`` block.
+    # The keys we expect to find there (see ``.env.example``):
+    #   GITHUB_WEBHOOK_SECRET
+    #   GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY_PATH    (production-style auth)
+    #   GITHUB_TOKEN                                  (sandbox-style auth)
+    env_file:
+      - .env
     environment:
       # Talk to the 12 OE containers in the agent stack by service name.
       AGENT_MODE: local
@@ -44,10 +52,19 @@ services:
       # MergeGuard's JSON store path inside the container.
       MERGEGUARD_DATA_FILE: /app/data/agentic_mergeguard.json
       MERGEGUARD_ALLOW_FIXTURE_FILES: "true"
+      # Line-anchored PR review (the inline-comment channel introduced on
+      # ``risk-score-check``). Defaults ON in local mode so the feature is
+      # exercised end-to-end; flip to "0" to fall back to sticky-only.
+      MERGEGUARD_INLINE_REVIEWS: "${MERGEGUARD_INLINE_REVIEWS:-1}"
     volumes:
       # Persist runs across container recreates.
       - ./data:/app/data
       - ./fixtures:/app/fixtures:ro
+      # GitHub App private keys (read-only). ``GITHUB_APP_PRIVATE_KEY_PATH``
+      # in ``.env`` points at a path under ``/secrets`` inside the container;
+      # this mount makes the host's ``./secrets`` available there. The
+      # directory is in .gitignore so real keys don't get committed.
+      - ./secrets:/secrets:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
