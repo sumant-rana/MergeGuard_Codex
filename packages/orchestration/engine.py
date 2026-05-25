@@ -98,6 +98,27 @@ AGENT_CATALOG = [
         "stage": "Report",
         "description": "Synthesizes all prior outputs into readiness, checks, and PR comment.",
     },
+    {
+        "id": "pr-history-indexer",
+        "label": "PR History Indexer",
+        "stage": "Onboarding",
+        "description": (
+            "Onboarding-only agent. Scans prior PRs, persists structured history "
+            "and semantic memory, and exposes repo-aware history_context to "
+            "review-compression. Not part of the per-PR 12-agent sequence."
+        ),
+    },
+    {
+        "id": "docs-indexer",
+        "label": "Docs Indexer",
+        "stage": "Onboarding",
+        "description": (
+            "Onboarding-only agent. Fetches README, /docs, and user-requested "
+            "paths, persists full documents in MongoDB/Atlas, and writes "
+            "repo-scoped semantic chunks into Magenta memory for downstream "
+            "retrieval. Not part of the per-PR 12-agent sequence."
+        ),
+    },
 ]
 
 

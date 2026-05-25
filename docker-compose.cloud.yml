@@ -47,6 +47,11 @@ services:
       MAGENTA_PROJECT_ID: "${MAGENTA_PROJECT_ID:?MAGENTA_PROJECT_ID must be set for cloud mode}"
       MERGEGUARD_DATA_FILE: /app/data/agentic_mergeguard.json
       MERGEGUARD_ALLOW_FIXTURE_FILES: "true"
+      # MongoDB Atlas connection for the pr-history-indexer onboarding
+      # agent. Must point at an Atlas cluster (the local docker mongo
+      # container is not used in cloud mode).
+      MONGODB_URI: "${MONGODB_URI:?MONGODB_URI must be set for cloud mode (Atlas URI)}"
+      MONGODB_HISTORY_DB: "${MONGODB_HISTORY_DB:-mergeguard}"
       # GitHub webhook integration. POST /webhooks/github verifies the
       # X-Hub-Signature-256 header against this secret before accepting.
       GITHUB_WEBHOOK_SECRET: "${GITHUB_WEBHOOK_SECRET:?GITHUB_WEBHOOK_SECRET must be set for cloud mode}"

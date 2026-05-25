@@ -41,6 +41,14 @@ def _load_dotenv(path: Path) -> None:
 _load_dotenv(REPO_ROOT / ".env")
 
 from apps.api.webhook_handler import handle_github_webhook
+from apps.api.onboarding_handler import (
+    handle_docs_retry,
+    handle_docs_start,
+    handle_docs_status,
+    handle_pr_history_retry,
+    handle_pr_history_start,
+    handle_pr_history_status,
+)
 from packages.mongo import LocalMergeGuardStore
 from packages.orchestration.engine import AGENT_CATALOG, AGENT_SEQUENCE, MergeGuardOrchestrator
 from packages.github_pr import normalize_github_pr_payload
@@ -48,6 +56,110 @@ from packages.github_pr import normalize_github_pr_payload
 
 STORE_PATH = REPO_ROOT / "data/agentic_mergeguard.json"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+_PR_HISTORY_AGENT_PATH = (
+    REPO_ROOT / "agents/pr-history-indexer/src/pr_history_indexer/main.py"
+)
+_DOCS_AGENT_PATH = REPO_ROOT / "agents/docs-indexer/src/docs_indexer/main.py"
+_onboarding_agent_module_cache: dict[str, object] = {}
+_pr_history_store_cache = None
+_pr_history_store_lock = threading.Lock()
+
+
+def _is_pr_history_start_path(path: str) -> bool:
+    return path.startswith("/api/onboarding/") and path.endswith("/pr-history/start")
+
+
+def _is_pr_history_retry_path(path: str) -> bool:
+    return path.startswith("/api/onboarding/") and path.endswith("/pr-history/retry")
+
+
+def _is_pr_history_status_path(path: str) -> bool:
+    return path.startswith("/api/onboarding/") and path.endswith("/pr-history/status")
+
+
+def _is_docs_start_path(path: str) -> bool:
+    return path.startswith("/api/onboarding/") and path.endswith("/docs/start")
+
+
+def _is_docs_retry_path(path: str) -> bool:
+    return path.startswith("/api/onboarding/") and path.endswith("/docs/retry")
+
+
+def _is_docs_status_path(path: str) -> bool:
+    return path.startswith("/api/onboarding/") and path.endswith("/docs/status")
+
+
+def _onboarding_session_id(path: str) -> str:
+    # /api/onboarding/<session_id>/<flow>/<verb>
+    parts = path.strip("/").split("/")
+    if len(parts) < 5:
+        return ""
+    return parts[2]
+
+
+# Backwards-compatible alias (kept so any caller using the old name works).
+_pr_history_session_id = _onboarding_session_id
+
+
+def _load_agent_module(cache_key: str, agent_path: Path):
+    """Lazy-load and cache an onboarding agent module.
+
+    Both ``pr-history-indexer`` and ``docs-indexer`` touch Magenta
+    compatibility code that we don't want to run on every API boot;
+    importing on first use keeps the dashboard's hot path lean.
+    """
+    cached = _onboarding_agent_module_cache.get(cache_key)
+    if cached is not None:
+        return cached
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(cache_key, agent_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load onboarding agent at {agent_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    _onboarding_agent_module_cache[cache_key] = module
+    return module
+
+
+def _pr_history_agent_module():
+    return _load_agent_module("pr_history_indexer_main", _PR_HISTORY_AGENT_PATH)
+
+
+def _docs_agent_module():
+    return _load_agent_module("docs_indexer_main", _DOCS_AGENT_PATH)
+
+
+def _pr_history_store():
+    """Return the ``PRHistoryStore`` configured for the current AGENT_MODE.
+
+    - ``local`` / ``cloud``: build a Mongo-backed store (env-driven).
+    - any other mode (or missing ``MONGODB_URI`` on a laptop): fall back
+      to an in-memory store so the dashboard's onboarding flow stays
+      explorable in demo mode. The agent itself still enforces the
+      stricter ``local``/``cloud`` requirement before persisting.
+    """
+    global _pr_history_store_cache
+    with _pr_history_store_lock:
+        if _pr_history_store_cache is not None:
+            return _pr_history_store_cache
+        uri = os.environ.get("MONGODB_URI", "").strip()
+        if uri:
+            try:
+                from packages.history_store.mongo_adapter import MongoPRHistoryStore
+
+                _pr_history_store_cache = MongoPRHistoryStore(
+                    uri=uri,
+                    db_name=os.environ.get("MONGODB_HISTORY_DB", "mergeguard"),
+                )
+                return _pr_history_store_cache
+            except Exception:  # noqa: BLE001 - log and fall back
+                logging.exception("failed to build MongoPRHistoryStore; using in-memory")
+        from packages.history_store import InMemoryPRHistoryStore
+
+        _pr_history_store_cache = InMemoryPRHistoryStore()
+        return _pr_history_store_cache
 
 
 class MergeGuardHandler(BaseHTTPRequestHandler):
@@ -74,6 +186,14 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
             )
         elif path == "/api/metrics":
             self.send_json(self.store().metrics())
+        elif _is_pr_history_status_path(path):
+            session_id = _onboarding_session_id(path)
+            response = handle_pr_history_status(session_id, store=_pr_history_store())
+            self.send_json(response["body"], status=response["status"])
+        elif _is_docs_status_path(path):
+            session_id = _onboarding_session_id(path)
+            response = handle_docs_status(session_id, store=_pr_history_store())
+            self.send_json(response["body"], status=response["status"])
         else:
             self.send_json({"error": "not found"}, status=404)
 
@@ -200,6 +320,50 @@ class MergeGuardHandler(BaseHTTPRequestHandler):
                 },
                 status=202,
             )
+        elif _is_pr_history_start_path(path):
+            session_id = _onboarding_session_id(path)
+            body = self.read_json(default={})
+            response = handle_pr_history_start(
+                session_id=session_id,
+                body=body,
+                store=_pr_history_store(),
+                agent_module=_pr_history_agent_module(),
+            )
+            self.send_json(response["body"], status=response["status"])
+            return
+        elif _is_pr_history_retry_path(path):
+            session_id = _onboarding_session_id(path)
+            body = self.read_json(default={})
+            response = handle_pr_history_retry(
+                session_id=session_id,
+                body=body,
+                store=_pr_history_store(),
+                agent_module=_pr_history_agent_module(),
+            )
+            self.send_json(response["body"], status=response["status"])
+            return
+        elif _is_docs_start_path(path):
+            session_id = _onboarding_session_id(path)
+            body = self.read_json(default={})
+            response = handle_docs_start(
+                session_id=session_id,
+                body=body,
+                store=_pr_history_store(),
+                agent_module=_docs_agent_module(),
+            )
+            self.send_json(response["body"], status=response["status"])
+            return
+        elif _is_docs_retry_path(path):
+            session_id = _onboarding_session_id(path)
+            body = self.read_json(default={})
+            response = handle_docs_retry(
+                session_id=session_id,
+                body=body,
+                store=_pr_history_store(),
+                agent_module=_docs_agent_module(),
+            )
+            self.send_json(response["body"], status=response["status"])
+            return
         elif path.startswith("/api/overrides/"):
             body = self.read_json(default={})
             parts = path.strip("/").split("/")

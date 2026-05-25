@@ -44,6 +44,11 @@ services:
       # MergeGuard's JSON store path inside the container.
       MERGEGUARD_DATA_FILE: /app/data/agentic_mergeguard.json
       MERGEGUARD_ALLOW_FIXTURE_FILES: "true"
+      # MongoDB used by the pr-history-indexer onboarding agent. Local
+      # mode points at the sibling mongo container; cloud mode overrides
+      # this via docker-compose.cloud.yml / .env with an Atlas URI.
+      MONGODB_URI: "${MONGODB_URI:-mongodb://mergeguard-mongo:27017}"
+      MONGODB_HISTORY_DB: "${MONGODB_HISTORY_DB:-mergeguard}"
     volumes:
       # Persist runs across container recreates.
       - ./data:/app/data
@@ -51,6 +56,25 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    depends_on:
+      - mergeguard-mongo
+
+  # MongoDB used by the pr-history-indexer onboarding agent in `local`
+  # mode. The agent reads MONGODB_URI from the mergeguard service. Cloud
+  # mode replaces this with an Atlas connection string via .env.
+  mergeguard-mongo:
+    image: mongo:7.0
+    container_name: mergeguard-mongo
+    networks:
+      - mergeguard_codex-all_default
+    ports:
+      - "${MERGEGUARD_MONGO_HOST_PORT:-27017}:27017"
+    volumes:
+      - mergeguard-mongo-data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mergeguard-mongo-data:
 
 networks:
   mergeguard_codex-all_default:

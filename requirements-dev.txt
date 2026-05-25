@@ -1,0 +1,14 @@
+# Optional developer dependencies for tests and local tooling.
+#
+# Install with:
+#   pip install -r requirements-dev.txt
+#
+# Used by:
+# - tests_agentic/history_store_mongo_test.py  (real MongoDB integration)
+#
+# These deps are not required for the rest of the unit-test suite; if
+# they are missing, the affected tests skip gracefully so
+# ``make test-agentic`` keeps passing on a vanilla laptop.
+
+pymongo>=4.7
+testcontainers[mongodb]>=4.0

@@ -19,6 +19,8 @@ AGENT_MODULES = {
     "contract-comparator": "agents/contract-comparator/src/contract_comparator/main.py",
     "test-coverage-validator": "agents/test-coverage-validator/src/test_coverage_validator/main.py",
     "truth-report-synthesizer": "agents/truth-report-synthesizer/src/truth_report_synthesizer/main.py",
+    "pr-history-indexer": "agents/pr-history-indexer/src/pr_history_indexer/main.py",
+    "docs-indexer": "agents/docs-indexer/src/docs_indexer/main.py",
 }
 
 

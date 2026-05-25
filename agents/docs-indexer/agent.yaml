@@ -1,0 +1,7 @@
+name: docs-indexer
+framework: langgraph
+entrypoint: docs_indexer.main:app
+description: Onboarding agent that indexes repository documentation (README, /docs, user-requested paths) into structured storage and semantic memory.
+features:
+  memory: true
+  guardrails: false

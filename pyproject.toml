@@ -22,7 +22,9 @@ members = [
   "agents/prompt-canary",
   "agents/contract-comparator",
   "agents/test-coverage-validator",
-  "agents/truth-report-synthesizer"
+  "agents/truth-report-synthesizer",
+  "agents/pr-history-indexer",
+  "agents/docs-indexer"
 ]
 
 [tool.ruff]

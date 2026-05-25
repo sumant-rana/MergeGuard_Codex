@@ -27,3 +27,7 @@ agents:
     path: agents/test-coverage-validator
   - name: truth-report-synthesizer
     path: agents/truth-report-synthesizer
+  - name: pr-history-indexer
+    path: agents/pr-history-indexer
+  - name: docs-indexer
+    path: agents/docs-indexer

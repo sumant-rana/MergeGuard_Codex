@@ -1,0 +1,5 @@
+[
+  {"filename": "src/payments/retry.ts", "status": "modified", "additions": 42, "deletions": 10},
+  {"filename": "tests/payments/retry.test.ts", "status": "added", "additions": 30, "deletions": 0},
+  {"filename": "docs/payments/retry.md", "status": "modified", "additions": 5, "deletions": 0}
+]

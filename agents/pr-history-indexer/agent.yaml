@@ -1,0 +1,7 @@
+name: pr-history-indexer
+framework: langgraph
+entrypoint: pr_history_indexer.main:app
+description: Onboarding agent that indexes historical pull requests into structured storage and semantic memory.
+features:
+  memory: true
+  guardrails: false
