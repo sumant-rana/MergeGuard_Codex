@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,8 @@ from packages.agent_runtime import (  # noqa: E402
     register_default_llm,
     register_entrypoint,
 )
+from packages.core.analysis_utils import saturate_risk  # noqa: E402
+from packages.core.inline_comments import build_inline_comments  # noqa: E402
 
 AGENT_ID = "truth-report-synthesizer"
 
@@ -50,26 +53,47 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     concept_findings = concept_classifier.get("concept_findings", [])
     block_concepts = [c for c in concept_findings if c.get("severity") == "block"]
 
+    # Phase-1 dedup: many of the analyzer outputs surface multiple findings
+    # against the SAME file (e.g. three policy violations on one route).
+    # Counting them all as separate risk penalties triple-billed the file and
+    # pinned everyone at the 100 cap. Dedup by path so each file contributes
+    # the per-source weight at most once.
+    pr_body = str(payload.get("pull_request", {}).get("body") or "")
+    justification_credit = (
+        -8 if _PR_BODY_JUSTIFICATION_RE.search(pr_body) else 0
+    )
+
     # Risk score — re-balanced 2026-Q1: a missed acceptance criterion
     # (`should` intent with status `missing`) is the single most
     # reviewer-relevant signal, so it carries real weight. Test-coverage
     # gaps are noise compared to that.
-    risk_score = min(
-        100,
-        compression.get("risk_score", 0)
-        + len(missing_should_intents) * 18              # missed acceptance criteria
-        + len(violated_intents) * 22                    # must_not violations
-        + len(block_concepts) * 22                      # secret / auth bypass / etc.
-        + len(policy.get("policy_findings", [])) * 12
-        + len(prompt.get("prompt_findings", [])) * 16
-        + len(contracts.get("contract_findings", [])) * 10
-        + len(slop.get("slop_findings", [])) * 6
-        + len(memory.get("memory_findings", [])) * 4
-        + len(test_coverage.get("coverage_findings", [])) * 6
-        + len(evidence.get("missing_evidence_findings", [])) * 4
-        + (10 if test_coverage.get("coverage_status") == "blocked" else 0)
-        + len([c for c in concept_findings if c.get("severity") == "review_required"]) * 4,
+    #
+    # Phase-3: the compression risk is fed in RAW (uncapped) so high-risk PRs
+    # still differentiate from one another. The final number is saturated at
+    # display time via ``saturate_risk`` instead of a hard ``min(100, x)``.
+    compression_raw = float(
+        compression.get("risk_score_raw", compression.get("risk_score", 0))
     )
+    risk_score_raw = max(
+        0.0,
+        compression_raw
+        + len(missing_should_intents) * 18                                       # missed acceptance criteria
+        + len(violated_intents) * 22                                             # must_not violations
+        + len(block_concepts) * 22                                               # secret / auth bypass / etc.
+        + _unique_paths(policy.get("policy_findings", [])) * 12
+        + _unique_paths(prompt.get("prompt_findings", [])) * 16
+        + _unique_paths(contracts.get("contract_findings", [])) * 10
+        + _unique_paths(slop.get("slop_findings", [])) * 6
+        + _unique_paths(memory.get("memory_findings", [])) * 4
+        + _unique_paths(test_coverage.get("coverage_findings", [])) * 6
+        + _unique_paths(evidence.get("missing_evidence_findings", [])) * 4
+        + (10 if test_coverage.get("coverage_status") == "blocked" else 0)
+        + _unique_paths(
+            [c for c in concept_findings if c.get("severity") == "review_required"]
+        ) * 4
+        + justification_credit,
+    )
+    risk_score = saturate_risk(risk_score_raw)
     blockers = collect_blockers(evidence, policy, prompt, contracts, slop, memory, test_coverage)
     # Strip out generic per-intent "not covered" findings — the Intent vs
     # Implementation table already shows the same information.
@@ -81,8 +105,15 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
     # blocker list so they outrank partial-coverage findings.
     blockers = _promote_intent_gaps(missing_should_intents, violated_intents) + blockers
 
+    # Status gating: a PR only escalates to "blocked" when there's an actual
+    # block-severity finding (concept-classifier secrets, must_not violations)
+    # or when the saturated risk score is *catastrophically* high. Bumping
+    # the score threshold from 80 -> 90 stops review-required findings from
+    # silently auto-blocking via score arithmetic. PRs that earn a "blocked"
+    # verdict now do so because something is genuinely broken, not because
+    # several lukewarm warnings happened to sum past the cap.
     has_block_severity = any(item.get("severity") == "block" for item in blockers)
-    if has_block_severity or risk_score >= 80 or violated_intents:
+    if has_block_severity or risk_score >= 90 or violated_intents:
         status = "blocked"
     elif blockers or missing_should_intents or risk_score >= 40:
         status = "review"
@@ -91,8 +122,17 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
 
     top_blocker = blockers[0]["message"] if blockers else None
     next_action = blockers[0].get("suggested_action") if blockers else "Proceed with normal review."
+    inline_comments = build_inline_comments(
+        changed_files=payload.get("changed_files", []),
+        behavioral_deltas=semantic.get("behavioral_deltas", []),
+        blockers=blockers,
+        hotspots=compression.get("hotspots", []),
+        sticky_anchor=None,  # filled in by the poster once the sticky exists
+    )
+
     summary = {
         "risk_score": risk_score,
+        "risk_score_raw": int(round(risk_score_raw)),
         "status": status,
         "top_blocker": top_blocker,
         "next_action": next_action,
@@ -143,6 +183,7 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
             evidence_links=evidence.get("evidence_links", []),
             missing_evidence_findings=evidence.get("missing_evidence_findings", []),
         ),
+        "inline_comments": inline_comments,
     }
     return make_agent_result(
         AGENT_ID,
@@ -151,6 +192,33 @@ def run(payload: dict[str, Any]) -> dict[str, Any]:
         messages=["synthesized truth report"],
         trace=[{"step": "truth_report", "status": status, "risk_score": risk_score}],
     )
+
+
+# Match a PR body that contains a "Why" / "Justification" / "MergeGuard notes"
+# section in any heading style. Authors who explain *why* an auth-touching
+# change is intentional get a small risk credit — drives the behavior we want
+# without making the gate stricter on PRs that don't explain themselves.
+_PR_BODY_JUSTIFICATION_RE = re.compile(
+    r"(?:^|\n)\s*(?:#{1,6}\s*|\*{1,2}|>\s*)?"
+    r"(?:why|justification|reviewer\s+notes|mergeguard\s+notes|rationale)\b",
+    re.IGNORECASE,
+)
+
+
+def _unique_paths(findings: list[dict[str, Any]]) -> int:
+    """Count distinct ``path`` values in a finding list.
+
+    Used by the PR-level risk math so two findings against the same file are
+    billed as one unit of risk, not two. Findings without a ``path`` count as
+    a single anonymous bucket (so they still register, but stacked anonymous
+    findings don't double-bill).
+    """
+    if not findings:
+        return 0
+    seen: set[str] = set()
+    for finding in findings:
+        seen.add(str(finding.get("path") or "(no-path)"))
+    return len(seen)
 
 
 def _missing_should_intents(

@@ -16,6 +16,7 @@ from .pr_poster import (
     submit_pr_review,
     upsert_pr_comment,
 )
+from .pr_review_poster import INLINE_REVIEW_MARKER, upsert_inline_review
 from .verify import verify_hmac_sha256
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "GitHubAuthError",
     "GitHubFetchError",
     "GitHubPostError",
+    "INLINE_REVIEW_MARKER",
     "InstallationToken",
     "WebhookEnvelope",
     "add_pr_labels",
@@ -42,6 +44,7 @@ __all__ = [
     "request_pr_reviewers",
     "status_to_check_conclusion",
     "submit_pr_review",
+    "upsert_inline_review",
     "upsert_pr_comment",
     "verify_hmac_sha256",
 ]

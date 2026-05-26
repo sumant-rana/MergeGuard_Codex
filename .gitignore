@@ -18,6 +18,7 @@ dist/
 tools/bin/agentic
 tools/bin/agentic_*
 .agentic/
+.claude/
 .env.*
 agents/*/.gitignore
 agents/*/logs/

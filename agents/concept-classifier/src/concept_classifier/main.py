@@ -21,6 +21,14 @@ from packages.agent_runtime import (  # noqa: E402
     register_default_llm,
     register_entrypoint,
 )
+from packages.core.analysis_utils import tokenize  # noqa: E402
+
+# A concept term is "word-shaped" (and therefore safe to evaluate with the
+# token-aware matcher) when it's a single alphanumeric run with no spaces,
+# dots, parentheses, or other punctuation. Multi-word and punctuated terms
+# (e.g. ``"system message"``, ``"fetch("``, ``"http."``) still use
+# substring matching — there's no useful tokenization for them.
+_WORD_TERM_RE = re.compile(r"^[A-Za-z][A-Za-z0-9]*$")
 
 AGENT_ID = "concept-classifier"
 
@@ -129,10 +137,18 @@ def classify_concepts(file: dict[str, Any], raw_file: dict[str, Any] | None = No
     findings: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
 
+    # Token-aware view of the haystack — used for single-word concept terms
+    # to avoid false positives like ``_authenticated`` matching ``auth``.
+    # Built once per file so the inner loops stay cheap.
+    haystack_tokens = tokenize(haystack)
+
     # 1) Substring-based concept tags. These are FUZZY — keyword presence is
     #    weak evidence so we never auto-block on this layer alone.
     for concept, terms in CONCEPT_PATTERNS.items():
-        matched = [term for term in terms if term in haystack]
+        matched = [
+            term for term in terms
+            if _concept_term_present(term, haystack_tokens, haystack)
+        ]
         if not matched:
             continue
         findings.append(
@@ -154,6 +170,21 @@ def classify_concepts(file: dict[str, Any], raw_file: dict[str, Any] | None = No
     findings.extend(_collect_regex_hits(RISKY_PATTERNS, case_sensitive_text, file, seen))
 
     return findings
+
+
+def _concept_term_present(term: str, haystack_tokens: set[str], haystack: str) -> bool:
+    """Match a concept term against tokenized + raw text.
+
+    Single-word terms go through the token set so identifiers like
+    ``_authenticated`` no longer fire ``auth``. Multi-word or punctuated
+    terms (``"system message"``, ``"fetch("``, ``"localstorage.setitem"``)
+    fall back to the legacy substring scan — there's no clean tokenization
+    for them and they tend to be precise patterns anyway.
+    """
+    lower = term.lower()
+    if _WORD_TERM_RE.match(term):
+        return lower in haystack_tokens
+    return lower in haystack
 
 
 def _finding(

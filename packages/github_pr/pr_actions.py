@@ -31,6 +31,7 @@ Tiered policy:
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -48,6 +49,7 @@ from .pr_poster import (
     submit_pr_review,
     upsert_pr_comment,
 )
+from .pr_review_poster import upsert_inline_review
 
 logger = logging.getLogger(__name__)
 
@@ -78,10 +80,23 @@ class ActionReport:
     check_run_id: int | None = None
     review_id: int | None = None
     review_action: str | None = None  # "submitted" | "dismissed" | None
+    inline_review_id: int | None = None
+    inline_comments_posted: int = 0
     labels_added: list[str] = field(default_factory=list)
     labels_removed: list[str] = field(default_factory=list)
     reviewers_requested: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+
+
+def _inline_reviews_enabled() -> bool:
+    """Feature flag: gates the line-anchored review entirely.
+
+    Off by default — flip via env (``MERGEGUARD_INLINE_REVIEWS=1``) once a
+    repo's reviewers have opted in. Keeps the existing sticky-comment +
+    check-run flow as the safe baseline.
+    """
+    raw = os.environ.get("MERGEGUARD_INLINE_REVIEWS", "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
 
 
 def apply_tiered_actions(
@@ -189,7 +204,46 @@ def apply_tiered_actions(
     except GitHubPostError as e:
         report.warnings.append(f"review: {e}")
 
+    # 6) Inline-comment review — feature-flagged.
+    #
+    # We post the inline comments as a single ``event=COMMENT`` review so it
+    # never blocks merge (the ``REQUEST_CHANGES`` path above keeps full
+    # responsibility for blocking). The synthesizer already produced the
+    # resolved ``{path, line, side, body}`` payload; we just need to ship it.
+    if _inline_reviews_enabled():
+        inline_comments = summary.get("inline_comments") or []
+        if inline_comments:
+            try:
+                result = upsert_inline_review(
+                    repo_full_name,
+                    pr_number,
+                    head_sha,
+                    inline_comments,
+                    token,
+                    review_body=_inline_review_lead(summary),
+                )
+                report.inline_review_id = result.get("review_id")
+                report.inline_comments_posted = int(result.get("comment_count") or 0)
+            except GitHubPostError as e:
+                report.warnings.append(f"inline_review: {e}")
+
     return report
+
+
+def _inline_review_lead(summary: dict[str, Any]) -> str:
+    """Short header rendered above the inline comments in the GitHub review.
+
+    Reviewers see this as the "review summary" line right before the inline
+    threads expand. Keep it terse — the sticky comment is where the long
+    form lives.
+    """
+    status = summary.get("status") or "review"
+    risk = summary.get("risk_score")
+    bits = [f"MergeGuard inline review — status `{status}`."]
+    if isinstance(risk, (int, float)):
+        bits.append(f"Risk score: **{int(risk)}/100**.")
+    bits.append("See the sticky comment for the full Truth Report.")
+    return " ".join(bits)
 
 
 # ---------------------------------------------------------------------------
