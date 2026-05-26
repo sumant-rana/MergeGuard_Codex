@@ -203,11 +203,14 @@ class PRHistoryIndexerAgentTest(unittest.TestCase):
 
         repo_key = "mongodb/example-service"
 
-        # 1. Persisted metadata records all carry repo_key.
+        # 1. Persisted metadata records all carry repo_key AND user_id so
+        #    anything that queries ``memory_records`` directly sees the
+        #    same scope key the vector store uses.
         memory_records = self.store.list_memory_record_metadata()
         self.assertTrue(memory_records)
         for record in memory_records:
             self.assertEqual(record.get("repo_key"), repo_key)
+            self.assertEqual(record.get("user_id"), repo_key)
 
         # 2. The actual Magenta memory writes used user_id=repo_key.
         memory = getattr(self.module.app, "memory", None)

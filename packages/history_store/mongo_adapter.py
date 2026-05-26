@@ -79,9 +79,11 @@ class MongoPRHistoryStore:
             raise ValueError("repository requires repo_key")
         self._ensure_indexes()
         now = _utc_now()
+        set_fields = {key: value for key, value in repo.items() if key != "created_at"}
+        set_fields["updated_at"] = now
         update = {
-            "$set": {**repo, "updated_at": now},
-            "$setOnInsert": {"created_at": now},
+            "$set": set_fields,
+            "$setOnInsert": {"created_at": repo.get("created_at") or now},
         }
         self._db[COLL_REPOSITORIES].update_one(
             {"repo_key": repo["repo_key"]}, update, upsert=True
@@ -100,17 +102,22 @@ class MongoPRHistoryStore:
             "status": run.get("status") or "running",
             "updated_at": now,
         }
+        # Mongo rejects field conflicts between ``$set`` and
+        # ``$setOnInsert``. Callers (handlers, agent main) commonly pass
+        # ``started_at``/``warnings``/``errors`` in the payload, so strip
+        # them from ``$set`` and let ``$setOnInsert`` own them on first
+        # write (and keep them stable on retries).
+        insert_only = {
+            "created_at": now,
+            "started_at": run.get("started_at") or now,
+            "warnings": list(run.get("warnings") or []),
+            "errors": list(run.get("errors") or []),
+        }
+        for field in insert_only:
+            update_set.pop(field, None)
         self._db[COLL_ONBOARDING_RUNS].update_one(
             {"onboarding_run_id": run_id},
-            {
-                "$set": update_set,
-                "$setOnInsert": {
-                    "created_at": now,
-                    "started_at": run.get("started_at") or now,
-                    "warnings": list(run.get("warnings") or []),
-                    "errors": list(run.get("errors") or []),
-                },
-            },
+            {"$set": update_set, "$setOnInsert": insert_only},
             upsert=True,
         )
 
@@ -145,10 +152,12 @@ class MongoPRHistoryStore:
             raise ValueError("prior_pr requires repo_key and pr_number")
         self._ensure_indexes()
         now = _utc_now()
+        set_fields = {key: value for key, value in record.items() if key != "indexed_at"}
+        set_fields["updated_at"] = now
         self._db[COLL_PRIOR_PRS].update_one(
             {"repo_key": repo, "pr_number": int(number)},
             {
-                "$set": {**record, "updated_at": now},
+                "$set": set_fields,
                 "$setOnInsert": {"indexed_at": record.get("indexed_at") or now},
             },
             upsert=True,
@@ -220,10 +229,12 @@ class MongoPRHistoryStore:
             raise ValueError("doc record requires repo_key and path")
         self._ensure_indexes()
         now = _utc_now()
+        set_fields = {key: value for key, value in record.items() if key != "indexed_at"}
+        set_fields["updated_at"] = now
         self._db[COLL_REPO_DOCS].update_one(
             {"repo_key": repo, "path": path},
             {
-                "$set": {**record, "updated_at": now},
+                "$set": set_fields,
                 "$setOnInsert": {"indexed_at": record.get("indexed_at") or now},
             },
             upsert=True,

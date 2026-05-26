@@ -245,6 +245,11 @@ def _persist_semantic_record(
     text = _semantic_text_for_pr(pr, file_records)
     metadata = {
         "repo_key": repo_key,
+        # Mirror the vector-store ``user_id`` into the structured audit
+        # record so anything that inspects ``memory_records`` directly
+        # (dashboards, debugging) sees the same scope key as
+        # ``search_semantic(user_id=repo_key, ...)``.
+        "user_id": repo_key,
         "type": "prior_pr_summary",
         "pr_number": pr.get("pr_number"),
         "paths": [r.get("path") for r in file_records if r.get("path")],
